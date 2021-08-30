@@ -24,6 +24,115 @@ spec:
             of an object. Servers should convert recognized schemas to the latest
             internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
           type: string
+        index:
+          additionalProperties:
+            additionalProperties:
+              description: PluginDescriptor describes a plugin binary.
+              properties:
+                aliases:
+                  description: Aliases are other text strings used to call this command
+                  items:
+                    type: string
+                  type: array
+                buildSHA:
+                  description: BuildSHA is the git commit hash the plugin was built
+                    with.
+                  type: string
+                completionArgs:
+                  description: CompletionArgs contains the valid command line completion
+                    values if `CompletionType` is set to `StaticPluginCompletion`.
+                  items:
+                    type: string
+                  type: array
+                completionCmd:
+                  description: CompletionCommand is the command to call from the plugin
+                    to retrieve a list of valid completion nouns when `CompletionType`
+                    is set to `DynamicPluginCompletion`.
+                  type: string
+                completionType:
+                  description: CompletionType determines how command line completion
+                    will be determined.
+                  type: integer
+                description:
+                  description: Description is the plugin's description.
+                  type: string
+                distribution:
+                  description: Distribution mechanism for the plugin.
+                  properties:
+                    gcp:
+                      description: GCPStorage is set if the plugin is distributed
+                        via Google Cloud Storage.
+                      properties:
+                        basePath:
+                          description: BasePath is a URI path that is prefixed to
+                            the object name/path. E.g., plugins/cluster
+                          type: string
+                        bucket:
+                          description: Bucket is a Google Cloud Storage bucket. E.g.,
+                            tanzu-cli
+                          type: string
+                      required:
+                      - basePath
+                      - bucket
+                      type: object
+                    oci:
+                      description: GCPStorage is set if the plugin is distributed
+                        via an OCI Image Registry.
+                      properties:
+                        name:
+                          description: Name is the unique repository/image name. It
+                            MUST be a valid URI path, MAY contain zero or more '/',
+                            and SHOULD NOT start or end with '/'. E.g., tanzu/cli/plugins/cluster
+                          type: string
+                        registry:
+                          description: Registry is an OCI compliant image registry.
+                            It MUST be a DNS-compatible name. E.g., harbor.my-domain.local
+                          type: string
+                      required:
+                      - name
+                      type: object
+                  required:
+                  - gcp
+                  - oci
+                  type: object
+                docURL:
+                  description: DocURL for the plugin.
+                  type: string
+                group:
+                  description: Command group for the plugin.
+                  type: string
+                hidden:
+                  description: Hidden tells whether the plugin should be hidden from
+                    the help command.
+                  type: boolean
+                installationPath:
+                  description: InstallationPath is a relative installation path for
+                    a plugin binary. E.g., harbor.my-domain.local/tmc-plugins/management-cluster/v0.3.2
+                  type: string
+                name:
+                  description: Name is the name of the plugin.
+                  type: string
+                version:
+                  description: Version of the plugin. Must be a valid semantic version
+                    https://semver.org/
+                  type: string
+              required:
+              - buildSHA
+              - completionType
+              - description
+              - distribution
+              - docURL
+              - group
+              - installationPath
+              - name
+              - version
+              type: object
+            description: MapInstallationPathToPluginDescriptor is a map of plugin
+              installation path to plugin descriptor.
+            type: object
+          description: Index is an index of PluginDescriptors for all installed plugins
+            by name and installation path.
+          type: object
         kind:
           description: 'Kind is a string value representing the REST resource this
             object represents. Servers may infer this from the endpoint the client
@@ -63,6 +172,45 @@ spec:
               description:
                 description: Description is the plugin's description.
                 type: string
+              distribution:
+                description: Distribution mechanism for the plugin.
+                properties:
+                  gcp:
+                    description: GCPStorage is set if the plugin is distributed via
+                      Google Cloud Storage.
+                    properties:
+                      basePath:
+                        description: BasePath is a URI path that is prefixed to the
+                          object name/path. E.g., plugins/cluster
+                        type: string
+                      bucket:
+                        description: Bucket is a Google Cloud Storage bucket. E.g.,
+                          tanzu-cli
+                        type: string
+                    required:
+                    - basePath
+                    - bucket
+                    type: object
+                  oci:
+                    description: GCPStorage is set if the plugin is distributed via
+                      an OCI Image Registry.
+                    properties:
+                      name:
+                        description: Name is the unique repository/image name. It
+                          MUST be a valid URI path, MAY contain zero or more '/',
+                          and SHOULD NOT start or end with '/'. E.g., tanzu/cli/plugins/cluster
+                        type: string
+                      registry:
+                        description: Registry is an OCI compliant image registry.
+                          It MUST be a DNS-compatible name. E.g., harbor.my-domain.local
+                        type: string
+                    required:
+                    - name
+                    type: object
+                required:
+                - gcp
+                - oci
+                type: object
               docURL:
                 description: DocURL for the plugin.
                 type: string
@@ -73,6 +221,10 @@ spec:
                 description: Hidden tells whether the plugin should be hidden from
                   the help command.
                 type: boolean
+              installationPath:
+                description: InstallationPath is a relative installation path for
+                  a plugin binary. E.g., harbor.my-domain.local/tmc-plugins/management-cluster/v0.3.2
+                type: string
               name:
                 description: Name is the name of the plugin.
                 type: string
@@ -84,12 +236,32 @@ spec:
             - buildSHA
             - completionType
             - description
+            - distribution
             - docURL
             - group
+            - installationPath
             - name
             - version
             type: object
           type: array
+        serverPlugins:
+          additionalProperties:
+            additionalProperties:
+              description: PluginInstallationPath is a relative installation path
+                for a plugin binary.
+              type: string
+            description: MapPluginNameToInstallationPath is a map of plugin name to
+              plugin installation path.
+            type: object
+          description: ServerPlugins links a server and a set of associated plugins.
+          type: object
+        standAlonePlugins:
+          additionalProperties:
+            description: PluginInstallationPath is a relative installation path for
+              a plugin binary.
+            type: string
+          description: StandAlonePlugins is a set of stand-alone plugin installations.
+          type: object
       type: object
   version: v1alpha1
   versions:

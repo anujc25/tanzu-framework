@@ -1,0 +1,143 @@
+
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.2.5
+  creationTimestamp: null
+  name: cliplugins.cli.tanzu.vmware.com
+spec:
+  group: cli.tanzu.vmware.com
+  names:
+    kind: CLIPlugin
+    listKind: CLIPluginList
+    plural: cliplugins
+    singular: cliplugin
+  scope: Namespaced
+  validation:
+    openAPIV3Schema:
+      description: CLIPlugin denotes a Tanzu cli plugin.
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          description: CLIPluginSpec defines the desired state of CLIPlugin.
+          properties:
+            description:
+              description: Description is the plugin's description.
+              type: string
+            distribution:
+              description: Distribution mechanism for the plugin.
+              properties:
+                gcp:
+                  description: GCPStorage is set if the plugin is distributed via
+                    Google Cloud Storage.
+                  properties:
+                    basePath:
+                      description: BasePath is a URI path that is prefixed to the
+                        object name/path. E.g., plugins/cluster
+                      type: string
+                    bucket:
+                      description: Bucket is a Google Cloud Storage bucket. E.g.,
+                        tanzu-cli
+                      type: string
+                  required:
+                  - basePath
+                  - bucket
+                  type: object
+                oci:
+                  description: GCPStorage is set if the plugin is distributed via
+                    an OCI Image Registry.
+                  properties:
+                    name:
+                      description: Name is the unique repository/image name. It MUST
+                        be a valid URI path, MAY contain zero or more '/', and SHOULD
+                        NOT start or end with '/'. E.g., tanzu/cli/plugins/cluster
+                      type: string
+                    registry:
+                      description: Registry is an OCI compliant image registry. It
+                        MUST be a DNS-compatible name. E.g., harbor.my-domain.local
+                      type: string
+                  required:
+                  - name
+                  type: object
+              required:
+              - gcp
+              - oci
+              type: object
+            optional:
+              description: Optional specifies whether the plugin is mandatory or optional
+                If optional, the plugin will not get auto-downloaded as part of `tanzu
+                login` or `tanzu plugin sync` command To view the list of plugin,
+                user can use `tanzu plugin list` and to download a specific plugin
+                run, `tanzu plugin install <plugin-name>`
+              type: boolean
+            platforms:
+              description: Platforms available for the plugin.
+              items:
+                description: Platform of the plugin binary.
+                properties:
+                  arch:
+                    description: Arch of the plugin binary in `GOARCH` format.
+                    type: string
+                  os:
+                    description: OS of the plugin binary in `GOOS` format.
+                    type: string
+                required:
+                - arch
+                - os
+                type: object
+              type: array
+            versionConstraints:
+              description: VersionConstraints for the plugin describes constraints
+                around using a version of the plugin.
+              properties:
+                recommendedVersion:
+                  description: RecommendedVersion version that Tanzu CLI should use
+                    if available. The value should be a valid semantic version as
+                    defined in https://semver.org/.
+                  type: string
+                supportedVersions:
+                  description: SupportedVersions determines the list of supported
+                    CLI plugin versions. The values for each should follow the version
+                    constraints format mentioned https://github.com/Masterminds/semver#checking-version-constraints.
+                  items:
+                    type: string
+                  type: array
+              required:
+              - recommendedVersion
+              - supportedVersions
+              type: object
+          required:
+          - description
+          - distribution
+          - optional
+          - platforms
+          - versionConstraints
+          type: object
+      required:
+      - metadata
+      - spec
+      type: object
+  version: v1alpha1
+  versions:
+  - name: v1alpha1
+    served: true
+    storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
