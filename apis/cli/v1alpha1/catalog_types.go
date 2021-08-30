@@ -16,6 +16,30 @@ type CmdGroup string
 // PluginCompletionType is the mechanism used for determining command line completion options.
 type PluginCompletionType int
 
+// PluginAssociation is a set of plugin names and their associated installation paths.
+type PluginAssociation map[string]string
+
+// Add adds plugin entry to the map
+func (pa PluginAssociation) Add(pluginName, installationPath string) {
+	pa[pluginName] = installationPath
+}
+
+// Remove deletes plugin entry from the map
+func (pa PluginAssociation) Remove(pluginName string) {
+	delete(pa, pluginName)
+}
+
+// Get returns installation path for the plugin
+// if plugin doesn't exists in map it will return empty string
+func (pa PluginAssociation) Get(pluginName string) string {
+	return pa[pluginName]
+}
+
+// Map returns associated list of plugins as Map
+func (pa PluginAssociation) Map() map[string]string {
+	return pa
+}
+
 // +kubebuilder:object:generate=false
 
 // Hook is the mechanism used to define function for plugin hooks
@@ -76,6 +100,9 @@ type PluginDescriptor struct {
 	// Version of the plugin. Must be a valid semantic version https://semver.org/
 	Version string `json:"version" yaml:"version"`
 
+	// Artifacts contains an artifact list for every supported version.
+	Artifacts map[string]ArtifactList `json:"artifacts"`
+
 	// BuildSHA is the git commit hash the plugin was built with.
 	BuildSHA string `json:"buildSHA" yaml:"buildSHA"`
 
@@ -102,6 +129,10 @@ type PluginDescriptor struct {
 	// Aliases are other text strings used to call this command
 	Aliases []string `json:"aliases,omitempty" yaml:"aliases,omitempty"`
 
+	// InstallationPath is a relative installation path for a plugin binary.
+	// E.g., harbor.my-domain.local/tmc-plugins/management-cluster/v0.3.2
+	InstallationPath string `json:"installationPath"`
+
 	// PostInstallHook is function to be run post install of a plugin.
 	PostInstallHook Hook `json:"-" yaml:"-"`
 }
@@ -112,8 +143,18 @@ type PluginDescriptor struct {
 type Catalog struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
+
 	// PluginDescriptors is a list of PluginDescriptor
 	PluginDescriptors []*PluginDescriptor `json:"pluginDescriptors,omitempty" yaml:"pluginDescriptors"`
+
+	// IndexByPath of PluginDescriptors for all installed plugins by installation path.
+	IndexByPath map[string]PluginDescriptor `json:"indexByPath,omitempty"`
+	// IndeByName of all plugin installation paths by name.
+	IndexByName map[string][]string `json:"indexByName,omitempty"`
+	// StandAlonePlugins is a set of stand-alone plugin installations.
+	StandAlonePlugins PluginAssociation `json:"standAlonePlugins,omitempty"`
+	// ServerPlugins links a server and a set of associated plugin installations.
+	ServerPlugins map[string]PluginAssociation `json:"serverPlugins,omitempty"`
 }
 
 // +kubebuilder:object:root=true
