@@ -94,8 +94,72 @@ type ClientOptions struct {
 type CLIOptions struct {
 	// Repositories are the plugin repositories.
 	Repositories []PluginRepository `json:"repositories,omitempty" yaml:"repositories"`
+	// Discoveries
+	Discoveries []PluginDiscovery `json:"pluginDiscoveries,omitempty" yaml:"pluginDiscoveries"`
 	// UnstableVersionSelector determined which version tags are allowed
 	UnstableVersionSelector VersionSelectorLevel `json:"unstableVersionSelector,omitempty" yaml:"unstableVersionSelector"`
+}
+
+// PluginDiscovery contains a specific distribution mechanism. Only one of the
+// configs must be set.
+type PluginDiscovery struct {
+	// GCPStorage is set if the plugins are to be discovered via Google Cloud Storage.
+	GCP *GCPDiscovery `json:"gcp"`
+	// OCIDiscovery is set if the plugins are to be discovered via an OCI Image Registry.
+	OCI *OCIDiscovery `json:"oci"`
+	// GenericRESTDiscovery is set if the plugins are to be discovered via a REST API endpoint.
+	REST *GenericRESTDiscovery `json:"rest"`
+	// K8sDiscovery is set if the plugins are to be discovered via the Kubernetes API server.
+	K8S *K8sDiscovery `json:"k8s"`
+}
+
+// GCPDiscovery provides a plugin discovery mechanism from a Google Cloud Storage
+// bucket with a manifest.yaml file.
+type GCPDiscovery struct {
+	// Bucket is a Google Cloud Storage bucket.
+	// E.g., tanzu-cli
+	Bucket string `json:"bucket"`
+	// BasePath is a URI path that is prefixed to the object name/path.
+	// E.g., plugins/cluster
+	ManifestPath string `json:"manifestPath"`
+}
+
+// OCIDiscovery provides a plugin discovery mechanism from a OCI Image Registry
+// points to OCI image which contains manifest.yaml file
+type OCIDiscovery struct {
+	// Registry is an OCI compliant image registry. It MUST be a DNS-compatible name.
+	// E.g., harbor.my-domain.local
+	Registry string `json:"registry,omitempty"`
+	// Name is the unique repository/image name. It MUST be a valid URI path, MAY
+	// contain zero or more '/', and SHOULD NOT start or end with '/'.
+	// E.g., tanzu/cli/plugins/manifests
+	Name string `json:"name"`
+	// Tag is the image tag for the image repository. If not provided `latest` is used
+	Tag string `json:"tag"`
+}
+
+// GenericRESTDiscovery provides a plugin discovery mechanism from any REST API
+// endpoint. The fully qualified list URL is constructed as
+// `https://{Endpoint}/{BasePath}` and the get plugin URL is constructed as .
+// `https://{Endpoint}/{BasePath}/{Plugin}`.
+type GenericRESTDiscovery struct {
+	// Endpoint is the REST API server endpoint.
+	// E.g., api.my-domain.local
+	Endpoint string `json:"endpoint"`
+	// BasePath is the base URL path of the plugin discovery API.
+	// E.g., /v1alpha1/cli/plugins
+	BasePath string `json:"basePath"`
+}
+
+// K8sDiscovery provides a plugin discovery mechanism from the Kubernetes API server.
+type K8sDiscovery struct {
+	// Path to the kubeconfig.
+	Path string `json:"path"`
+	// The context to use (if required), defaults to current.
+	Context string `json:"context"`
+	// Version of the CLIPlugins API to query.
+	// E.g., v1alpha1
+	Version string `json:"version"`
 }
 
 // PluginRepository is a CLI plugin repository
