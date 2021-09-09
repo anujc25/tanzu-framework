@@ -166,6 +166,10 @@ spec:
                   description: UnstableVersionSelector determined which version tags
                     are allowed
                   type: string
+                usePluginAPI:
+                  description: UsePluginAPI determines whether to use legacy way of
+                    discovering plugins or to use new Plugin API based plugin descovery
+                  type: boolean
               type: object
           type: object
         current:
