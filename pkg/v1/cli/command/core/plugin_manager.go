@@ -55,6 +55,10 @@ var listPluginCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List available plugins",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		if config.IsPluginAPIEnabled() {
+			return errors.New("Plugin API enabled but function is not yet implemented")
+		}
+
 		descriptors, err := cli.ListPlugins()
 		if err != nil {
 			return err
@@ -144,6 +148,10 @@ var describePluginCmd = &cobra.Command{
 		}
 		name := args[0]
 
+		if config.IsPluginAPIEnabled() {
+			return errors.New("Plugin API enabled but function is not yet implemented")
+		}
+
 		repos := getRepositories()
 
 		repo, err := repos.Find(name)
@@ -173,6 +181,10 @@ var installPluginCmd = &cobra.Command{
 			return fmt.Errorf("must provide plugin name as positional argument")
 		}
 		name := args[0]
+
+		if config.IsPluginAPIEnabled() {
+			return errors.New("Plugin API enabled but function is not yet implemented")
+		}
 
 		repos := getRepositories()
 
@@ -209,6 +221,10 @@ var upgradePluginCmd = &cobra.Command{
 		}
 		name := args[0]
 
+		if config.IsPluginAPIEnabled() {
+			return errors.New("Plugin API enabled but function is not yet implemented")
+		}
+
 		repos := getRepositories()
 		repo, err := repos.Find(name)
 		if err != nil {
@@ -235,6 +251,10 @@ var deletePluginCmd = &cobra.Command{
 		}
 		name := args[0]
 
+		if config.IsPluginAPIEnabled() {
+			return errors.New("Plugin API enabled but function is not yet implemented")
+		}
+
 		err = cli.DeletePlugin(name)
 
 		return
@@ -245,6 +265,10 @@ var cleanPluginCmd = &cobra.Command{
 	Use:   "clean",
 	Short: "Clean the plugins",
 	RunE: func(cmd *cobra.Command, args []string) (err error) {
+		if config.IsPluginAPIEnabled() {
+			return errors.New("Plugin API enabled but function is not yet implemented")
+		}
+
 		return cli.Clean()
 	},
 }
