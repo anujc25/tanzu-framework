@@ -40,45 +40,6 @@ spec:
                 items:
                   type: string
                 type: array
-              artifacts:
-                additionalProperties:
-                  description: ArtifactList contains an Artifact object for every
-                    supported platform of a version.
-                  items:
-                    description: Artifact points to an individual plugin binary specific
-                      to a version and platform.
-                    properties:
-                      arch:
-                        description: Arch of the plugin binary in `GOARCH` format.
-                        type: string
-                      digest:
-                        description: SHA256 hash of the plugin binary.
-                        type: string
-                      gcp:
-                        description: GCP is a Google Cloud Storage object URI for
-                          the plugin binary.
-                        type: string
-                      image:
-                        description: Image is a fully qualified OCI image for the
-                          plugin binary.
-                        type: string
-                      os:
-                        description: OS of the plugin binary in `GOOS` format.
-                        type: string
-                      type:
-                        description: Type of the binary artifact. Valid values are
-                          S3, GCP, OCIImage.
-                        type: string
-                    required:
-                    - arch
-                    - digest
-                    - os
-                    - type
-                    type: object
-                  type: array
-                description: Artifacts contains an artifact list for every supported
-                  version.
-                type: object
               buildSHA:
                 description: BuildSHA is the git commit hash the plugin was built
                   with.
@@ -101,6 +62,10 @@ spec:
               description:
                 description: Description is the plugin's description.
                 type: string
+              discovery:
+                description: Discovery specificies the name of the discovery from
+                  where this plugin is discovered.
+                type: string
               docURL:
                 description: DocURL for the plugin.
                 type: string
@@ -118,19 +83,28 @@ spec:
               name:
                 description: Name is the name of the plugin.
                 type: string
+              scope:
+                description: Scope specificies the scope of the plugin. Stand-Alone
+                  or Context
+                type: string
+              status:
+                description: Status specificies the current plugin installation status
+                type: string
               version:
                 description: Version of the plugin. Must be a valid semantic version
                   https://semver.org/
                 type: string
             required:
-            - artifacts
             - buildSHA
             - completionType
             - description
+            - discovery
             - docURL
             - group
             - installationPath
             - name
+            - scope
+            - status
             - version
             type: object
           description: IndexByPath of PluginDescriptors for all installed plugins
@@ -153,45 +127,6 @@ spec:
                 items:
                   type: string
                 type: array
-              artifacts:
-                additionalProperties:
-                  description: ArtifactList contains an Artifact object for every
-                    supported platform of a version.
-                  items:
-                    description: Artifact points to an individual plugin binary specific
-                      to a version and platform.
-                    properties:
-                      arch:
-                        description: Arch of the plugin binary in `GOARCH` format.
-                        type: string
-                      digest:
-                        description: SHA256 hash of the plugin binary.
-                        type: string
-                      gcp:
-                        description: GCP is a Google Cloud Storage object URI for
-                          the plugin binary.
-                        type: string
-                      image:
-                        description: Image is a fully qualified OCI image for the
-                          plugin binary.
-                        type: string
-                      os:
-                        description: OS of the plugin binary in `GOOS` format.
-                        type: string
-                      type:
-                        description: Type of the binary artifact. Valid values are
-                          S3, GCP, OCIImage.
-                        type: string
-                    required:
-                    - arch
-                    - digest
-                    - os
-                    - type
-                    type: object
-                  type: array
-                description: Artifacts contains an artifact list for every supported
-                  version.
-                type: object
               buildSHA:
                 description: BuildSHA is the git commit hash the plugin was built
                   with.
@@ -214,6 +149,10 @@ spec:
               description:
                 description: Description is the plugin's description.
                 type: string
+              discovery:
+                description: Discovery specificies the name of the discovery from
+                  where this plugin is discovered.
+                type: string
               docURL:
                 description: DocURL for the plugin.
                 type: string
@@ -231,19 +170,28 @@ spec:
               name:
                 description: Name is the name of the plugin.
                 type: string
+              scope:
+                description: Scope specificies the scope of the plugin. Stand-Alone
+                  or Context
+                type: string
+              status:
+                description: Status specificies the current plugin installation status
+                type: string
               version:
                 description: Version of the plugin. Must be a valid semantic version
                   https://semver.org/
                 type: string
             required:
-            - artifacts
             - buildSHA
             - completionType
             - description
+            - discovery
             - docURL
             - group
             - installationPath
             - name
+            - scope
+            - status
             - version
             type: object
           type: array

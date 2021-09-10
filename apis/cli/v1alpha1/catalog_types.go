@@ -21,6 +21,9 @@ type PluginAssociation map[string]string
 
 // Add adds plugin entry to the map
 func (pa PluginAssociation) Add(pluginName, installationPath string) {
+	if pa == nil {
+		pa = map[string]string{}
+	}
 	pa[pluginName] = installationPath
 }
 
@@ -100,9 +103,6 @@ type PluginDescriptor struct {
 	// Version of the plugin. Must be a valid semantic version https://semver.org/
 	Version string `json:"version" yaml:"version"`
 
-	// Artifacts contains an artifact list for every supported version.
-	Artifacts map[string]ArtifactList `json:"artifacts"`
-
 	// BuildSHA is the git commit hash the plugin was built with.
 	BuildSHA string `json:"buildSHA" yaml:"buildSHA"`
 
@@ -132,6 +132,14 @@ type PluginDescriptor struct {
 	// InstallationPath is a relative installation path for a plugin binary.
 	// E.g., harbor.my-domain.local/tmc-plugins/management-cluster/v0.3.2
 	InstallationPath string `json:"installationPath"`
+
+	// Discovery specificies the name of the discovery from where
+	// this plugin is discovered.
+	Discovery string `json:"discovery"`
+	// Scope specificies the scope of the plugin. Stand-Alone or Context
+	Scope string `json:"scope"`
+	// Status specificies the current plugin installation status
+	Status string `json:"status"`
 
 	// PostInstallHook is function to be run post install of a plugin.
 	PostInstallHook Hook `json:"-" yaml:"-"`

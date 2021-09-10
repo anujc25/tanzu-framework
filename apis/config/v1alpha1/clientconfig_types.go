@@ -102,24 +102,24 @@ type CLIOptions struct {
 	DiscoverySources []PluginDiscovery `json:"discoverySources,omitempty" yaml:"discoverySources"`
 	// UnstableVersionSelector determined which version tags are allowed
 	UnstableVersionSelector VersionSelectorLevel `json:"unstableVersionSelector,omitempty" yaml:"unstableVersionSelector"`
-	// UsePluginAPI determines whether to use legacy way of discovering plugins or
+	// UseContextAwareDiscovery determines whether to use legacy way of discovering plugins or
 	// to use new Plugin API based plugin descovery
-	UsePluginAPI bool `json:"usePluginAPI,omitempty" yaml:"usePluginAPI"`
+	UseContextAwareDiscovery bool `json:"useContextAwareDiscovery,omitempty" yaml:"useContextAwareDiscovery"`
 }
 
 // PluginDiscovery contains a specific distribution mechanism. Only one of the
 // configs must be set.
 type PluginDiscovery struct {
 	// GCPStorage is set if the plugins are to be discovered via Google Cloud Storage.
-	GCP *GCPDiscovery `json:"gcp"`
+	GCP *GCPDiscovery `json:"gcp,omitempty"`
 	// OCIDiscovery is set if the plugins are to be discovered via an OCI Image Registry.
-	OCI *OCIDiscovery `json:"oci"`
+	OCI *OCIDiscovery `json:"oci,omitempty"`
 	// GenericRESTDiscovery is set if the plugins are to be discovered via a REST API endpoint.
-	REST *GenericRESTDiscovery `json:"rest"`
+	REST *GenericRESTDiscovery `json:"rest,omitempty"`
 	// K8sDiscovery is set if the plugins are to be discovered via the Kubernetes API server.
-	K8S *K8sDiscovery `json:"k8s"`
+	K8S *K8sDiscovery `json:"k8s,omitempty"`
 	// LocalDiscovery is set if the plugins are to be discovered via Local Manifest fast.
-	Local *LocalDiscovery `json:"local"`
+	Local *LocalDiscovery `json:"local,omitempty"`
 }
 
 // GCPDiscovery provides a plugin discovery mechanism from a Google Cloud Storage
