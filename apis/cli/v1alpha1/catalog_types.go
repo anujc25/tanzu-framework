@@ -16,17 +16,8 @@ type CmdGroup string
 // PluginCompletionType is the mechanism used for determining command line completion options.
 type PluginCompletionType int
 
-// PluginName is a name of the plugin
-type PluginName string
-
-// PluginInstallationPath is a relative installation path for a plugin binary.
-type PluginInstallationPath string
-
-// MapInstallationPathToPluginDescriptor is a map of plugin installation path to plugin descriptor.
-type MapInstallationPathToPluginDescriptor map[PluginInstallationPath]PluginDescriptor
-
-// MapPluginNameToInstallationPath is a map of plugin name to plugin installation path.
-type MapPluginNameToInstallationPath map[PluginName]PluginInstallationPath
+// PluginAssociation is a set of plugin names and their associated installation paths.
+type PluginAssociation map[string]string
 
 // +kubebuilder:object:generate=false
 
@@ -119,7 +110,7 @@ type PluginDescriptor struct {
 
 	// InstallationPath is a relative installation path for a plugin binary.
 	// E.g., harbor.my-domain.local/tmc-plugins/management-cluster/v0.3.2
-	InstallationPath PluginInstallationPath `json:"installationPath"`
+	InstallationPath string `json:"installationPath"`
 
 	// PostInstallHook is function to be run post install of a plugin.
 	PostInstallHook Hook `json:"-" yaml:"-"`
@@ -143,13 +134,14 @@ type Catalog struct {
 	// PluginDescriptors is a list of PluginDescriptor
 	PluginDescriptors []*PluginDescriptor `json:"pluginDescriptors,omitempty" yaml:"pluginDescriptors"`
 
-	// Index is an index of PluginDescriptors for all installed plugins by
-	// name and installation path.
-	Index map[PluginName]MapInstallationPathToPluginDescriptor `json:"index,omitempty" yaml:"index"`
+	// IndexByPath of PluginDescriptors for all installed plugins by installation path.
+	IndexByPath map[string]PluginDescriptor `json:"indexByPath,omitempty"`
+	// IndeByName of all plugin installation paths by name.
+	IndexByName map[string][]string `json:"indexByName,omitempty"`
 	// StandAlonePlugins is a set of stand-alone plugin installations.
-	StandAlonePlugins map[PluginName]PluginInstallationPath `json:"standAlonePlugins,omitempty" yaml:"standAlonePlugins"`
-	// ServerPlugins links a server and a set of associated plugins.
-	ServerPlugins map[string]MapPluginNameToInstallationPath `json:"serverPlugins,omitempty" yaml:"serverPlugins"`
+	StandAlonePlugins PluginAssociation `json:"standAlonePlugins,omitempty"`
+	// ServerPlugins links a server and a set of associated plugin installations.
+	ServerPlugins map[string]PluginAssociation `json:"serverPlugins,omitempty"`
 }
 
 // +kubebuilder:object:root=true
