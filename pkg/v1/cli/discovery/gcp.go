@@ -13,10 +13,10 @@ type GCPDiscovery struct {
 }
 
 // NewGCPDiscovery returns a new GCP bucket repository.
-func NewGCPDiscovery(bucket, rootPath, name string) Discovery {
+func NewGCPDiscovery(bucket, manifestPath, name string) Discovery {
 	return &GCPDiscovery{
 		bucketName:   bucket,
-		manifestPath: rootPath,
+		manifestPath: manifestPath,
 		name:         name,
 	}
 }

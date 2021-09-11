@@ -132,45 +132,76 @@ func savePluginsToCatalogCache(list []*cliv1alpha1.PluginDescriptor) error {
 
 // GetPluginsFromCatalogCache gets plugins from catalog cache
 func GetPluginsFromCatalogCache(serverName string) (list []*cliv1alpha1.PluginDescriptor, err error) {
-	catalog, err := getCatalogCache()
+	var catalog *cliv1alpha1.Catalog
+
+	catalog, err = getCatalogCache()
 	if err != nil {
-		return nil, err
+		return
 	}
-	if len(catalog.PluginDescriptors) == 0 {
-		return nil, errors.New("could not retrieve plugin descriptors from catalog cache")
+
+	serverPluginAssociation, _ := catalog.ServerPlugins[serverName]
+	list = getPluginDescriptorFromPluginAssociation(catalog.IndexByPath, serverPluginAssociation, catalog.StandAlonePlugins)
+
+	return
+}
+
+func getPluginDescriptorFromPluginAssociation(indexByPath map[string]cliv1alpha1.PluginDescriptor,
+	serverPluginAssociation,
+	standalonePluginAssociation cliv1alpha1.PluginAssociation) (list []*cliv1alpha1.PluginDescriptor) {
+
+	// Add plugins from server plugin association
+	mapServerPluginToPath := serverPluginAssociation.Map()
+	for _, installationPath := range mapServerPluginToPath {
+		pd := indexByPath[installationPath]
+		list = append(list, &pd)
 	}
-	return catalog.PluginDescriptors, nil
+
+	// Add plugins from standalone plugin association if the same plugin
+	// is not added from server plugin association
+	mapstandalonePluginToPath := standalonePluginAssociation.Map()
+	for pluginName, installationPath := range mapstandalonePluginToPath {
+		if _, exists := mapServerPluginToPath[pluginName]; !exists {
+			pd := indexByPath[installationPath]
+			list = append(list, &pd)
+		}
+	}
+	return
 }
 
 // InsertOrUpdatePluginCacheEntry inserts or updates a plugin entry in catalog cache
-func InsertOrUpdatePluginCacheEntry(name string) error {
-	list, err := GetPluginsFromCatalogCache()
+func InsertOrUpdatePluginCacheEntry(serverName, pluginName string, descriptor cliv1alpha1.PluginDescriptor) error {
+	catalog, err := getCatalogCache()
 	if err != nil {
 		return err
 	}
-	list = remove(list, name)
-	descriptor, err := DescribePlugin(PluginNameFromBin(name))
-	if err != nil {
-		return err
+
+	if serverName == "" {
+		catalog.StandAlonePlugins.Add(pluginName, descriptor.InstallationPath)
+	} else {
+		catalog.ServerPlugins[serverName].Add(pluginName, descriptor.InstallationPath)
 	}
-	list = append(list, descriptor)
-	if err := savePluginsToCatalogCache(list); err != nil {
-		return err
-	}
+
+	catalog.IndexByPath[descriptor.InstallationPath] = descriptor
+	catalog.IndexByName[pluginName] = append(catalog.IndexByName[pluginName], descriptor.InstallationPath)
+
 	return nil
 }
 
 // DeletePluginCacheEntry deletes plugin entry in catalog cache
-func DeletePluginCacheEntry(name string) error {
-	list, err := GetPluginsFromCatalogCache()
+func DeletePluginCacheEntry(serverName, pluginName string) error {
+	catalog, err := getCatalogCache()
 	if err != nil {
 		return err
 	}
-	list = remove(list, name)
-	if err := savePluginsToCatalogCache(list); err != nil {
-		return err
+
+	serverPluginAssociation, exists := catalog.ServerPlugins[serverName]
+	if exists {
+		serverPluginAssociation.Remove(pluginName)
 	}
-	return nil
+
+	// TODO(anuj): Delete entry for standalone plugins?
+
+	return saveCatalogCache(catalog)
 }
 
 // CleanCatalogCache cleans the catalog cache
@@ -186,7 +217,27 @@ func CleanCatalogCache() error {
 }
 
 func GetPluginPath(serverName, pluginName string) (string, error) {
-	return "", nil
+	catalog, err := getCatalogCache()
+	if err != nil {
+		return "", err
+	}
+
+	// Get the plugin path from server plugin association if plugin exists
+	serverPluginAssociation, exists := catalog.ServerPlugins[serverName]
+	if exists {
+		path := serverPluginAssociation.Get(pluginName)
+		if path != "" {
+			return path, nil
+		}
+	}
+
+	// Else get the plugin path from the standalone plugin association
+	path := catalog.StandAlonePlugins.Get(pluginName)
+	if path != "" {
+		return path, nil
+	}
+
+	return "", errors.Errorf("unable to find the plugin '%v' for server '%v' in catalog cache", pluginName, serverName)
 }
 
 // getCatalogCachePath gets the catalog cache path
@@ -196,27 +247,6 @@ func getCatalogCachePath() (string, error) {
 		return "", errors.Wrap(err, "could not locate catalog cache directory")
 	}
 	return filepath.Join(catalogCacheDir, catalogCacheFileName), nil
-}
-
-func remove(list []*cliv1alpha1.PluginDescriptor, name string) []*cliv1alpha1.PluginDescriptor {
-	i := 0
-	for _, v := range list {
-		if v != nil && v.Name != name {
-			list[i] = v
-			i++
-		}
-	}
-	list = list[:i]
-	return list
-}
-
-func inExclude(name string, exclude []string) bool {
-	for _, e := range exclude {
-		if name == e {
-			return true
-		}
-	}
-	return false
 }
 
 // Ensure the root directory exists.

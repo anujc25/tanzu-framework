@@ -17,10 +17,12 @@ import (
 	"golang.org/x/mod/semver"
 
 	cliv1alpha1 "github.com/vmware-tanzu/tanzu-framework/apis/cli/v1alpha1"
+	"github.com/vmware-tanzu/tanzu-framework/apis/config/v1alpha1"
 	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/cli/catalog"
 	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/cli/common"
 	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/cli/discovery"
 	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/cli/distribution"
+	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/config"
 )
 
 const (
@@ -60,8 +62,63 @@ func ValidatePlugin(p *cliv1alpha1.PluginDescriptor) (err error) {
 	return
 }
 
-func DiscoverPlugins(serverName string, discovery ...discovery.Discovery) ([]*cliv1alpha1.PluginDescriptor, error) {
-	return nil, nil
+func discoverPlugins(pd []v1alpha1.PluginDiscovery) ([]common.Plugin, error) {
+	allPlugins := []common.Plugin{}
+	for _, d := range pd {
+		discObject := discovery.CreateDiscovery(d)
+		plugins, err := discObject.List()
+		if err != nil {
+			return nil, errors.Wrapf(err, "unable to list plugin from discovery '%v'", discObject.Name())
+		}
+		allPlugins = append(allPlugins, plugins...)
+	}
+	return allPlugins, nil
+}
+
+// DiscoverStandalonePlugins returns the available standalone plugins
+func DiscoverStandalonePlugins() ([]common.Plugin, error) {
+	cfg, err := config.GetClientConfig()
+	if err != nil {
+		return nil, errors.Wrapf(err, "unable to get client configuration")
+	}
+
+	if cfg == nil || cfg.ClientOptions == nil || cfg.ClientOptions.CLI == nil {
+		return []common.Plugin{}, nil
+	}
+
+	// TODO: Need to mark these plugins as standalone plugins
+
+	return discoverPlugins(cfg.ClientOptions.CLI.Discoveries)
+}
+
+// DiscoverServerPlugins returns the available plugins associated with the given server
+func DiscoverServerPlugins(serverName string) ([]common.Plugin, error) {
+	server, err := config.GetCurrentServer()
+	if err != nil {
+		return []common.Plugin{}, nil
+	}
+
+	// TODO: Need to mark these plugins as context based plugins
+
+	return discoverPlugins(server.Discoveries)
+}
+
+// DiscoverPlugins returns the available plugins that can be used with the given server
+func DiscoverPlugins(serverName string) ([]common.Plugin, error) {
+	allPlugins := []common.Plugin{}
+	serverPlugins, err := DiscoverServerPlugins(serverName)
+	if err != nil {
+		return allPlugins, errors.Wrapf(err, "unable to discover server plugins")
+	}
+	standalonePlugins, err := DiscoverStandalonePlugins()
+	if err != nil {
+		return allPlugins, errors.Wrapf(err, "unable to discover server plugins")
+	}
+	allPlugins = append(serverPlugins, standalonePlugins...)
+
+	// TODO(anuj): Remove duplicate plugins with server plugins getting higher priority
+
+	return allPlugins, nil
 }
 
 // ListPlugins returns the available plugins.
@@ -139,7 +196,19 @@ func installOrUpgradePlugin(serverName, pluginName, version string, distribution
 	if err != nil {
 		return errors.Wrap(err, "could not write file")
 	}
-	err = catalog.InsertOrUpdatePluginCacheEntry(pluginName)
+
+	b, err = exec.Command(pluginPath, "info").Output()
+	if err != nil {
+		return fmt.Errorf("could not describe plugin %q", pluginName)
+	}
+	var descriptor cliv1alpha1.PluginDescriptor
+	err = json.Unmarshal(b, &descriptor)
+	if err != nil {
+		err = fmt.Errorf("could not unmarshal plugin %q description", pluginName)
+	}
+	descriptor.InstallationPath = pluginPath
+
+	err = catalog.InsertOrUpdatePluginCacheEntry(serverName, pluginName, descriptor)
 	if err != nil {
 		log.Debug("Plugin descriptor could not be updated in cache")
 	}
@@ -157,7 +226,7 @@ func DeletePlugin(serverName, pluginName string) error {
 		err = fmt.Errorf("could not get plugin path for plugin %q", pluginName)
 	}
 
-	err = catalog.DeletePluginCacheEntry(pluginName)
+	err = catalog.DeletePluginCacheEntry(serverName, pluginName)
 	if err != nil {
 		log.Debugf("Plugin descriptor could not be deleted from cache %v", err)
 	}
