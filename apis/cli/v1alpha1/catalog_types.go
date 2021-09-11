@@ -19,6 +19,27 @@ type PluginCompletionType int
 // PluginAssociation is a set of plugin names and their associated installation paths.
 type PluginAssociation map[string]string
 
+// Add adds plugin entry to the map
+func (pa PluginAssociation) Add(pluginName, installationPath string) {
+	pa[pluginName] = installationPath
+}
+
+// Remove deletes plugin entry from the map
+func (pa PluginAssociation) Remove(pluginName string) {
+	delete(pa, pluginName)
+}
+
+// Get returns installation path for the plugin
+// if plugin doesn't exists in map it will return empty string
+func (pa PluginAssociation) Get(pluginName string) string {
+	return pa[pluginName]
+}
+
+// Map returns associated list of plugins as Map
+func (pa PluginAssociation) Map() map[string]string {
+	return pa
+}
+
 // +kubebuilder:object:generate=false
 
 // Hook is the mechanism used to define function for plugin hooks

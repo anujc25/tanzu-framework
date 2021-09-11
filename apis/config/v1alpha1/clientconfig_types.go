@@ -34,6 +34,10 @@ type Server struct {
 
 	// ManagementClusterOpts if the server is a management cluster.
 	ManagementClusterOpts *ManagementClusterServer `json:"managementClusterOpts,omitempty" yaml:"managementClusterOpts"`
+
+	// Discoveries determines from where to discover plugins
+	// associated with this server
+	Discoveries []PluginDiscovery `json:"pluginDiscoveries,omitempty" yaml:"pluginDiscoveries"`
 }
 
 // ManagementClusterServer is the configuration for a management cluster kubeconfig.
@@ -94,7 +98,7 @@ type ClientOptions struct {
 type CLIOptions struct {
 	// Repositories are the plugin repositories.
 	Repositories []PluginRepository `json:"repositories,omitempty" yaml:"repositories"`
-	// Discoveries
+	// Discoveries determines from where to discover standalone plugins
 	Discoveries []PluginDiscovery `json:"pluginDiscoveries,omitempty" yaml:"pluginDiscoveries"`
 	// UnstableVersionSelector determined which version tags are allowed
 	UnstableVersionSelector VersionSelectorLevel `json:"unstableVersionSelector,omitempty" yaml:"unstableVersionSelector"`
@@ -111,11 +115,15 @@ type PluginDiscovery struct {
 	REST *GenericRESTDiscovery `json:"rest"`
 	// K8sDiscovery is set if the plugins are to be discovered via the Kubernetes API server.
 	K8S *K8sDiscovery `json:"k8s"`
+	// LocalDiscovery is set if the plugins are to be discovered via Local Manifest fast.
+	Local *LocalDiscovery `json:"local"`
 }
 
 // GCPDiscovery provides a plugin discovery mechanism from a Google Cloud Storage
 // bucket with a manifest.yaml file.
 type GCPDiscovery struct {
+	// Name is a name of the discovery
+	Name string `json:"name"`
 	// Bucket is a Google Cloud Storage bucket.
 	// E.g., tanzu-cli
 	Bucket string `json:"bucket"`
@@ -127,13 +135,15 @@ type GCPDiscovery struct {
 // OCIDiscovery provides a plugin discovery mechanism from a OCI Image Registry
 // points to OCI image which contains manifest.yaml file
 type OCIDiscovery struct {
+	// Name is a name of the discovery
+	Name string `json:"name"`
 	// Registry is an OCI compliant image registry. It MUST be a DNS-compatible name.
 	// E.g., harbor.my-domain.local
 	Registry string `json:"registry,omitempty"`
-	// Name is the unique repository/image name. It MUST be a valid URI path, MAY
+	// Path is the unique repository/image name. It MUST be a valid URI path, MAY
 	// contain zero or more '/', and SHOULD NOT start or end with '/'.
 	// E.g., tanzu/cli/plugins/manifests
-	Name string `json:"name"`
+	Path string `json:"path"`
 	// Tag is the image tag for the image repository. If not provided `latest` is used
 	Tag string `json:"tag"`
 }
@@ -143,6 +153,8 @@ type OCIDiscovery struct {
 // `https://{Endpoint}/{BasePath}` and the get plugin URL is constructed as .
 // `https://{Endpoint}/{BasePath}/{Plugin}`.
 type GenericRESTDiscovery struct {
+	// Name is a name of the discovery
+	Name string `json:"name"`
 	// Endpoint is the REST API server endpoint.
 	// E.g., api.my-domain.local
 	Endpoint string `json:"endpoint"`
@@ -153,6 +165,8 @@ type GenericRESTDiscovery struct {
 
 // K8sDiscovery provides a plugin discovery mechanism from the Kubernetes API server.
 type K8sDiscovery struct {
+	// Name is a name of the discovery
+	Name string `json:"name"`
 	// Path to the kubeconfig.
 	Path string `json:"path"`
 	// The context to use (if required), defaults to current.
@@ -160,6 +174,14 @@ type K8sDiscovery struct {
 	// Version of the CLIPlugins API to query.
 	// E.g., v1alpha1
 	Version string `json:"version"`
+}
+
+// LocalDiscovery is a artifact discovery endpoint utilizing a local host os.
+type LocalDiscovery struct {
+	// Name is a name of the discovery
+	Name string `json:"name"`
+	// ManifestPath is a local path pointing to manifest file
+	ManifestPath string `json:"manifestPath"`
 }
 
 // PluginRepository is a CLI plugin repository
