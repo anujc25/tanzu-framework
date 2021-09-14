@@ -21,6 +21,9 @@ type PluginAssociation map[string]string
 
 // Add adds plugin entry to the map
 func (pa PluginAssociation) Add(pluginName, installationPath string) {
+	if pa == nil {
+		pa = map[string]string{}
+	}
 	pa[pluginName] = installationPath
 }
 

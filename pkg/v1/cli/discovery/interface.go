@@ -4,6 +4,8 @@
 package discovery
 
 import (
+	"errors"
+
 	"github.com/vmware-tanzu/tanzu-framework/apis/config/v1alpha1"
 	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/cli/common"
 )
@@ -16,17 +18,19 @@ type Discovery interface {
 	List() ([]common.Plugin, error)
 	// Describe a plugin.
 	Describe(name string) (common.Plugin, error)
+	// Type returns type of discovery.
+	Type() string
 }
 
-func CreateDiscovery(pd v1alpha1.PluginDiscovery) Discovery {
+func CreateDiscovery(pd v1alpha1.PluginDiscovery) (Discovery, error) {
 	if pd.GCP != nil {
-		return NewGCPDiscovery(pd.GCP.Bucket, pd.GCP.ManifestPath, pd.GCP.Name)
+		return NewGCPDiscovery(pd.GCP.Bucket, pd.GCP.ManifestPath, pd.GCP.Name), nil
 	}
 	if pd.OCI != nil {
-		return NewOCIDiscovery(pd.OCI.Name, pd.OCI.Registry, pd.OCI.Path, pd.OCI.Tag)
+		return NewOCIDiscovery(pd.OCI.Name, pd.OCI.Registry, pd.OCI.Path, pd.OCI.Tag), nil
 	}
 	if pd.Local != nil {
-		return NewLocalDiscovery(pd.Local.Name, pd.Local.ManifestPath)
+		return NewLocalDiscovery(pd.Local.Name, pd.Local.ManifestPath), nil
 	}
-	return nil
+	return nil, errors.New("unknown plugin discovery")
 }

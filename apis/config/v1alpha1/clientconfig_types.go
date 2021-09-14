@@ -111,15 +111,15 @@ type CLIOptions struct {
 // configs must be set.
 type PluginDiscovery struct {
 	// GCPStorage is set if the plugins are to be discovered via Google Cloud Storage.
-	GCP *GCPDiscovery `json:"gcp"`
+	GCP *GCPDiscovery `json:"gcp,omitempty"`
 	// OCIDiscovery is set if the plugins are to be discovered via an OCI Image Registry.
-	OCI *OCIDiscovery `json:"oci"`
+	OCI *OCIDiscovery `json:"oci,omitempty"`
 	// GenericRESTDiscovery is set if the plugins are to be discovered via a REST API endpoint.
-	REST *GenericRESTDiscovery `json:"rest"`
+	REST *GenericRESTDiscovery `json:"rest,omitempty"`
 	// K8sDiscovery is set if the plugins are to be discovered via the Kubernetes API server.
-	K8S *K8sDiscovery `json:"k8s"`
+	K8S *K8sDiscovery `json:"k8s,omitempty"`
 	// LocalDiscovery is set if the plugins are to be discovered via Local Manifest fast.
-	Local *LocalDiscovery `json:"local"`
+	Local *LocalDiscovery `json:"local,omitempty"`
 }
 
 // GCPDiscovery provides a plugin discovery mechanism from a Google Cloud Storage

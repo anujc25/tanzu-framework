@@ -8,12 +8,33 @@ import (
 	"fmt"
 	"io"
 	"path"
+	"path/filepath"
 
 	"cloud.google.com/go/storage"
 	"github.com/pkg/errors"
 
 	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/cli/common"
 )
+
+// GCPStorage provides a Google Cloud Storage bucket with an optional base path (or
+// object prefix). The object download path name is constructed as
+// `{Bucket}/{BasePath}/{Version}/{OS}/{Arch}`.
+type GCPStorage struct {
+	// Bucket is a Google Cloud Storage bucket.
+	// E.g., tanzu-cli
+	Bucket string `json:"bucket"`
+	// BasePath is a URI path that is prefixed to the object name/path.
+	// E.g., plugins/cluster
+	BasePath string `json:"basePath"`
+}
+
+// NewGCPDistribution returns a new GCP storage distribution.
+func NewGCPDistribution(bucket, basePath string) Distribution {
+	return &GCPStorage{
+		Bucket:   bucket,
+		BasePath: basePath,
+	}
+}
 
 // Fetch an artifact.
 func (g *GCPStorage) Fetch(name, version string, arch string) ([]byte, error) {
@@ -24,7 +45,7 @@ func (g *GCPStorage) Fetch(name, version string, arch string) ([]byte, error) {
 		return nil, err
 	}
 
-	artifactPath := path.Join(g.BasePath, version, arch)
+	artifactPath := path.Join(g.BasePath, name, version, arch)
 
 	return g.fetch(ctx, artifactPath, bkt)
 }
@@ -63,5 +84,5 @@ func (g *GCPStorage) fetch(ctx context.Context, artifactPath string, bkt *storag
 
 // Get the relative installation path for a plugin binary
 func (g *GCPStorage) GetInstallationPath() string {
-	return ""
+	return filepath.Join("storage.googleapis.com", g.Bucket, g.BasePath)
 }

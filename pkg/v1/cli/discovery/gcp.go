@@ -35,3 +35,8 @@ func (g *GCPDiscovery) Describe(name string) (plugin common.Plugin, err error) {
 func (g *GCPDiscovery) Name() string {
 	return g.name
 }
+
+// Type of the discovery.
+func (g *GCPDiscovery) Type() string {
+	return "GCP"
+}

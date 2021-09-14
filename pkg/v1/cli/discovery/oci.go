@@ -44,3 +44,8 @@ func (od *OCIDiscovery) Describe(name string) (plugin common.Plugin, err error) 
 func (od *OCIDiscovery) Name() string {
 	return od.name
 }
+
+// Type of the discovery.
+func (od *OCIDiscovery) Type() string {
+	return "GCP"
+}
