@@ -7,7 +7,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-<<<<<<< HEAD
 // ArtifactList contains an Artifact object for every supported platform of a version.
 type ArtifactList []Artifact
 
