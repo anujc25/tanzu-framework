@@ -30,9 +30,9 @@ spec:
             cli:
               description: CLI options specific to the CLI.
               properties:
-                pluginDiscoveries:
-                  description: Discoveries determines from where to discover standalone
-                    plugins
+                discoverySources:
+                  description: DiscoverySources determines from where to discover
+                    standalone plugins
                   items:
                     description: PluginDiscovery contains a specific distribution
                       mechanism. Only one of the configs must be set.
@@ -100,26 +100,18 @@ spec:
                         description: OCIDiscovery is set if the plugins are to be
                           discovered via an OCI Image Registry.
                         properties:
+                          image:
+                            description: Image is an OCI compliant image. Which include
+                              DNS-compatible registry name, a valid URI path(MAY contain
+                              zero or more ‘/’) and a valid tag. Contains a manifest
+                              file E.g., harbor.my-domain.local/tanzu-cli/plugins-manifest:latest
+                            type: string
                           name:
                             description: Name is a name of the discovery
                             type: string
-                          path:
-                            description: Path is the unique repository/image name.
-                              It MUST be a valid URI path, MAY contain zero or more
-                              '/', and SHOULD NOT start or end with '/'. E.g., tanzu/cli/plugins/manifests
-                            type: string
-                          registry:
-                            description: Registry is an OCI compliant image registry.
-                              It MUST be a DNS-compatible name. E.g., harbor.my-domain.local
-                            type: string
-                          tag:
-                            description: Tag is the image tag for the image repository.
-                              If not provided `latest` is used
-                            type: string
                         required:
+                        - image
                         - name
-                        - path
-                        - tag
                         type: object
                       rest:
                         description: GenericRESTDiscovery is set if the plugins are
@@ -191,76 +183,8 @@ spec:
           items:
             description: Server connection.
             properties:
-              globalOpts:
-                description: GlobalOpts if the server is global.
-                properties:
-                  auth:
-                    description: Auth for the global server.
-                    properties:
-                      IDToken:
-                        description: IDToken is the current id token based on the
-                          context scoped to the CLI.
-                        type: string
-                      accessToken:
-                        description: AccessToken is the current access token based
-                          on the context.
-                        type: string
-                      expiration:
-                        description: Expiration times of the token.
-                        format: date-time
-                        type: string
-                      issuer:
-                        description: Issuer url for IDP, compliant with OIDC Metadata
-                          Discovery.
-                        type: string
-                      permissions:
-                        description: Permissions are roles assigned to the user.
-                        items:
-                          type: string
-                        type: array
-                      refresh_token:
-                        description: RefreshToken will be stored only in case of api-token
-                          login flow.
-                        type: string
-                      type:
-                        description: Type of the token (user or client).
-                        type: string
-                      userName:
-                        description: UserName is the authorized user the token is
-                          assigned to.
-                        type: string
-                    required:
-                    - IDToken
-                    - accessToken
-                    - expiration
-                    - issuer
-                    - permissions
-                    - refresh_token
-                    - type
-                    - userName
-                    type: object
-                  endpoint:
-                    description: Endpoint for the server.
-                    type: string
-                type: object
-              managementClusterOpts:
-                description: ManagementClusterOpts if the server is a management cluster.
-                properties:
-                  context:
-                    description: The context to use (if required), defaults to current.
-                    type: string
-                  endpoint:
-                    description: Endpoint for the login.
-                    type: string
-                  path:
-                    description: Path to the kubeconfig.
-                    type: string
-                type: object
-              name:
-                description: Name of the server.
-                type: string
-              pluginDiscoveries:
-                description: Discoveries determines from where to discover plugins
+              discoverySources:
+                description: DiscoverySources determines from where to discover plugins
                   associated with this server
                 items:
                   description: PluginDiscovery contains a specific distribution mechanism.
@@ -329,26 +253,18 @@ spec:
                       description: OCIDiscovery is set if the plugins are to be discovered
                         via an OCI Image Registry.
                       properties:
+                        image:
+                          description: Image is an OCI compliant image. Which include
+                            DNS-compatible registry name, a valid URI path(MAY contain
+                            zero or more ‘/’) and a valid tag. Contains a manifest
+                            file E.g., harbor.my-domain.local/tanzu-cli/plugins-manifest:latest
+                          type: string
                         name:
                           description: Name is a name of the discovery
                           type: string
-                        path:
-                          description: Path is the unique repository/image name. It
-                            MUST be a valid URI path, MAY contain zero or more '/',
-                            and SHOULD NOT start or end with '/'. E.g., tanzu/cli/plugins/manifests
-                          type: string
-                        registry:
-                          description: Registry is an OCI compliant image registry.
-                            It MUST be a DNS-compatible name. E.g., harbor.my-domain.local
-                          type: string
-                        tag:
-                          description: Tag is the image tag for the image repository.
-                            If not provided `latest` is used
-                          type: string
                       required:
+                      - image
                       - name
-                      - path
-                      - tag
                       type: object
                     rest:
                       description: GenericRESTDiscovery is set if the plugins are
@@ -378,6 +294,74 @@ spec:
                   - rest
                   type: object
                 type: array
+              globalOpts:
+                description: GlobalOpts if the server is global.
+                properties:
+                  auth:
+                    description: Auth for the global server.
+                    properties:
+                      IDToken:
+                        description: IDToken is the current id token based on the
+                          context scoped to the CLI.
+                        type: string
+                      accessToken:
+                        description: AccessToken is the current access token based
+                          on the context.
+                        type: string
+                      expiration:
+                        description: Expiration times of the token.
+                        format: date-time
+                        type: string
+                      issuer:
+                        description: Issuer url for IDP, compliant with OIDC Metadata
+                          Discovery.
+                        type: string
+                      permissions:
+                        description: Permissions are roles assigned to the user.
+                        items:
+                          type: string
+                        type: array
+                      refresh_token:
+                        description: RefreshToken will be stored only in case of api-token
+                          login flow.
+                        type: string
+                      type:
+                        description: Type of the token (user or client).
+                        type: string
+                      userName:
+                        description: UserName is the authorized user the token is
+                          assigned to.
+                        type: string
+                    required:
+                    - IDToken
+                    - accessToken
+                    - expiration
+                    - issuer
+                    - permissions
+                    - refresh_token
+                    - type
+                    - userName
+                    type: object
+                  endpoint:
+                    description: Endpoint for the server.
+                    type: string
+                type: object
+              managementClusterOpts:
+                description: ManagementClusterOpts if the server is a management cluster.
+                properties:
+                  context:
+                    description: The context to use (if required), defaults to current.
+                    type: string
+                  endpoint:
+                    description: Endpoint for the login.
+                    type: string
+                  path:
+                    description: Path to the kubeconfig.
+                    type: string
+                type: object
+              name:
+                description: Name of the server.
+                type: string
               type:
                 description: Type of the endpoint.
                 type: string

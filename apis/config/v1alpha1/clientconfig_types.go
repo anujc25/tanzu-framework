@@ -35,9 +35,9 @@ type Server struct {
 	// ManagementClusterOpts if the server is a management cluster.
 	ManagementClusterOpts *ManagementClusterServer `json:"managementClusterOpts,omitempty" yaml:"managementClusterOpts"`
 
-	// Discoveries determines from where to discover plugins
+	// DiscoverySources determines from where to discover plugins
 	// associated with this server
-	Discoveries []PluginDiscovery `json:"pluginDiscoveries,omitempty" yaml:"pluginDiscoveries"`
+	DiscoverySources []PluginDiscovery `json:"discoverySources,omitempty" yaml:"discoverySources"`
 }
 
 // ManagementClusterServer is the configuration for a management cluster kubeconfig.
@@ -98,8 +98,8 @@ type ClientOptions struct {
 type CLIOptions struct {
 	// Repositories are the plugin repositories.
 	Repositories []PluginRepository `json:"repositories,omitempty" yaml:"repositories"`
-	// Discoveries determines from where to discover standalone plugins
-	Discoveries []PluginDiscovery `json:"pluginDiscoveries,omitempty" yaml:"pluginDiscoveries"`
+	// DiscoverySources determines from where to discover standalone plugins
+	DiscoverySources []PluginDiscovery `json:"discoverySources,omitempty" yaml:"discoverySources"`
 	// UnstableVersionSelector determined which version tags are allowed
 	UnstableVersionSelector VersionSelectorLevel `json:"unstableVersionSelector,omitempty" yaml:"unstableVersionSelector"`
 }
@@ -137,15 +137,10 @@ type GCPDiscovery struct {
 type OCIDiscovery struct {
 	// Name is a name of the discovery
 	Name string `json:"name"`
-	// Registry is an OCI compliant image registry. It MUST be a DNS-compatible name.
-	// E.g., harbor.my-domain.local
-	Registry string `json:"registry,omitempty"`
-	// Path is the unique repository/image name. It MUST be a valid URI path, MAY
-	// contain zero or more '/', and SHOULD NOT start or end with '/'.
-	// E.g., tanzu/cli/plugins/manifests
-	Path string `json:"path"`
-	// Tag is the image tag for the image repository. If not provided `latest` is used
-	Tag string `json:"tag"`
+	// Image is an OCI compliant image. Which include DNS-compatible registry name,
+	// a valid URI path(MAY contain zero or more ‘/’) and a valid tag. Contains a manifest file
+	// E.g., harbor.my-domain.local/tanzu-cli/plugins-manifest:latest
+	Image string `json:"image"`
 }
 
 // GenericRESTDiscovery provides a plugin discovery mechanism from any REST API

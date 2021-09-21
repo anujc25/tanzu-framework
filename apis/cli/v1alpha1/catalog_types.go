@@ -100,8 +100,8 @@ type PluginDescriptor struct {
 	// Version of the plugin. Must be a valid semantic version https://semver.org/
 	Version string `json:"version" yaml:"version"`
 
-	// Distribution mechanism for the plugin.
-	Discovery DistributionConfig `json:"distribution"`
+	// Artifacts contains an artifact list for every supported version.
+	Artifacts map[string]ArtifactList `json:"artifacts"`
 
 	// BuildSHA is the git commit hash the plugin was built with.
 	BuildSHA string `json:"buildSHA" yaml:"buildSHA"`
@@ -135,14 +135,6 @@ type PluginDescriptor struct {
 
 	// PostInstallHook is function to be run post install of a plugin.
 	PostInstallHook Hook `json:"-" yaml:"-"`
-}
-
-// ServerPluginAssociations links server and it's associated plugins
-type ServerPluginAssociation struct {
-	// ServerName name of server
-	ServerName string `json:"serverName,omitempty" yaml:"serverName,omitempty"`
-	// PluginDescriptors is a list of PluginDescriptor
-	PluginDescriptors []*PluginDescriptor `json:"pluginDescriptors,omitempty" yaml:"pluginDescriptors"`
 }
 
 // +kubebuilder:object:root=true

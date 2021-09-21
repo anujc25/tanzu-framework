@@ -7,54 +7,25 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// DistributionConfig contains a specific distribution mechanism. Only one of the
-// configs must be set.
-type DistributionConfig struct {
-	// GCPStorage is set if the plugin is distributed via Google Cloud Storage.
-	GCP *GCPStorage `json:"gcp"`
-	// GCPStorage is set if the plugin is distributed via an OCI Image Registry.
-	OCI *OCIRegistry `json:"oci"`
-}
+// ArtifactList contains an Artifact object for every supported platform of a version.
+type ArtifactList []Artifact
 
-// GCPStorage provides a Google Cloud Storage bucket with an optional base path (or
-// object prefix). The object download path name is constructed as
-// `{Bucket}/{BasePath}/{Version}/{OS}/{Arch}`.
-type GCPStorage struct {
-	// Bucket is a Google Cloud Storage bucket.
-	// E.g., tanzu-cli
-	Bucket string `json:"bucket"`
-	// BasePath is a URI path that is prefixed to the object name/path.
-	// E.g., plugins/cluster
-	BasePath string `json:"basePath"`
-}
+// GCPObject is a GCP object URI for the plugin binary.
+type GCPObject string
 
-// OCIRegistry provides an OCI compliant image registry which supports multiple
-// architecture image manifests. The fully qualified image name is constructed as
-// `{Registry}/{Name}:{Version}`.
-type OCIRegistry struct {
-	// Registry is an OCI compliant image registry. It MUST be a DNS-compatible name.
-	// E.g., harbor.my-domain.local
-	Registry string `json:"registry,omitempty"`
-	// Name is the unique repository/image name. It MUST be a valid URI path, MAY
-	// contain zero or more '/', and SHOULD NOT start or end with '/'.
-	// E.g., tanzu/cli/plugins/cluster
-	Name string `json:"name"`
-}
+// OCIImage is a fully qualified OCI image of the plugin binary.
+type OCIImage string
 
-// VersionConstraints
-type VersionConstraints struct {
-	// RecommendedVersion version that Tanzu CLI should use if available.
-	// The value should be a valid semantic version as defined in
-	// https://semver.org/.
-	RecommendedVersion string `json:"recommendedVersion"`
-	// SupportedVersions determines the list of supported CLI plugin versions.
-	// The values for each should follow the version constraints format mentioned
-	// https://github.com/Masterminds/semver#checking-version-constraints.
-	SupportedVersions []string `json:"supportedVersions"`
-}
-
-// Platform of the plugin binary.
-type Platform struct {
+// Artifact points to an individual plugin binary specific to a version and platform.
+type Artifact struct {
+	// Image is a fully qualified OCI image for the plugin binary.
+	Image OCIImage `json:"image,omitempty"`
+	// GCP is a Google Cloud Storage object URI for the plugin binary.
+	GCP GCPObject `json:"gcp,omitempty"`
+	// SHA256 hash of the plugin binary.
+	Digest string `json:"digest"`
+	// Type of the binary artifact. Valid values are S3, GCP, OCIImage.
+	Type string `json:"type"`
 	// OS of the plugin binary in `GOOS` format.
 	OS string `json:"os"`
 	// Arch of the plugin binary in `GOARCH` format.
@@ -65,13 +36,12 @@ type Platform struct {
 type CLIPluginSpec struct {
 	// Description is the plugin's description.
 	Description string `json:"description"`
-	// Distribution mechanism for the plugin.
-	Distribution DistributionConfig `json:"distribution"`
-	// VersionConstraints for the plugin describes constraints
-	// around using a version of the plugin.
-	VersionConstraints VersionConstraints `json:"versionConstraints"`
-	// Platforms available for the plugin.
-	Platforms []Platform `json:"platforms"`
+	// Recommended version that Tanzu CLI should use if available.
+	// The value should be a valid semantic version as defined in
+	// https://semver.org/. E.g., 2.0.1
+	RecommendedVersion string `json:"recommendedVersion"`
+	// Artifacts contains an artifact list for every supported version.
+	Artifacts map[string]ArtifactList `json:"artifacts"`
 	// Optional specifies whether the plugin is mandatory or optional
 	// If optional, the plugin will not get auto-downloaded as part of
 	// `tanzu login` or `tanzu plugin sync` command

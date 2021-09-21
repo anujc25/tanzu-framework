@@ -21,8 +21,8 @@ func (in *CLIOptions) DeepCopyInto(out *CLIOptions) {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
-	if in.Discoveries != nil {
-		in, out := &in.Discoveries, &out.Discoveries
+	if in.DiscoverySources != nil {
+		in, out := &in.DiscoverySources, &out.DiscoverySources
 		*out = make([]PluginDiscovery, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
@@ -567,8 +567,8 @@ func (in *Server) DeepCopyInto(out *Server) {
 		*out = new(ManagementClusterServer)
 		**out = **in
 	}
-	if in.Discoveries != nil {
-		in, out := &in.Discoveries, &out.Discoveries
+	if in.DiscoverySources != nil {
+		in, out := &in.DiscoverySources, &out.DiscoverySources
 		*out = make([]PluginDiscovery, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])

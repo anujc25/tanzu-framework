@@ -40,6 +40,45 @@ spec:
                 items:
                   type: string
                 type: array
+              artifacts:
+                additionalProperties:
+                  description: ArtifactList contains an Artifact object for every
+                    supported platform of a version.
+                  items:
+                    description: Artifact points to an individual plugin binary specific
+                      to a version and platform.
+                    properties:
+                      arch:
+                        description: Arch of the plugin binary in `GOARCH` format.
+                        type: string
+                      digest:
+                        description: SHA256 hash of the plugin binary.
+                        type: string
+                      gcp:
+                        description: GCP is a Google Cloud Storage object URI for
+                          the plugin binary.
+                        type: string
+                      image:
+                        description: Image is a fully qualified OCI image for the
+                          plugin binary.
+                        type: string
+                      os:
+                        description: OS of the plugin binary in `GOOS` format.
+                        type: string
+                      type:
+                        description: Type of the binary artifact. Valid values are
+                          S3, GCP, OCIImage.
+                        type: string
+                    required:
+                    - arch
+                    - digest
+                    - os
+                    - type
+                    type: object
+                  type: array
+                description: Artifacts contains an artifact list for every supported
+                  version.
+                type: object
               buildSHA:
                 description: BuildSHA is the git commit hash the plugin was built
                   with.
@@ -62,45 +101,6 @@ spec:
               description:
                 description: Description is the plugin's description.
                 type: string
-              distribution:
-                description: Distribution mechanism for the plugin.
-                properties:
-                  gcp:
-                    description: GCPStorage is set if the plugin is distributed via
-                      Google Cloud Storage.
-                    properties:
-                      basePath:
-                        description: BasePath is a URI path that is prefixed to the
-                          object name/path. E.g., plugins/cluster
-                        type: string
-                      bucket:
-                        description: Bucket is a Google Cloud Storage bucket. E.g.,
-                          tanzu-cli
-                        type: string
-                    required:
-                    - basePath
-                    - bucket
-                    type: object
-                  oci:
-                    description: GCPStorage is set if the plugin is distributed via
-                      an OCI Image Registry.
-                    properties:
-                      name:
-                        description: Name is the unique repository/image name. It
-                          MUST be a valid URI path, MAY contain zero or more '/',
-                          and SHOULD NOT start or end with '/'. E.g., tanzu/cli/plugins/cluster
-                        type: string
-                      registry:
-                        description: Registry is an OCI compliant image registry.
-                          It MUST be a DNS-compatible name. E.g., harbor.my-domain.local
-                        type: string
-                    required:
-                    - name
-                    type: object
-                required:
-                - gcp
-                - oci
-                type: object
               docURL:
                 description: DocURL for the plugin.
                 type: string
@@ -123,10 +123,10 @@ spec:
                   https://semver.org/
                 type: string
             required:
+            - artifacts
             - buildSHA
             - completionType
             - description
-            - distribution
             - docURL
             - group
             - installationPath
@@ -153,6 +153,45 @@ spec:
                 items:
                   type: string
                 type: array
+              artifacts:
+                additionalProperties:
+                  description: ArtifactList contains an Artifact object for every
+                    supported platform of a version.
+                  items:
+                    description: Artifact points to an individual plugin binary specific
+                      to a version and platform.
+                    properties:
+                      arch:
+                        description: Arch of the plugin binary in `GOARCH` format.
+                        type: string
+                      digest:
+                        description: SHA256 hash of the plugin binary.
+                        type: string
+                      gcp:
+                        description: GCP is a Google Cloud Storage object URI for
+                          the plugin binary.
+                        type: string
+                      image:
+                        description: Image is a fully qualified OCI image for the
+                          plugin binary.
+                        type: string
+                      os:
+                        description: OS of the plugin binary in `GOOS` format.
+                        type: string
+                      type:
+                        description: Type of the binary artifact. Valid values are
+                          S3, GCP, OCIImage.
+                        type: string
+                    required:
+                    - arch
+                    - digest
+                    - os
+                    - type
+                    type: object
+                  type: array
+                description: Artifacts contains an artifact list for every supported
+                  version.
+                type: object
               buildSHA:
                 description: BuildSHA is the git commit hash the plugin was built
                   with.
@@ -175,45 +214,6 @@ spec:
               description:
                 description: Description is the plugin's description.
                 type: string
-              distribution:
-                description: Distribution mechanism for the plugin.
-                properties:
-                  gcp:
-                    description: GCPStorage is set if the plugin is distributed via
-                      Google Cloud Storage.
-                    properties:
-                      basePath:
-                        description: BasePath is a URI path that is prefixed to the
-                          object name/path. E.g., plugins/cluster
-                        type: string
-                      bucket:
-                        description: Bucket is a Google Cloud Storage bucket. E.g.,
-                          tanzu-cli
-                        type: string
-                    required:
-                    - basePath
-                    - bucket
-                    type: object
-                  oci:
-                    description: GCPStorage is set if the plugin is distributed via
-                      an OCI Image Registry.
-                    properties:
-                      name:
-                        description: Name is the unique repository/image name. It
-                          MUST be a valid URI path, MAY contain zero or more '/',
-                          and SHOULD NOT start or end with '/'. E.g., tanzu/cli/plugins/cluster
-                        type: string
-                      registry:
-                        description: Registry is an OCI compliant image registry.
-                          It MUST be a DNS-compatible name. E.g., harbor.my-domain.local
-                        type: string
-                    required:
-                    - name
-                    type: object
-                required:
-                - gcp
-                - oci
-                type: object
               docURL:
                 description: DocURL for the plugin.
                 type: string
@@ -236,10 +236,10 @@ spec:
                   https://semver.org/
                 type: string
             required:
+            - artifacts
             - buildSHA
             - completionType
             - description
-            - distribution
             - docURL
             - group
             - installationPath
