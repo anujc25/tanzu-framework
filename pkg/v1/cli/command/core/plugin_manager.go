@@ -56,7 +56,7 @@ var listPluginCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List available plugins",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if config.IsPluginAPIEnabled() {
+		if config.IsContextAwareDiscoveryEnabled() {
 			server, err := config.GetCurrentServer()
 			if err != nil {
 				return err
@@ -69,7 +69,7 @@ var listPluginCmd = &cobra.Command{
 
 			data := [][]string{}
 			for _, p := range availablePlugins {
-				data = append(data, []string{p.Name, p.Description, p.Scope, p.Discovery, p.VersionConstraints.RecommendedVersion, p.Status})
+				data = append(data, []string{p.GetName(), p.GetDescription(), p.GetScope(), p.GetDiscovery(), p.GetRecommendedVersion(), p.GetStatus()})
 			}
 
 			output := component.NewOutputWriter(cmd.OutOrStdout(), outputFormat, "Name", "Description", "Scope", "Discovery", "Version", "Status")
@@ -174,7 +174,7 @@ var describePluginCmd = &cobra.Command{
 		}
 		name := args[0]
 
-		if config.IsPluginAPIEnabled() {
+		if config.IsContextAwareDiscoveryEnabled() {
 			server, err := config.GetCurrentServer()
 			if err != nil {
 				return err
@@ -223,7 +223,7 @@ var installPluginCmd = &cobra.Command{
 		}
 		name := args[0]
 
-		if config.IsPluginAPIEnabled() {
+		if config.IsContextAwareDiscoveryEnabled() {
 			server, err := config.GetCurrentServer()
 			if err != nil {
 				return err
@@ -266,7 +266,7 @@ var upgradePluginCmd = &cobra.Command{
 		}
 		name := args[0]
 
-		if config.IsPluginAPIEnabled() {
+		if config.IsContextAwareDiscoveryEnabled() {
 			return errors.New("Plugin API enabled but function is not yet implemented")
 		}
 
@@ -296,7 +296,7 @@ var deletePluginCmd = &cobra.Command{
 		}
 		name := args[0]
 
-		if config.IsPluginAPIEnabled() {
+		if config.IsContextAwareDiscoveryEnabled() {
 			return errors.New("Plugin API enabled but function is not yet implemented")
 		}
 
@@ -310,7 +310,7 @@ var cleanPluginCmd = &cobra.Command{
 	Use:   "clean",
 	Short: "Clean the plugins",
 	RunE: func(cmd *cobra.Command, args []string) (err error) {
-		if config.IsPluginAPIEnabled() {
+		if config.IsContextAwareDiscoveryEnabled() {
 			return errors.New("Plugin API enabled but function is not yet implemented")
 		}
 

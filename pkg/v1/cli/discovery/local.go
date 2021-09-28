@@ -5,11 +5,15 @@ package discovery
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
+	"path/filepath"
 
 	"github.com/pkg/errors"
-	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/cli/common"
-	"gopkg.in/yaml.v2"
+	apimachineryjson "k8s.io/apimachinery/pkg/runtime/serializer/json"
+
+	cliv1alpha1 "github.com/vmware-tanzu/tanzu-framework/apis/cli/v1alpha1"
+	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/cli/plugin"
 )
 
 // LocalDiscovery is a artifact discovery endpoint utilizing a local host os.
@@ -27,23 +31,23 @@ func NewLocalDiscovery(name, localPath string) Discovery {
 }
 
 // List available plugins.
-func (l *LocalDiscovery) List() ([]common.Plugin, error) {
-	manifest, err := l.Manifest()
+func (l *LocalDiscovery) List() ([]plugin.Plugin, error) {
+	plugins, err := l.Manifest()
 	if err != nil {
 		return nil, err
 	}
-	return manifest.Plugins, nil
+	return plugins, nil
 }
 
 // Describe a plugin.
-func (l *LocalDiscovery) Describe(name string) (plugin common.Plugin, err error) {
-	manifest, err := l.Manifest()
+func (l *LocalDiscovery) Describe(name string) (plugin plugin.Plugin, err error) {
+	plugins, err := l.Manifest()
 	if err != nil {
 		return
 	}
 
-	for _, p := range manifest.Plugins {
-		if p.Name == name {
+	for _, p := range plugins {
+		if p.GetName() == name {
 			plugin = p
 			return
 		}
@@ -58,23 +62,39 @@ func (l *LocalDiscovery) Name() string {
 }
 
 // Manifest returns the manifest for a local repository.
-func (l *LocalDiscovery) Manifest() (manifest common.Manifest, err error) {
-	b, err := os.ReadFile(l.path)
+func (l *LocalDiscovery) Manifest() ([]plugin.Plugin, error) {
+	plugins := []plugin.Plugin{}
+
+	items, err := ioutil.ReadDir(l.path)
 	if err != nil {
-		err = errors.Wrapf(err, "error while reading manifest file")
-		return
+		return nil, errors.Wrapf(err, "error while reading local plugin manifest directory")
 	}
+	for _, item := range items {
+		if item.IsDir() {
+			continue
+		}
+		b, err := os.ReadFile(filepath.Join(l.path, item.Name()))
+		if err != nil {
+			return nil, errors.Wrapf(err, "error while reading manifest file")
+		}
 
-	err = yaml.Unmarshal(b, &manifest)
-	if err != nil {
-		err = fmt.Errorf("could not unmarshal manifest.yaml: %v", err)
+		scheme, err := cliv1alpha1.SchemeBuilder.Build()
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to create scheme")
+		}
+		s := apimachineryjson.NewSerializerWithOptions(apimachineryjson.DefaultMetaFactory, scheme, scheme,
+			apimachineryjson.SerializerOptions{Yaml: true, Pretty: false, Strict: false})
+		var p cliv1alpha1.CLIPlugin
+		_, _, err = s.Decode(b, nil, &p)
+		if err != nil {
+			return nil, errors.Wrap(err, "could not decode catalog file")
+		}
+
+		po := plugin.NewPlugin(p)
+		po.SetDiscovery(fmt.Sprintf("%s/%s", l.Type(), l.name))
+		plugins = append(plugins, po)
 	}
-
-	for i := range manifest.Plugins {
-		manifest.Plugins[i].Discovery = fmt.Sprintf("%s/%s", l.Type(), l.name)
-	}
-
-	return
+	return plugins, nil
 }
 
 // Type of the repository.

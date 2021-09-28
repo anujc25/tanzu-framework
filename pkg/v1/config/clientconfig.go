@@ -400,7 +400,7 @@ func EndpointFromServer(s *configv1alpha1.Server) (endpoint string, err error) {
 	}
 }
 
-func IsPluginAPIEnabled() bool {
+func IsContextAwareDiscoveryEnabled() bool {
 	cfg, err := GetClientConfig()
 	if err != nil {
 		log.Fatal(err)
@@ -408,5 +408,5 @@ func IsPluginAPIEnabled() bool {
 	if cfg == nil || cfg.ClientOptions == nil || cfg.ClientOptions.CLI == nil {
 		return false
 	}
-	return cfg.ClientOptions.CLI.UsePluginAPI
+	return cfg.ClientOptions.CLI.UseContextAwareDiscovery
 }

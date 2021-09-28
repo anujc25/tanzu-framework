@@ -3,40 +3,35 @@
 
 package discovery
 
-import "github.com/vmware-tanzu/tanzu-framework/pkg/v1/cli/common"
+import (
+	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/cli/plugin"
+)
 
 // OCIDiscovery is a artifact discovery endpoint utilizing OCI image
 type OCIDiscovery struct {
 	// name is a name of the discovery
 	name string `json:"name"`
-	// registry is an OCI compliant image registry. It MUST be a DNS-compatible name.
-	// E.g., harbor.my-domain.local
-	registry string `json:"registry,omitempty"`
-	// path is the unique repository/image name. It MUST be a valid URI path, MAY
-	// contain zero or more '/', and SHOULD NOT start or end with '/'.
-	// E.g., tanzu/cli/plugins/manifests
-	path string `json:"path"`
-	// tag is the image tag for the image repository. If not provided `latest` is used
-	tag string `json:"tag"`
+	// image is an OCI compliant image. Which include DNS-compatible registry name,
+	// a valid URI path(MAY contain zero or more ‘/’) and a valid tag. Contains a manifest file
+	// E.g., harbor.my-domain.local/tanzu-cli/plugins-manifest:latest
+	image string `json:"image"`
 }
 
 // NewOCIDiscovery returns a new local repository.
-func NewOCIDiscovery(name, registry, path, tag string) Discovery {
+func NewOCIDiscovery(name, image string) Discovery {
 	return &OCIDiscovery{
-		name:     name,
-		registry: registry,
-		path:     path,
-		tag:      tag,
+		name:  name,
+		image: image,
 	}
 }
 
 // List available plugins.
-func (od *OCIDiscovery) List() (plugins []common.Plugin, err error) {
+func (od *OCIDiscovery) List() (plugins []plugin.Plugin, err error) {
 	return
 }
 
 // Describe a plugin.
-func (od *OCIDiscovery) Describe(name string) (plugin common.Plugin, err error) {
+func (od *OCIDiscovery) Describe(name string) (plugin plugin.Plugin, err error) {
 	return
 }
 

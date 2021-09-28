@@ -288,8 +288,8 @@ func getPluginsFromCatalogCache() (list []*cliv1alpha1.PluginDescriptor, err err
 	return catalog.PluginDescriptors, nil
 }
 
-// insertOrUpdatePluginCacheEntry inserts or updates a plugin entry in catalog cache
-func insertOrUpdatePluginCacheEntry(name string) error {
+// upsertPluginCacheEntry inserts or updates a plugin entry in catalog cache
+func upsertPluginCacheEntry(name string) error {
 	list, err := getPluginsFromCatalogCache()
 	if err != nil {
 		return err
@@ -463,7 +463,7 @@ func installOrUpgradePlugin(name, version string, repo Repository) error {
 	if err != nil {
 		return errors.Wrap(err, "could not write file")
 	}
-	err = insertOrUpdatePluginCacheEntry(name)
+	err = upsertPluginCacheEntry(name)
 	if err != nil {
 		log.Debug("Plugin descriptor could not be updated in cache")
 	}

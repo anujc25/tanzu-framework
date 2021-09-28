@@ -194,8 +194,8 @@ func getPluginDescriptorFromPluginAssociation(indexByPath map[string]cliv1alpha1
 	return
 }
 
-// InsertOrUpdatePluginCacheEntry inserts or updates a plugin entry in catalog cache
-func InsertOrUpdatePluginCacheEntry(serverName, pluginName string, descriptor cliv1alpha1.PluginDescriptor) error {
+// UpsertPluginCacheEntry inserts or updates a plugin entry in catalog cache
+func UpsertPluginCacheEntry(serverName, pluginName string, descriptor cliv1alpha1.PluginDescriptor) error {
 	catalog, err := getCatalogCache()
 	if err != nil {
 		return err
