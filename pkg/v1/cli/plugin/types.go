@@ -104,6 +104,8 @@ func (po *plugin) Fetch(version, os, arch string) ([]byte, error) {
 				return artifacts.NewOCIArtifact(string(artifactList[i].Image)).Fetch()
 			case "GCP":
 				return artifacts.NewGCPArtifact(string(artifactList[i].GCP), string(artifactList[i].GCP)).Fetch()
+			case "local":
+				return artifacts.NewLocalArtifact(string(artifactList[i].Local)).Fetch()
 			}
 		}
 	}
