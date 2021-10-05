@@ -10,23 +10,18 @@ import (
 // ArtifactList contains an Artifact object for every supported platform of a version.
 type ArtifactList []Artifact
 
-// GCPObject is a GCP object URI for the plugin binary.
-type GCPObject string
-
 // OCIImage is a fully qualified OCI image of the plugin binary.
 type OCIImage string
 
-// LocalPath is a full local path of the plugin binary.
-type LocalPath string
+// AssetURI is a URI of the plugin binary. This can be a fully qualified HTTP path or a local path.
+type AssetURI string
 
 // Artifact points to an individual plugin binary specific to a version and platform.
 type Artifact struct {
 	// Image is a fully qualified OCI image for the plugin binary.
 	Image OCIImage `json:"image,omitempty"`
-	// GCP is a Google Cloud Storage object URI for the plugin binary.
-	GCP GCPObject `json:"gcp,omitempty"`
-	// Local is Local path to the plugin binary
-	Local LocalPath `json:"local,omitempty"`
+	// AssetURI is a URI of the plugin binary.
+	URI AssetURI `json:"uri,omitempty"`
 	// SHA256 hash of the plugin binary.
 	Digest string `json:"digest"`
 	// Type of the binary artifact. Valid values are S3, GCP, OCIImage.
