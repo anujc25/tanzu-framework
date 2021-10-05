@@ -106,6 +106,9 @@ type PluginDescriptor struct {
 	// BuildSHA is the git commit hash the plugin was built with.
 	BuildSHA string `json:"buildSHA" yaml:"buildSHA"`
 
+	// Digest is the SHA256 hash of the plugin binary.
+	Digest string `json:"digest" yaml:"digest"`
+
 	// Command group for the plugin.
 	Group CmdGroup `json:"group" yaml:"group"`
 
@@ -136,8 +139,10 @@ type PluginDescriptor struct {
 	// Discovery specificies the name of the discovery from where
 	// this plugin is discovered.
 	Discovery string `json:"discovery"`
+
 	// Scope specificies the scope of the plugin. Stand-Alone or Context
 	Scope string `json:"scope"`
+
 	// Status specificies the current plugin installation status
 	Status string `json:"status"`
 

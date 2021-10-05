@@ -8,10 +8,10 @@ import (
 )
 
 type Discovered struct {
-	// Description is the plugin's description.
+	// Name is the name of the plugin.
 	Name string
 
-	// Description is the plugin's description.
+	// Description is the description of the plugin.
 	Description string
 
 	// RecommendedVersion is the version that Tanzu CLI should use if available.
