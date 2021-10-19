@@ -406,24 +406,24 @@ func EndpointFromServer(s *configv1alpha1.Server) (endpoint string, err error) {
 // This determines whether to use legacy way of discovering plugins or
 // to use the new context-aware Plugin API based plugin discovery mechanism
 func IsContextAwareDiscoveryEnabled() bool {
-	contextAwareDiscoveryEnabled := false // Default value is set to false
+	isContextAwareDiscoveryEnabled := false // Default value is set to false
 
 	cfg, err := GetClientConfig()
 	if err != nil {
 		log.Fatal(err)
 	}
 	if cfg == nil || cfg.ClientOptions == nil {
-		return contextAwareDiscoveryEnabled
+		return isContextAwareDiscoveryEnabled
 	}
 
 	fm, exists := cfg.ClientOptions.Features["global"]
 	if !exists {
-		return contextAwareDiscoveryEnabled
+		return isContextAwareDiscoveryEnabled
 	}
 
 	contextAwareDiscoveryEnabledString, exists := fm["useContextAwareDiscovery"]
 	if !exists {
-		return contextAwareDiscoveryEnabled
+		return isContextAwareDiscoveryEnabled
 	}
 
 	return strings.EqualFold(contextAwareDiscoveryEnabledString, "true")
