@@ -84,9 +84,11 @@ BUILD_TAGS ?=
 ARTIFACTS_DIR ?= ./artifacts
 
 XDG_CACHE_HOME := ${HOME}/.cache
+XDG_CONFIG_HOME :=${HOME}/.config
 
 export XDG_DATA_HOME
 export XDG_CACHE_HOME
+export XDG_CONFIG_HOME
 
 ## --------------------------------------
 ## API/controller building and generation
@@ -253,6 +255,19 @@ build-cli-local: configure-buildtags-embedproviders build-cli-${GOHOSTOS}-${GOHO
 
 .PHONY: build-install-cli-local
 build-install-cli-local: clean-catalog-cache clean-cli-plugins build-cli-local install-cli-plugins install-cli ## Local build and install the CLI plugins
+
+## --------------------------------------
+## Build Plugin Discovery API files
+## --------------------------------------
+
+STANDALONE_PLUGINS := "login management-cluster package pinniped-auth"
+CONTEXT_PLUGINS := "cluster kubernetes-release secret"
+ENVS1 := "darwin-amd64"
+
+.PHONY: build-plugin-discovery-api-files-local
+build-plugin-discovery-api-files-local:
+	$(GO) run ./cmd/cli/plugin-admin/builder/main.go publish --type local --standalone-plugins "$(STANDALONE_PLUGINS)" --context-plugins "$(CONTEXT_PLUGINS)" --version $(BUILD_VERSION) --os-arch "$(ENVS1)" --local-distro-path $(XDG_CONFIG_HOME) --local-artifact-dir $(ARTIFACTS_DIR)
+
 
 ## --------------------------------------
 ## manage cli mocks
