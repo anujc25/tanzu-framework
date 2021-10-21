@@ -5,16 +5,18 @@ package core
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"strings"
 	"time"
 
+	"github.com/aunum/log"
 	"github.com/briandowns/spinner"
 	"github.com/logrusorgru/aurora"
 	"github.com/spf13/cobra"
 
+	"github.com/vmware-tanzu/tanzu-framework/apis/cli/v1alpha1"
 	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/cli"
+	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/cli/pluginmanager"
 	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/config"
 )
 
@@ -58,9 +60,30 @@ func NewRootCmd() (*cobra.Command, error) {
 		genAllDocsCmd,
 	)
 
-	plugins, err := cli.ListPlugins()
-	if err != nil {
-		return nil, fmt.Errorf("find available plugins: %w", err)
+	plugins := make([]*v1alpha1.PluginDescriptor, 0)
+	var err error
+
+	if config.IsContextAwareDiscoveryEnabled() {
+		currentServerName := ""
+
+		server, err := config.GetCurrentServer()
+		if err == nil && server != nil {
+			currentServerName = server.Name
+		}
+
+		serverPlugin, standalonePlugins, err := pluginmanager.InstalledPlugins(currentServerName)
+		if err != nil {
+			return nil, fmt.Errorf("find installed plugins: %w", err)
+		}
+		p := append(serverPlugin, standalonePlugins...)
+		for i := range p {
+			plugins = append(plugins, &p[i])
+		}
+	} else {
+		plugins, err = cli.ListPlugins()
+		if err != nil {
+			return nil, fmt.Errorf("find available plugins: %w", err)
+		}
 	}
 
 	if err = config.CopyLegacyConfigDir(); err != nil {
@@ -68,7 +91,7 @@ func NewRootCmd() (*cobra.Command, error) {
 	}
 
 	// check that all plugins in the core distro are installed or do so.
-	if !noInit && !cli.IsDistributionSatisfied(plugins) {
+	if !config.IsContextAwareDiscoveryEnabled() && !noInit && !cli.IsDistributionSatisfied(plugins) {
 		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 		if err := s.Color("bgBlack", "bold", "fgWhite"); err != nil {
 			return nil, err
@@ -90,6 +113,7 @@ func NewRootCmd() (*cobra.Command, error) {
 		}
 		s.Stop()
 	}
+
 	for _, plugin := range plugins {
 		RootCmd.AddCommand(cli.GetCmd(plugin))
 	}

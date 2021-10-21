@@ -19,7 +19,7 @@ var (
 
 	// DefaultLocalPluginDistroDir is the default Local plugin distribution root directory
 	// This directory will be used for local discovery and local distribute of plugins
-	DefaultLocalPluginDistroDir = filepath.Join(xdg.ConfigHome, "tanzu-plugin")
+	DefaultLocalPluginDistroDir = filepath.Join(xdg.Home, ".config", "tanzu-plugins")
 )
 
 const (

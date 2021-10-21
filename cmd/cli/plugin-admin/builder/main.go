@@ -8,6 +8,7 @@ import (
 
 	cliv1alpha1 "github.com/vmware-tanzu/tanzu-framework/apis/cli/v1alpha1"
 	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/builder/command"
+	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/builder/command/publish"
 	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/buildinfo"
 	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/cli/command/plugin"
 )
@@ -28,6 +29,7 @@ func main() {
 	p.AddCommands(
 		command.CLICmd,
 		command.NewInitCmd(),
+		publish.PublishCmd,
 	)
 	if err := p.Execute(); err != nil {
 		log.Fatal(err)
