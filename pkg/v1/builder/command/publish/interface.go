@@ -6,7 +6,7 @@ package publish
 
 // Publisher is an interface to publish plugins and plugin api
 type Publisher interface {
-	PublishStandAlonePlugin() error
-
-	PublishContextAwarePlugin() error
+	// PublishPlugins publishes plugins binaries and
+	// CLIPlugin resource files for discovery
+	PublishPlugins() error
 }

@@ -265,7 +265,8 @@ CONTEXT_PLUGINS := cluster kubernetes-release secret
 
 .PHONY: build-publish-plugin-discovery-local
 build-publish-plugin-discovery-local: clean-catalog-cache clean-cli-plugins build-cli-local install-cli
-	$(GO) run ./cmd/cli/plugin-admin/builder/main.go publish --type local --standalone-plugins "$(STANDALONE_PLUGINS)" --context-plugins "$(CONTEXT_PLUGINS)" --version $(BUILD_VERSION) --os-arch "$(GOHOSTOS)-$(GOHOSTARCH)" --local-distro-path "$(XDG_CONFIG_HOME)/tanzu-plugins" --local-artifact-dir $(ARTIFACTS_DIR)
+	$(GO) run ./cmd/cli/plugin-admin/builder/main.go publish --type local --plugins "$(STANDALONE_PLUGINS)" --version $(BUILD_VERSION) --os-arch "$(GOHOSTOS)-$(GOHOSTARCH)" --local-output-discovery-dir "$(XDG_CONFIG_HOME)/tanzu-plugins/discovery/standalone" --local-output-distribution-dir "$(XDG_CONFIG_HOME)/tanzu-plugins/distribution" --input-artifact-dir $(ARTIFACTS_DIR)
+	$(GO) run ./cmd/cli/plugin-admin/builder/main.go publish --type local --plugins "$(CONTEXT_PLUGINS)" --version $(BUILD_VERSION) --os-arch "$(GOHOSTOS)-$(GOHOSTARCH)" --local-output-discovery-dir "$(XDG_CONFIG_HOME)/tanzu-plugins/discovery/context" --local-output-distribution-dir "$(XDG_CONFIG_HOME)/tanzu-plugins/distribution" --input-artifact-dir $(ARTIFACTS_DIR)
 
 ## --------------------------------------
 ## manage cli mocks
