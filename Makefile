@@ -263,8 +263,8 @@ build-install-cli-local: clean-catalog-cache clean-cli-plugins build-cli-local i
 STANDALONE_PLUGINS := login management-cluster package pinniped-auth
 CONTEXT_PLUGINS := cluster kubernetes-release secret
 
-.PHONY: build-plugin-discovery-local
-build-plugin-discovery-local: clean-catalog-cache clean-cli-plugins build-cli-local install-cli
+.PHONY: build-publish-plugin-discovery-local
+build-publish-plugin-discovery-local: clean-catalog-cache clean-cli-plugins build-cli-local install-cli
 	$(GO) run ./cmd/cli/plugin-admin/builder/main.go publish --type local --standalone-plugins "$(STANDALONE_PLUGINS)" --context-plugins "$(CONTEXT_PLUGINS)" --version $(BUILD_VERSION) --os-arch "$(GOHOSTOS)-$(GOHOSTARCH)" --local-distro-path "$(XDG_CONFIG_HOME)/tanzu-plugins" --local-artifact-dir $(ARTIFACTS_DIR)
 
 ## --------------------------------------
