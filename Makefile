@@ -257,16 +257,15 @@ build-cli-local: configure-buildtags-embedproviders build-cli-${GOHOSTOS}-${GOHO
 build-install-cli-local: clean-catalog-cache clean-cli-plugins build-cli-local install-cli-plugins install-cli ## Local build and install the CLI plugins
 
 ## --------------------------------------
-## Build Plugin Discovery API files
+## Build CLIPlugin Discovery resource files
 ## --------------------------------------
 
 STANDALONE_PLUGINS := login management-cluster package pinniped-auth
 CONTEXT_PLUGINS := cluster kubernetes-release secret
 
 .PHONY: build-plugin-discovery-local
-build-plugin-discovery-local:
+build-plugin-discovery-local: clean-catalog-cache clean-cli-plugins build-cli-local install-cli
 	$(GO) run ./cmd/cli/plugin-admin/builder/main.go publish --type local --standalone-plugins "$(STANDALONE_PLUGINS)" --context-plugins "$(CONTEXT_PLUGINS)" --version $(BUILD_VERSION) --os-arch "$(GOHOSTOS)-$(GOHOSTARCH)" --local-distro-path "$(XDG_CONFIG_HOME)/tanzu-plugins" --local-artifact-dir $(ARTIFACTS_DIR)
-
 
 ## --------------------------------------
 ## manage cli mocks
