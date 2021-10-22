@@ -15,25 +15,22 @@ import (
 )
 
 type LocalPublisher struct {
-	Plugins          []string
-	Version          string
-	OSArch           []string
-	InputArtifactDir string
-
+	Plugins               []string
+	InputArtifactDir      string
+	OSArch                []string
 	LocalDiscoveryPath    string
 	LocalDistributionPath string
 }
 
-func NewLocalPublisher(plugins []string, version string, oa []string, localDiscoveryPath, localDistributionPath, inputArtifactDir string) Publisher {
+func NewLocalPublisher(plugins []string, version string, arrOSArch []string, localDiscoveryPath, localDistributionPath, inputArtifactDir string) Publisher {
 	_ = ensureResourceDir(localDiscoveryPath, true)
 	_ = ensureResourceDir(localDistributionPath, false)
 
 	return &LocalPublisher{
 		Plugins:               plugins,
-		Version:               version,
-		OSArch:                oa,
 		LocalDiscoveryPath:    localDiscoveryPath,
 		LocalDistributionPath: localDistributionPath,
+		OSArch:                arrOSArch,
 		InputArtifactDir:      inputArtifactDir,
 	}
 }
@@ -41,29 +38,36 @@ func NewLocalPublisher(plugins []string, version string, oa []string, localDisco
 // PublishPlugins publishes plugins binaries and
 // CLIPlugin resource files for discovery to local directories
 func (l *LocalPublisher) PublishPlugins() error {
-	for _, plugin := range l.Plugins {
+
+	availablePluginInfo := detectAvailablePluginInfo(l.InputArtifactDir, l.Plugins, l.OSArch)
+
+	for plugin, pluginInfo := range availablePluginInfo {
 		log.Info("Processing plugin:", plugin)
+		mapVersionArtifactList := make(map[string]v1alpha1.ArtifactList)
 
-		artifacts := make([]v1alpha1.Artifact, 0)
-		for _, oa := range l.OSArch {
-			os, arch := osArch(oa)
+		// Create version based artifact list
+		for version, arrOSArch := range pluginInfo.versions {
+			artifacts := make([]v1alpha1.Artifact, 0)
+			for _, oa := range arrOSArch {
+				sourcePath, digest, err := getPluginPathAndDigestFromMetadata(l.InputArtifactDir, plugin, version, oa.os, oa.arch)
+				if err != nil {
+					return err
+				}
 
-			sourcePath, digest, err := getPluginPathAndDigestFromMetadata(l.InputArtifactDir, plugin, l.Version, os, arch)
-			if err != nil {
-				return err
+				destPath, err := l.publishPlugin(sourcePath, version, oa.os, oa.arch, plugin)
+				if err != nil {
+					return err
+				}
+
+				artifacts = append(artifacts, newArtifactObject(oa.os, oa.arch, common.DistributionTypeLocal, digest, destPath))
 			}
-
-			destPath, err := l.publishPlugin(sourcePath, os, arch, plugin)
-			if err != nil {
-				return err
-			}
-
-			artifacts = append(artifacts, createArtifactObject(os, arch, common.DistributionTypeLocal, digest, destPath))
+			mapVersionArtifactList[version] = artifacts
 		}
 
-		cliPlugin := createCLIPluginResource(plugin, plugin, l.Version, artifacts)
+		// Create new CLIPlugin resource based on plugin and artifact info
+		cliPlugin := newCLIPluginResource(plugin, pluginInfo.description, pluginInfo.recommendedVersion, mapVersionArtifactList)
 
-		err := writeCLIPluginToFile(cliPlugin, filepath.Join(l.LocalDiscoveryPath, plugin+".yaml"))
+		err := saveCLIPluginResource(cliPlugin, filepath.Join(l.LocalDiscoveryPath, plugin+".yaml"))
 		if err != nil {
 			return errors.Wrap(err, "could not write CLIPlugin to file")
 		}
@@ -72,8 +76,8 @@ func (l *LocalPublisher) PublishPlugins() error {
 	return nil
 }
 
-func (l *LocalPublisher) publishPlugin(sourcePath, os, arch, plugin string) (string, error) {
-	destPath := filepath.Join(l.LocalDistributionPath, os, arch, "cli", plugin, l.Version, "tanzu-"+plugin+"-"+os+"_"+arch)
+func (l *LocalPublisher) publishPlugin(sourcePath, version, os, arch, plugin string) (string, error) {
+	destPath := filepath.Join(l.LocalDistributionPath, os, arch, "cli", plugin, version, "tanzu-"+plugin+"-"+os+"_"+arch)
 	if os == "windows" {
 		sourcePath = sourcePath + ".exe"
 		destPath = destPath + ".exe"

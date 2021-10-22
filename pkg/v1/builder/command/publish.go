@@ -28,7 +28,7 @@ func init() {
 	PublishCmd.Flags().StringVar(&distroType, "type", "", "type of discovery and distribution for publishing plugins. Supported: local")
 	PublishCmd.Flags().StringVar(&pluginsString, "plugins", "", "list of plugin names. Example: 'login management-cluster cluster'")
 	PublishCmd.Flags().StringVar(&version, "version", "", "version of the plugins to publish")
-	PublishCmd.Flags().StringVar(&oa, "os-arch", "", "list of os-arch. Format: 'darwin-amd64 linux-amd64 windows-amd64'")
+	PublishCmd.Flags().StringVar(&oa, "os-arch", "darwin-amd64 linux-amd64 windows-amd64", "list of os-arch")
 	PublishCmd.Flags().StringVar(&inputArtifactDir, "input-artifact-dir", "", "artifact directory which is a output of 'tanzu builder cli compile' command")
 
 	PublishCmd.Flags().StringVar(&localOutputDiscoveryDir, "local-output-discovery-dir", "", "local output directory where CLIPlugin resource yamls for discovery will be placed. Applicable to 'local' type")
@@ -39,7 +39,6 @@ func init() {
 
 	PublishCmd.MarkFlagRequired("type")
 	PublishCmd.MarkFlagRequired("version")
-	PublishCmd.MarkFlagRequired("os-arch")
 	PublishCmd.MarkFlagRequired("input-artifact-dir")
 }
 

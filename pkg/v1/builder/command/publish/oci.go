@@ -6,10 +6,6 @@ package publish
 import (
 	"path/filepath"
 
-	"github.com/aunum/log"
-	"github.com/pkg/errors"
-
-	"github.com/vmware-tanzu/tanzu-framework/apis/cli/v1alpha1"
 	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/cli/common"
 )
 
@@ -50,33 +46,33 @@ func NewOCIPublisher(plugins []string,
 // CLIPlugin resource files for discovery to oci image repository
 func (o *OCIPublisher) PublishPlugins() error {
 
-	for _, plugin := range o.Plugins {
-		log.Info("Processing plugin:", plugin)
+	// for _, plugin := range o.Plugins {
+	// 	log.Info("Processing plugin:", plugin)
 
-		artifacts := make([]v1alpha1.Artifact, 0)
-		for _, oa := range o.OSArch {
-			os, arch := osArch(oa)
+	// 	artifacts := make([]v1alpha1.Artifact, 0)
+	// 	for _, oa := range o.OSArch {
+	// 		os, arch := osArch(oa)
 
-			sourcePath, digest, err := getPluginPathAndDigestFromMetadata(o.InputArtifactDir, plugin, o.Version, os, arch)
-			if err != nil {
-				return err
-			}
+	// 		sourcePath, digest, err := getPluginPathAndDigestFromMetadata(o.InputArtifactDir, plugin, o.Version, os, arch)
+	// 		if err != nil {
+	// 			return err
+	// 		}
 
-			imagePath, err := o.publishPlugin(sourcePath, os, arch, plugin)
-			if err != nil {
-				return err
-			}
+	// 		imagePath, err := o.publishPlugin(sourcePath, os, arch, plugin)
+	// 		if err != nil {
+	// 			return err
+	// 		}
 
-			artifacts = append(artifacts, createArtifactObject(os, arch, common.DistributionTypeOCI, digest, imagePath))
-		}
+	// 		artifacts = append(artifacts, newArtifactObject(os, arch, common.DistributionTypeOCI, digest, imagePath))
+	// 	}
 
-		cliPlugin := createCLIPluginResource(plugin, plugin, o.Version, artifacts)
+	// 	cliPlugin := newCLIPluginResource(plugin, plugin, o.Version, artifacts)
 
-		err := writeCLIPluginToFile(cliPlugin, filepath.Join(o.localDiscoveryPath, plugin+".yaml"))
-		if err != nil {
-			return errors.Wrap(err, "could not write CLIPlugin to file")
-		}
-	}
+	// 	err := saveCLIPluginResource(cliPlugin, filepath.Join(o.localDiscoveryPath, plugin+".yaml"))
+	// 	if err != nil {
+	// 		return errors.Wrap(err, "could not write CLIPlugin to file")
+	// 	}
+	// }
 
 	return o.publishDiscovery()
 }
