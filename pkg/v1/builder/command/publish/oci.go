@@ -3,84 +3,29 @@
 
 package publish
 
-import (
-	"path/filepath"
-
-	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/cli/common"
-)
-
 type OCIPublisher struct {
-	Plugins          []string
-	Version          string
-	OSArch           []string
-	InputArtifactDir string
-
 	OCIDiscoveryImageRepository          string
 	OCIDistributionImageRepositoryPrefix string
 
-	localDiscoveryPath string
+	LocalDiscoveryPath string
 }
 
-func NewOCIPublisher(plugins []string,
-	version string,
-	oa []string,
+func NewOCIPublisher(
 	ociDiscoveryImageRepository,
 	ociDistributionImageRepositoryPrefix,
-	inputArtifactDir string) Publisher {
-
-	localDiscoveryPath := filepath.Join(common.DefaultLocalPluginDistroDir, "discovery", "oci")
-	_ = ensureResourceDir(localDiscoveryPath, true)
+	localDiscoveryPath string) Publisher {
 
 	return &OCIPublisher{
-		Plugins:                              plugins,
-		Version:                              version,
-		OSArch:                               oa,
-		InputArtifactDir:                     inputArtifactDir,
 		OCIDiscoveryImageRepository:          ociDiscoveryImageRepository,
 		OCIDistributionImageRepositoryPrefix: ociDistributionImageRepositoryPrefix,
-		localDiscoveryPath:                   localDiscoveryPath,
+		LocalDiscoveryPath:                   localDiscoveryPath,
 	}
 }
 
-// PublishPlugins publishes plugins binaries and
-// CLIPlugin resource files for discovery to oci image repository
-func (o *OCIPublisher) PublishPlugins() error {
-
-	// for _, plugin := range o.Plugins {
-	// 	log.Info("Processing plugin:", plugin)
-
-	// 	artifacts := make([]v1alpha1.Artifact, 0)
-	// 	for _, oa := range o.OSArch {
-	// 		os, arch := osArch(oa)
-
-	// 		sourcePath, digest, err := getPluginPathAndDigestFromMetadata(o.InputArtifactDir, plugin, o.Version, os, arch)
-	// 		if err != nil {
-	// 			return err
-	// 		}
-
-	// 		imagePath, err := o.publishPlugin(sourcePath, os, arch, plugin)
-	// 		if err != nil {
-	// 			return err
-	// 		}
-
-	// 		artifacts = append(artifacts, newArtifactObject(os, arch, common.DistributionTypeOCI, digest, imagePath))
-	// 	}
-
-	// 	cliPlugin := newCLIPluginResource(plugin, plugin, o.Version, artifacts)
-
-	// 	err := saveCLIPluginResource(cliPlugin, filepath.Join(o.localDiscoveryPath, plugin+".yaml"))
-	// 	if err != nil {
-	// 		return errors.Wrap(err, "could not write CLIPlugin to file")
-	// 	}
-	// }
-
-	return o.publishDiscovery()
-}
-
-func (o *OCIPublisher) publishPlugin(sourcePath, os, arch, plugin string) (string, error) {
+func (o *OCIPublisher) PublishPlugin(version, os, arch, plugin, sourcePath string) (string, error) {
 	return "", nil
 }
 
-func (o *OCIPublisher) publishDiscovery() error {
+func (o *OCIPublisher) PublishDiscovery() error {
 	return nil
 }

@@ -4,9 +4,10 @@
 // Package publish implements plugin and plugin api publishing related function
 package publish
 
-// Publisher is an interface to publish plugins and plugin api
+// Publisher is an interface to publish plugin and CLIPlugin resource files to discovery
 type Publisher interface {
-	// PublishPlugins publishes plugins binaries and
-	// CLIPlugin resource files for discovery
-	PublishPlugins() error
+	// PublishPlugin publishes plugin binaries to distribution
+	PublishPlugin(version, os, arch, plugin, sourcePath string) (string, error)
+	// PublishDiscovery publishes plugin discovery
+	PublishDiscovery() error
 }

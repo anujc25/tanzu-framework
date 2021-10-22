@@ -264,9 +264,9 @@ STANDALONE_PLUGINS := login management-cluster package pinniped-auth
 CONTEXT_PLUGINS := cluster kubernetes-release secret
 
 .PHONY: build-publish-plugin-discovery-local
-build-publish-plugin-discovery-local: clean-catalog-cache clean-cli-plugins build-cli-local install-cli
-	$(GO) run ./cmd/cli/plugin-admin/builder/main.go publish --type local --plugins "$(STANDALONE_PLUGINS)" --version $(BUILD_VERSION) --os-arch "$(GOHOSTOS)-$(GOHOSTARCH)" --local-output-discovery-dir "$(XDG_CONFIG_HOME)/tanzu-plugins/discovery/standalone" --local-output-distribution-dir "$(XDG_CONFIG_HOME)/tanzu-plugins/distribution" --input-artifact-dir $(ARTIFACTS_DIR)
-	$(GO) run ./cmd/cli/plugin-admin/builder/main.go publish --type local --plugins "$(CONTEXT_PLUGINS)" --version $(BUILD_VERSION) --os-arch "$(GOHOSTOS)-$(GOHOSTARCH)" --local-output-discovery-dir "$(XDG_CONFIG_HOME)/tanzu-plugins/discovery/context" --local-output-distribution-dir "$(XDG_CONFIG_HOME)/tanzu-plugins/distribution" --input-artifact-dir $(ARTIFACTS_DIR)
+build-publish-plugin-discovery-local: clean-catalog-cache clean-cli-plugins
+	$(GO) run ./cmd/cli/plugin-admin/builder/main.go publish --type local --plugins "$(STANDALONE_PLUGINS)" --os-arch "$(ENVS)" --local-output-discovery-dir "$(XDG_CONFIG_HOME)/tanzu-plugins/discovery/standalone" --local-output-distribution-dir "$(XDG_CONFIG_HOME)/tanzu-plugins/distribution" --input-artifact-dir $(ARTIFACTS_DIR)
+	$(GO) run ./cmd/cli/plugin-admin/builder/main.go publish --type local --plugins "$(CONTEXT_PLUGINS)" --os-arch "$(ENVS)" --local-output-discovery-dir "$(XDG_CONFIG_HOME)/tanzu-plugins/discovery/context" --local-output-distribution-dir "$(XDG_CONFIG_HOME)/tanzu-plugins/distribution" --input-artifact-dir $(ARTIFACTS_DIR)
 
 ## --------------------------------------
 ## manage cli mocks
