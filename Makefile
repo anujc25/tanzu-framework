@@ -257,16 +257,27 @@ build-cli-local: configure-buildtags-embedproviders build-cli-${GOHOSTOS}-${GOHO
 build-install-cli-local: clean-catalog-cache clean-cli-plugins build-cli-local install-cli-plugins install-cli ## Local build and install the CLI plugins
 
 ## --------------------------------------
-## Build CLIPlugin Discovery resource files
+## Build and publish CLIPlugin Discovery resource files and binaries
 ## --------------------------------------
 
 STANDALONE_PLUGINS := login management-cluster package pinniped-auth
 CONTEXT_PLUGINS := cluster kubernetes-release secret
 
-.PHONY: build-publish-plugin-discovery-local
-build-publish-plugin-discovery-local: clean-catalog-cache clean-cli-plugins
-	$(GO) run ./cmd/cli/plugin-admin/builder/main.go publish --type local --plugins "$(STANDALONE_PLUGINS)" --os-arch "$(ENVS)" --local-output-discovery-dir "$(XDG_CONFIG_HOME)/tanzu-plugins/discovery/standalone" --local-output-distribution-dir "$(XDG_CONFIG_HOME)/tanzu-plugins/distribution" --input-artifact-dir $(ARTIFACTS_DIR)
-	$(GO) run ./cmd/cli/plugin-admin/builder/main.go publish --type local --plugins "$(CONTEXT_PLUGINS)" --os-arch "$(ENVS)" --local-output-discovery-dir "$(XDG_CONFIG_HOME)/tanzu-plugins/discovery/context" --local-output-distribution-dir "$(XDG_CONFIG_HOME)/tanzu-plugins/distribution" --input-artifact-dir $(ARTIFACTS_DIR)
+.PHONY: publish-plugins
+publish-plugins:
+	$(GO) run ./cmd/cli/plugin-admin/builder/main.go publish --type local --plugins "$(STANDALONE_PLUGINS)" --os-arch "${ENVS}" --local-output-discovery-dir "$(XDG_CONFIG_HOME)/tanzu-plugins/discovery/standalone" --local-output-distribution-dir "$(XDG_CONFIG_HOME)/tanzu-plugins/distribution" --input-artifact-dir $(ARTIFACTS_DIR)
+	$(GO) run ./cmd/cli/plugin-admin/builder/main.go publish --type local --plugins "$(CONTEXT_PLUGINS)" --os-arch "${ENVS}" --local-output-discovery-dir "$(XDG_CONFIG_HOME)/tanzu-plugins/discovery/context" --local-output-distribution-dir "$(XDG_CONFIG_HOME)/tanzu-plugins/distribution" --input-artifact-dir $(ARTIFACTS_DIR)
+
+.PHONY: publish-plugins-local
+publish-plugins-local:
+	$(GO) run ./cmd/cli/plugin-admin/builder/main.go publish --type local --plugins "$(STANDALONE_PLUGINS)" --os-arch "${GOHOSTOS}-${GOHOSTARCH}" --local-output-discovery-dir "$(XDG_CONFIG_HOME)/tanzu-plugins/discovery/standalone" --local-output-distribution-dir "$(XDG_CONFIG_HOME)/tanzu-plugins/distribution" --input-artifact-dir $(ARTIFACTS_DIR)
+	$(GO) run ./cmd/cli/plugin-admin/builder/main.go publish --type local --plugins "$(CONTEXT_PLUGINS)" --os-arch "${GOHOSTOS}-${GOHOSTARCH}" --local-output-discovery-dir "$(XDG_CONFIG_HOME)/tanzu-plugins/discovery/context" --local-output-distribution-dir "$(XDG_CONFIG_HOME)/tanzu-plugins/distribution" --input-artifact-dir $(ARTIFACTS_DIR)
+
+.PHONY: build-publish-plugins
+build-publish-plugins: clean-catalog-cache clean-cli-plugins build-cli install-cli publish-plugins
+	
+.PHONY: build-publish-plugins-local
+build-publish-plugins-local: clean-catalog-cache clean-cli-plugins build-cli-local install-cli publish-plugins-local
 
 ## --------------------------------------
 ## manage cli mocks

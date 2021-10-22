@@ -14,9 +14,9 @@ import (
 )
 
 var (
-	distroType, pluginsString, oa, inputArtifactDir                   string
-	localOutputDiscoveryDir, localOutputDistributionDir               string
-	ociDiscoveryImageRepository, ociDistributionImageRepositoryPrefix string
+	distroType, pluginsString, oa, inputArtifactDir     string
+	localOutputDiscoveryDir, localOutputDistributionDir string
+	ociDiscoveryImage, ociDistributionImageRepository   string
 )
 
 // PublishCmd publishes plugin resources
@@ -36,8 +36,8 @@ func init() {
 	PublishCmd.Flags().StringVar(&localOutputDiscoveryDir, "local-output-discovery-dir", "", "local output directory where CLIPlugin resource yamls for discovery will be placed. Applicable to 'local' type")
 	PublishCmd.Flags().StringVar(&localOutputDistributionDir, "local-output-distribution-dir", "", "local output directory where plugin binaries will be placed. Applicable to 'local' type")
 
-	PublishCmd.Flags().StringVar(&ociDiscoveryImageRepository, "oci-discovery-image-repository", "", "image path to publish oci image with CLIPlugin resource yamls. Applicable to 'oci' type")
-	PublishCmd.Flags().StringVar(&ociDistributionImageRepositoryPrefix, "oci-distribution-image-repository-prefix", "", "image path prefix to publish oci image for plugin binaries. Applicable to 'oci' type")
+	PublishCmd.Flags().StringVar(&ociDiscoveryImage, "oci-discovery-image", "", "image path to publish oci image with CLIPlugin resource yamls. Applicable to 'oci' type")
+	PublishCmd.Flags().StringVar(&ociDistributionImageRepository, "oci-distribution-image-repository", "", "image path prefix to publish oci image for plugin binaries. Applicable to 'oci' type")
 
 	PublishCmd.MarkFlagRequired("type")
 	PublishCmd.MarkFlagRequired("plugins")
@@ -58,7 +58,7 @@ func publishPlugins(cmd *cobra.Command, args []string) error {
 	case "local":
 		publisherInterface = publish.NewLocalPublisher(localOutputDistributionDir)
 	case "oci":
-		publisherInterface = publish.NewOCIPublisher(ociDiscoveryImageRepository, ociDistributionImageRepositoryPrefix, localOutputDiscoveryDir)
+		publisherInterface = publish.NewOCIPublisher(ociDiscoveryImage, ociDistributionImageRepository, localOutputDiscoveryDir)
 	default:
 		return errors.Errorf("publish plugins with type %s is not yet supported", distroType)
 	}

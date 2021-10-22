@@ -3,29 +3,35 @@
 
 package publish
 
+// TODO: to be implemented as part of https://github.com/vmware-tanzu/tanzu-framework/issues/946
+
+// OCIPublisher defines OCI publisher configuration
 type OCIPublisher struct {
-	OCIDiscoveryImageRepository          string
-	OCIDistributionImageRepositoryPrefix string
+	OCIDiscoveryImage              string
+	OCIDistributionImageRepository string
 
 	LocalDiscoveryPath string
 }
 
+// NewOCIPublisher create new OCI based publisher
 func NewOCIPublisher(
-	ociDiscoveryImageRepository,
-	ociDistributionImageRepositoryPrefix,
+	ociDiscoveryImage,
+	ociDistributionImageRepository,
 	localDiscoveryPath string) Publisher {
 
 	return &OCIPublisher{
-		OCIDiscoveryImageRepository:          ociDiscoveryImageRepository,
-		OCIDistributionImageRepositoryPrefix: ociDistributionImageRepositoryPrefix,
-		LocalDiscoveryPath:                   localDiscoveryPath,
+		OCIDiscoveryImage:              ociDiscoveryImage,
+		OCIDistributionImageRepository: ociDistributionImageRepository,
+		LocalDiscoveryPath:             localDiscoveryPath,
 	}
 }
 
+// PublishPlugin publishes plugin binaries to OCI based distribution directory
 func (o *OCIPublisher) PublishPlugin(version, os, arch, plugin, sourcePath string) (string, error) {
 	return "", nil
 }
 
+// PublishDiscovery publishes the CLIPlugin resources YAML to a OCI based discovery container image
 func (o *OCIPublisher) PublishDiscovery() error {
 	return nil
 }

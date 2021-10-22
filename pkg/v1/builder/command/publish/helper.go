@@ -28,7 +28,7 @@ type pluginInfo struct {
 	versions           map[string][]osArch
 }
 
-func detectAvailablePluginInfo(artifactDir string, plugins []string, arrOSArch []string) map[string]*pluginInfo {
+func detectAvailablePluginInfo(artifactDir string, plugins []string, arrOSArch []string) (map[string]*pluginInfo, error) {
 	mapPluginInfo := make(map[string]*pluginInfo)
 
 	// For all plugins
@@ -38,9 +38,10 @@ func detectAvailablePluginInfo(artifactDir string, plugins []string, arrOSArch [
 			o, a := splitOSArch(osArch)
 
 			// get all directory under plugin directory
-			files, err := os.ReadDir(filepath.Join(artifactDir, o, a, "cli", plugin))
+			pluginDir := filepath.Join(artifactDir, o, a, "cli", plugin)
+			files, err := os.ReadDir(pluginDir)
 			if err != nil {
-				continue
+				return nil, errors.Errorf("unable to find plugin artifact directory for plugin:'%s' os:'%s', arch:'%s' [directory: '%s']", plugin, o, a, pluginDir)
 			}
 
 			// Each directory under the plugin directory is considered version directory
@@ -60,7 +61,7 @@ func detectAvailablePluginInfo(artifactDir string, plugins []string, arrOSArch [
 		}
 	}
 
-	return mapPluginInfo
+	return mapPluginInfo, nil
 }
 
 func updatePluginInfoMapWithRecommandedVersionDescription(mapPluginInfo map[string]*pluginInfo, plugin, recommendedVersion, description string) {
@@ -128,6 +129,9 @@ func newArtifactObject(os, arch, artifactType, digest, uri string) v1alpha1.Arti
 
 func getPluginPathAndDigestFromMetadata(artifactDir, plugin, version, os, arch string) (string, string, error) {
 	sourcePath := filepath.Join(artifactDir, os, arch, "cli", plugin, version, "tanzu-"+plugin+"-"+os+"_"+arch)
+	if os == "windows" {
+		sourcePath = sourcePath + ".exe"
+	}
 	digest, err := utils.SHA256FromFile(sourcePath)
 	if err != nil {
 		return "", "", errors.Wrap(err, "error while calculating sha256")

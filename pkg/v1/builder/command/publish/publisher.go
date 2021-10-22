@@ -1,6 +1,7 @@
 // Copyright 2021 VMware, Inc. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+// Package publish implements plugin and plugin api publishing related function
 package publish
 
 import (
@@ -12,6 +13,15 @@ import (
 	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/cli/common"
 )
 
+// Publisher is an interface to publish plugin and CLIPlugin resource files to discovery
+type Publisher interface {
+	// PublishPlugin publishes plugin binaries to distribution
+	PublishPlugin(version, os, arch, plugin, sourcePath string) (string, error)
+	// PublishDiscovery publishes the CLIPlugin resources YAML to a discovery
+	PublishDiscovery() error
+}
+
+// PublishMetadata defines metadata required for plugins publishing
 type PublishMetadata struct {
 	Plugins            []string
 	InputArtifactDir   string
@@ -20,11 +30,17 @@ type PublishMetadata struct {
 	PublisherInterface Publisher
 }
 
-func PublishPlugins(g PublishMetadata) error {
-	_ = ensureResourceDir(g.LocalDiscoveryPath, true)
-	// _ = ensureResourceDir(localDistributionPath, false) // TODO: fix this
+// PublishPlugins publishes the plugin based on provided metadata
+// This function is responsible for auto-detecting the available plugin versions
+// as well as os-arch and publishing artifacts to correct discovery and distribution
+// based on the publisher type
+func PublishPlugins(pm PublishMetadata) error {
+	_ = ensureResourceDir(pm.LocalDiscoveryPath, true)
 
-	availablePluginInfo := detectAvailablePluginInfo(g.InputArtifactDir, g.Plugins, g.OSArch)
+	availablePluginInfo, err := detectAvailablePluginInfo(pm.InputArtifactDir, pm.Plugins, pm.OSArch)
+	if err != nil {
+		return err
+	}
 
 	for plugin, pluginInfo := range availablePluginInfo {
 		log.Info("Processing plugin:", plugin)
@@ -34,12 +50,12 @@ func PublishPlugins(g PublishMetadata) error {
 		for version, arrOSArch := range pluginInfo.versions {
 			artifacts := make([]v1alpha1.Artifact, 0)
 			for _, oa := range arrOSArch {
-				sourcePath, digest, err := getPluginPathAndDigestFromMetadata(g.InputArtifactDir, plugin, version, oa.os, oa.arch)
+				sourcePath, digest, err := getPluginPathAndDigestFromMetadata(pm.InputArtifactDir, plugin, version, oa.os, oa.arch)
 				if err != nil {
 					return err
 				}
 
-				destPath, err := g.PublisherInterface.PublishPlugin(sourcePath, version, oa.os, oa.arch, plugin)
+				destPath, err := pm.PublisherInterface.PublishPlugin(sourcePath, version, oa.os, oa.arch, plugin)
 				if err != nil {
 					return err
 				}
@@ -52,11 +68,11 @@ func PublishPlugins(g PublishMetadata) error {
 		// Create new CLIPlugin resource based on plugin and artifact info
 		cliPlugin := newCLIPluginResource(plugin, pluginInfo.description, pluginInfo.recommendedVersion, mapVersionArtifactList)
 
-		err := saveCLIPluginResource(cliPlugin, filepath.Join(g.LocalDiscoveryPath, plugin+".yaml"))
+		err := saveCLIPluginResource(cliPlugin, filepath.Join(pm.LocalDiscoveryPath, plugin+".yaml"))
 		if err != nil {
 			return errors.Wrap(err, "could not write CLIPlugin to file")
 		}
 	}
 
-	return g.PublisherInterface.PublishDiscovery()
+	return pm.PublisherInterface.PublishDiscovery()
 }
