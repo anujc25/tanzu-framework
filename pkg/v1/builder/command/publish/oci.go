@@ -9,10 +9,9 @@ import (
 
 	"github.com/aunum/log"
 	"github.com/pkg/errors"
+
 	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/cli/common"
 )
-
-// TODO: to be implemented as part of https://github.com/vmware-tanzu/tanzu-framework/issues/946
 
 // OCIPublisher defines OCI publisher configuration
 type OCIPublisher struct {
@@ -58,7 +57,7 @@ func (o *OCIPublisher) PublishPlugin(sourcePath, version, os, arch, plugin strin
 // PublishDiscovery publishes the CLIPlugin resources YAML to a OCI based discovery container image
 func (o *OCIPublisher) PublishDiscovery() error {
 	log.Info("Publishing discovery image to:", o.OCIDiscoveryImage)
-	out, err := exec.Command("imgpkg", "push", "-i", o.OCIDiscoveryImage, "-f", o.LocalDiscoveryPath).CombinedOutput()
+	out, err := exec.Command("imgpkg", "push", "-i", o.OCIDiscoveryImage, "-f", o.LocalDiscoveryPath).CombinedOutput() //nolint:gosec
 	if err != nil {
 		return errors.Wrapf(err, "%v", string(out))
 	}
