@@ -2,7 +2,7 @@ apiVersion: kbld.k14s.io/v1alpha1
 kind: Config
 overrides:
 #! featuregates
-- image: featuregates/featuregates-controller-manager:latest
+- image: featuregates-controller-manager:latest
   newImage: ""
 #! tanzu-cliplugins linux-amd64
 - image: tanzu-cli-plugins/login-linux-amd64:latest
