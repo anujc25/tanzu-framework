@@ -264,8 +264,8 @@ build-install-cli-local: clean-catalog-cache clean-cli-plugins build-cli-local i
 STANDALONE_PLUGINS := login management-cluster package pinniped-auth
 CONTEXT_PLUGINS := cluster kubernetes-release secret
 
-.PHONY: publish-plugins
-publish-plugins:
+.PHONY: publish-plugins-all-local
+publish-plugins-all-local:
 	$(GO) run ./cmd/cli/plugin-admin/builder/main.go publish --type local --plugins "$(STANDALONE_PLUGINS)" --version $(BUILD_VERSION) --os-arch "${ENVS}" --local-output-discovery-dir "$(XDG_CONFIG_HOME)/tanzu-plugins/discovery/standalone" --local-output-distribution-dir "$(XDG_CONFIG_HOME)/tanzu-plugins/distribution" --input-artifact-dir $(ARTIFACTS_DIR)
 	$(GO) run ./cmd/cli/plugin-admin/builder/main.go publish --type local --plugins "$(CONTEXT_PLUGINS)" --version $(BUILD_VERSION) --os-arch "${ENVS}" --local-output-discovery-dir "$(XDG_CONFIG_HOME)/tanzu-plugins/discovery/context" --local-output-distribution-dir "$(XDG_CONFIG_HOME)/tanzu-plugins/distribution" --input-artifact-dir $(ARTIFACTS_DIR)
 
@@ -274,11 +274,27 @@ publish-plugins-local:
 	$(GO) run ./cmd/cli/plugin-admin/builder/main.go publish --type local --plugins "$(STANDALONE_PLUGINS)" --version $(BUILD_VERSION) --os-arch "${GOHOSTOS}-${GOHOSTARCH}" --local-output-discovery-dir "$(XDG_CONFIG_HOME)/tanzu-plugins/discovery/standalone" --local-output-distribution-dir "$(XDG_CONFIG_HOME)/tanzu-plugins/distribution" --input-artifact-dir $(ARTIFACTS_DIR)
 	$(GO) run ./cmd/cli/plugin-admin/builder/main.go publish --type local --plugins "$(CONTEXT_PLUGINS)" --version $(BUILD_VERSION) --os-arch "${GOHOSTOS}-${GOHOSTARCH}" --local-output-discovery-dir "$(XDG_CONFIG_HOME)/tanzu-plugins/discovery/context" --local-output-distribution-dir "$(XDG_CONFIG_HOME)/tanzu-plugins/distribution" --input-artifact-dir $(ARTIFACTS_DIR)
 
-.PHONY: build-publish-plugins
-build-publish-plugins: clean-catalog-cache clean-cli-plugins build-cli install-cli publish-plugins
+.PHONY: publish-plugins-all-oci
+publish-plugins-all-oci:
+	$(GO) run ./cmd/cli/plugin-admin/builder/main.go publish --type oci --plugins "$(STANDALONE_PLUGINS)" --version $(BUILD_VERSION) --os-arch "${ENVS}" --oci-discovery-image ${OCI_REGISTRY}/tanzu-plugins/discovery/standalone:v0.0.1 --oci-distribution-image-repository ${OCI_REGISTRY}/tanzu-plugins/distribution/ --input-artifact-dir $(ROOT_DIR)/$(ARTIFACTS_DIR)
+	$(GO) run ./cmd/cli/plugin-admin/builder/main.go publish --type oci --plugins "$(CONTEXT_PLUGINS)" --version $(BUILD_VERSION) --os-arch "${ENVS}" --oci-discovery-image ${OCI_REGISTRY}/tanzu-plugins/discovery/context:v0.0.1 --oci-distribution-image-repository ${OCI_REGISTRY}/tanzu-plugins/distribution/ --input-artifact-dir $(ROOT_DIR)/$(ARTIFACTS_DIR)
 
+.PHONY: publish-plugins-oci
+publish-plugins-oci:
+	$(GO) run ./cmd/cli/plugin-admin/builder/main.go publish --type oci --plugins "$(STANDALONE_PLUGINS)" --version $(BUILD_VERSION) --os-arch "${GOHOSTOS}-${GOHOSTARCH}" --oci-discovery-image ${OCI_REGISTRY}/tanzu-plugins/discovery/standalone:v0.0.1 --oci-distribution-image-repository ${OCI_REGISTRY}/tanzu-plugins/distribution/ --input-artifact-dir $(ROOT_DIR)/$(ARTIFACTS_DIR)
+	$(GO) run ./cmd/cli/plugin-admin/builder/main.go publish --type oci --plugins "$(CONTEXT_PLUGINS)" --version $(BUILD_VERSION) --os-arch "${GOHOSTOS}-${GOHOSTARCH}" --oci-discovery-image ${OCI_REGISTRY}/tanzu-plugins/discovery/context:v0.0.1 --oci-distribution-image-repository ${OCI_REGISTRY}/tanzu-plugins/distribution/ --input-artifact-dir $(ROOT_DIR)/$(ARTIFACTS_DIR)
+
+.PHONY: build-publish-plugins-all-local
+build-publish-plugins-all-local: clean-catalog-cache clean-cli-plugins build-cli publish-plugins-all-local
+	
 .PHONY: build-publish-plugins-local
-build-publish-plugins-local: clean-catalog-cache clean-cli-plugins build-cli-local install-cli publish-plugins-local
+build-publish-plugins-local: clean-catalog-cache clean-cli-plugins build-cli-local publish-plugins-local
+
+.PHONY: build-publish-plugins-all-oci
+build-publish-plugins-all-oci: clean-catalog-cache clean-cli-plugins build-cli publish-plugins-all-oci
+	
+.PHONY: build-publish-plugins-oci
+build-publish-plugins-oci: clean-catalog-cache clean-cli-plugins build-cli-local publish-plugins-oci
 
 ## --------------------------------------
 ## manage cli mocks

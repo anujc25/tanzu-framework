@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/otiai10/copy"
+	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/cli/common"
 )
 
 // LocalPublisher defines local publisher configuration
@@ -15,10 +16,10 @@ type LocalPublisher struct {
 }
 
 // NewLocalPublisher create new local publisher
-func NewLocalPublisher(localDistributionPath string) Publisher {
+func NewLocalPublisher(localDistributionPath string) (Publisher, error) {
 	return &LocalPublisher{
 		LocalDistributionPath: localDistributionPath,
-	}
+	}, nil
 }
 
 // PublishPlugin publishes plugin binaries to local distribution directory
@@ -39,4 +40,9 @@ func (l *LocalPublisher) PublishPlugin(sourcePath, version, os, arch, plugin str
 // PublishDiscovery publishes the CLIPlugin resources YAML to a local discovery directory
 func (l *LocalPublisher) PublishDiscovery() error {
 	return nil
+}
+
+// Type returns type of publisher
+func (l *LocalPublisher) Type() string {
+	return common.DistributionTypeLocal
 }
