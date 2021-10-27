@@ -156,7 +156,7 @@ $(KAPP):
 
 trivy: $(TRIVY) ## Download trivy
 $(TRIVY):
-	curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b $(TOOLS_BIN_DIR)
+	curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b $(BIN_DIR)
 
 ## --------------------------------------
 ## Cleanup

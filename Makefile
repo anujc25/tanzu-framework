@@ -39,7 +39,7 @@ KUBEVAL            := $(TOOLS_BIN_DIR)/kubeval
 GINKGO             := $(TOOLS_BIN_DIR)/ginkgo
 VALE               := $(TOOLS_BIN_DIR)/vale
 YQ                 := $(TOOLS_BIN_DIR)/yq
-TOOLING_BINARIES   := $(GOLANGCI_LINT) $(YTT) $(KBLD) $(VENDIR) $(IMGPKG) $(KAPP) $(KUBEVAL) $(GOIMPORTS) $(GOBINDATA) $(GINKGO) $(VALE) $(YQ)
+TOOLING_BINARIES   := $(GOLANGCI_LINT) $(YTT) $(KBLD) $(VENDIR) $(IMGPKG) $(KAPP) $(KUBEVAL) $(GOIMPORTS) $(GOBINDATA) $(GINKGO) $(VALE) $(YQ) $(TRIVY)
 
 export MANAGEMENT_PACKAGE_REPO_VERSION ?= $(BUILD_VERSION)
 
@@ -587,3 +587,7 @@ management-package-repos-bundles: tools management-package-bundles ## Build tar 
 local-registry: ## Starts up a local docker registry
 	docker container stop registry && docker container rm -v registry || true
 	docker run -d -p 5000:5000 --name registry projects-stg.registry.vmware.com/tkg/vkatam/registry:2
+
+.PHONY: trivy-scan
+trivy-scan: tools ## Trivy scan images used in packages
+	$(PACKAGES_SCRIPTS_DIR)/package-utils.sh trivy_scan
