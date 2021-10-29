@@ -28,3 +28,27 @@ managementPackageRepository:
       version: latest
       #! Gets replaced with imgpkg sha256 at build, this should be name:version
       sha256: "featuregates:latest"
+    - name: cliplugin
+      displayName: cliplugin
+      #! Relative path to package bundle
+      path: management-packages/cliplugin
+      domain: tanzu.vmware.com
+      version: latest
+      #! Gets replaced with imgpkg sha256 at build, this should be name:version
+      sha256: "cliplugin:latest"
+    - name: context-aware-cliplugins
+      displayName: context-aware-cliplugins
+      #! Relative path to package bundle
+      path: management-packages/context-aware-cliplugins
+      domain: tanzu.vmware.com
+      version: latest
+      #! Gets replaced with imgpkg sha256 at build, this should be name:version
+      sha256: "context-aware-cliplugins:latest"
+    - name: standalone-cliplugins
+      displayName: standalone-cliplugins
+      #! Relative path to package bundle
+      path: management-packages/standalone-cliplugins
+      domain: tanzu.vmware.com
+      version: latest
+      #! Gets replaced with imgpkg sha256 at build, this should be name:version
+      sha256: "standalone-cliplugins:latest"

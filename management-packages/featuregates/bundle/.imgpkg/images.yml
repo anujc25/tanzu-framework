@@ -1,0 +1,11 @@
+---
+apiVersion: imgpkg.carvel.dev/v1alpha1
+images:
+- annotations:
+    kbld.carvel.dev/id: featuregates-controller-manager:latest
+    kbld.carvel.dev/origins: |
+      - resolved:
+          tag: v0.9.0-dev
+          url: localhost:5000/featuregates-controller-manager:v0.9.0-dev
+  image: localhost:5000/featuregates-controller-manager@sha256:9f2c525cd689ed83efe438316f0654e270e51459a9186b90cdc305be17278565
+kind: ImagesLock

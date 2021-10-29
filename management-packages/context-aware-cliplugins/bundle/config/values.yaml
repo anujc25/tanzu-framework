@@ -1,0 +1,10 @@
+#@data/values
+#@overlay/match-child-defaults missing_ok=True
+
+---
+cluster:
+  version: ""
+kubernetesrelease:
+  version: ""
+secret:
+  version: ""

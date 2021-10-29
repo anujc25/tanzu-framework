@@ -1,0 +1,67 @@
+---
+apiVersion: imgpkg.carvel.dev/v1alpha1
+images:
+- annotations:
+    kbld.carvel.dev/id: tanzu-cli-plugins/cluster-darwin-amd64:latest
+    kbld.carvel.dev/origins: |
+      - resolved:
+          tag: v0.9.0-dev
+          url: localhost:5000/tanzu-cli-plugins/cluster-darwin-amd64:v0.9.0-dev
+  image: localhost:5000/tanzu-cli-plugins/cluster-darwin-amd64@sha256:1b6549ec2533fa8bef29da2a621252973ae0e79e5a71913b238e5cd73f8d30bf
+- annotations:
+    kbld.carvel.dev/id: tanzu-cli-plugins/cluster-linux-amd64:latest
+    kbld.carvel.dev/origins: |
+      - resolved:
+          tag: v0.9.0-dev
+          url: localhost:5000/tanzu-cli-plugins/cluster-linux-amd64:v0.9.0-dev
+  image: localhost:5000/tanzu-cli-plugins/cluster-linux-amd64@sha256:bd5b5c348b8bc3d2a2eb5b93b75fc895505e470fb8f1297acea9a002f60eab10
+- annotations:
+    kbld.carvel.dev/id: tanzu-cli-plugins/cluster-windows-amd64:latest
+    kbld.carvel.dev/origins: |
+      - resolved:
+          tag: v0.9.0-dev
+          url: localhost:5000/tanzu-cli-plugins/cluster-windows-amd64:v0.9.0-dev
+  image: localhost:5000/tanzu-cli-plugins/cluster-windows-amd64@sha256:a75dd9401ca6f14e837183ac6ea89133900cea979d20a648a99b46d87b566430
+- annotations:
+    kbld.carvel.dev/id: tanzu-cli-plugins/kubernetes-release-darwin-amd64:latest
+    kbld.carvel.dev/origins: |
+      - resolved:
+          tag: v0.9.0-dev
+          url: localhost:5000/tanzu-cli-plugins/kubernetes-release-darwin-amd64:v0.9.0-dev
+  image: localhost:5000/tanzu-cli-plugins/kubernetes-release-darwin-amd64@sha256:dca7317732cfa2799aa0811698db6ba664481934f590b824d4084b72e826699b
+- annotations:
+    kbld.carvel.dev/id: tanzu-cli-plugins/kubernetes-release-linux-amd64:latest
+    kbld.carvel.dev/origins: |
+      - resolved:
+          tag: v0.9.0-dev
+          url: localhost:5000/tanzu-cli-plugins/kubernetes-release-linux-amd64:v0.9.0-dev
+  image: localhost:5000/tanzu-cli-plugins/kubernetes-release-linux-amd64@sha256:6c665be04d1f307123cad524a46e7eccea638e4bb72032a4330e74df7e609911
+- annotations:
+    kbld.carvel.dev/id: tanzu-cli-plugins/kubernetes-release-windows-amd64:latest
+    kbld.carvel.dev/origins: |
+      - resolved:
+          tag: v0.9.0-dev
+          url: localhost:5000/tanzu-cli-plugins/kubernetes-release-windows-amd64:v0.9.0-dev
+  image: localhost:5000/tanzu-cli-plugins/kubernetes-release-windows-amd64@sha256:731e3d7da96abe9662bc7ce3b50a837322c2d0e9e577b64e11163dfd6a671665
+- annotations:
+    kbld.carvel.dev/id: tanzu-cli-plugins/secret-darwin-amd64:latest
+    kbld.carvel.dev/origins: |
+      - resolved:
+          tag: v0.9.0-dev
+          url: localhost:5000/tanzu-cli-plugins/secret-darwin-amd64:v0.9.0-dev
+  image: localhost:5000/tanzu-cli-plugins/secret-darwin-amd64@sha256:16edace890bd40c2d807234dfece84247c431a7cd2e8d02a8011e37018674e54
+- annotations:
+    kbld.carvel.dev/id: tanzu-cli-plugins/secret-linux-amd64:latest
+    kbld.carvel.dev/origins: |
+      - resolved:
+          tag: v0.9.0-dev
+          url: localhost:5000/tanzu-cli-plugins/secret-linux-amd64:v0.9.0-dev
+  image: localhost:5000/tanzu-cli-plugins/secret-linux-amd64@sha256:65893637e4f620b9788c6eacdeb17be9c34ce11ec7744a6ac42004746c7de67f
+- annotations:
+    kbld.carvel.dev/id: tanzu-cli-plugins/secret-windows-amd64:latest
+    kbld.carvel.dev/origins: |
+      - resolved:
+          tag: v0.9.0-dev
+          url: localhost:5000/tanzu-cli-plugins/secret-windows-amd64:v0.9.0-dev
+  image: localhost:5000/tanzu-cli-plugins/secret-windows-amd64@sha256:7d0aa02451d4de447aec8df4ecff19f330f9bdc2d10818fea919589a8ef92fe2
+kind: ImagesLock

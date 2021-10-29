@@ -1,0 +1,14 @@
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: PackageMetadata
+metadata:
+  name: context-aware-cliplugins.tanzu.vmware.com
+  namespace: context-aware-cliplugins
+spec:
+  displayName: "context-aware-cliplugins"
+  longDescription: "Context-Aware CLIPlugin package provides API resources which can be installed to the cluster that allows discovery of context plugins with Tanzu CLI"
+  shortDescription: "Standalone CLI Plugins"
+  providerName: VMware
+  maintainers:
+    - name: "Anuj Chaudhari"
+  categories:
+    - "cliplugins"
