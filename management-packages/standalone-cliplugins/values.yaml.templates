@@ -3,10 +3,10 @@
 
 ---
 login:
-  version: $(VERSION)
+  version: VERSION
 managementcluster:
-  version: $(VERSION)
+  version: VERSION
 package:
-  version: $(VERSION)
+  version: VERSION
 pinnipedauth:
-  version: $(VERSION)
+  version: VERSION

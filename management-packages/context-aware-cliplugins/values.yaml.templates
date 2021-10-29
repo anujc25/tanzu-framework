@@ -3,8 +3,8 @@
 
 ---
 cluster:
-  version: $(VERSION)
+  version: VERSION
 kubernetesrelease:
-  version: $(VERSION)
+  version: VERSION
 secret:
-  version: $(VERSION)
+  version: VERSION

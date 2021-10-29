@@ -18,9 +18,11 @@ fi
 
 function generate_imgpkg_lock_output() {
   while IFS='|' read -r name path version; do
+    make -C $path configure-package
     mkdir -p "$path/bundle/.imgpkg"
     yttCmd="${TOOLS_BIN_DIR}/ytt --ignore-unknown-comments -f $path/bundle/config/"
     ${yttCmd} | "${TOOLS_BIN_DIR}"/kbld -f - -f kbld-config.yml --imgpkg-lock-output "$path/bundle/.imgpkg/images.yml" > /dev/null
+    make -C $path reset-package
   done < <("${TOOLS_BIN_DIR}"/yq e ".${PACKAGE_REPOSITORY}PackageRepository.packages[] | .name + \"|\" + .path + \"|\" + .version" "package-values.yaml")
 }
 
@@ -34,12 +36,14 @@ function create_package_bundles() {
       packageVersion="$REPO_VERSION+$packageSubVersion"
       imagePackageVersion="v${REPO_VERSION}_${packageSubVersion}"
     fi
+    make -C $path configure-package
     "${TOOLS_BIN_DIR}"/imgpkg push -b "${1}/$name:$imagePackageVersion" --file "$path/bundle" --lock-output "$name-$packageVersion-lock-output.yaml"
     "${TOOLS_BIN_DIR}"/yq e '.bundle | .image' "$name-$packageVersion-lock-output.yaml" | sed "s,${1}/$name@sha256:, ,g" | xargs -I '{}' sed -ie "s,${name}:${version},{},g" package-values-sha256.yaml
     [ -z "$packageSubVersion" ] && echo "${REPO_VERSION}" | sed "s,${1}/$name@version:, ,g" | xargs -I '{}' sed -ie "s,${version},{},g" package-values-sha256.yaml
     mkdir -p "${MANAGEMENT_PACKAGES_BUILD_ARTIFACTS_DIR}/package-bundles/${PACKAGE_REPOSITORY}"
     tar -czvf "${MANAGEMENT_PACKAGES_BUILD_ARTIFACTS_DIR}/package-bundles/${PACKAGE_REPOSITORY}/$name-$imagePackageVersion.tar.gz" -C "$path/bundle" .
     rm -f "$name-$packageVersion-lock-output.yaml" package-values-sha256.yamle
+    make -C $path reset-package
   done < <("${TOOLS_BIN_DIR}"/yq e ".${PACKAGE_REPOSITORY}PackageRepository.packages[] | .name + \"|\" + .version + \"|\" + .packageSubVersion + \"|\" + .path" "package-values.yaml")
 }
 
