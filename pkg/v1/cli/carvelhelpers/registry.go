@@ -27,11 +27,7 @@ func GetFilesMapFromImage(imageWithTag string) (map[string][]byte, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "unable to initialize registry")
 	}
-	image, tag, err := getImageRepoAndTag(imageWithTag)
-	if err != nil {
-		return nil, err
-	}
-	return reg.GetFiles(image, tag)
+	return reg.GetFiles(imageWithTag)
 }
 
 // ReadImageAndSaveFilesToTempDir reads OCI image and saves file to temp dir
@@ -56,15 +52,7 @@ func ReadImageAndSaveFilesToTempDir(imageWithTag string) (string, error) {
 	return tmpDir, nil
 }
 
-func getImageRepoAndTag(imageWithTag string) (string, string, error) {
-	// Support providing image with tag as well as support image with sha256
-	idx := strings.LastIndex(imageWithTag, ":")
-	if idx == -1 {
-		return "", "", errors.Errorf("invalid artifact image '%s'", imageWithTag)
-	}
-	return imageWithTag[0:idx], imageWithTag[idx+1:], nil
-}
-
+// newRegistry returns new
 func newRegistry() (registry.Registry, error) {
 	verifyCerts := true
 	skipVerifyCerts := os.Getenv(constants.ConfigVariableCustomImageRepositorySkipTLSVerify)
