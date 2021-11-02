@@ -119,7 +119,7 @@ func DiscoveredFromK8sV1alpha1(p *cliv1alpha1.CLIPlugin) plugin.Discovered {
 		RecommendedVersion: p.Spec.RecommendedVersion,
 		Optional:           p.Spec.Optional,
 	}
-	dp.SupportedVersions = make([]string, len(p.Spec.Artifacts))
+	dp.SupportedVersions = make([]string, 0)
 	for v := range p.Spec.Artifacts {
 		dp.SupportedVersions = append(dp.SupportedVersions, v)
 	}

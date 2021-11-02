@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -181,8 +182,8 @@ var (
 				var receivedImageTag string
 				BeforeEach(func() {
 					fakeRegistry.ListImageTagsReturns([]string{"v3", "v1", "v2"}, nil)
-					fakeRegistry.GetFileCalls(func(ImagePath string, ImageTag string, filename string) ([]byte, error) {
-						receivedImageTag = ImageTag
+					fakeRegistry.GetFileCalls(func(ImageWithTag string, filename string) ([]byte, error) {
+						receivedImageTag = strings.Split(ImageWithTag, ":")[1]
 						return nil, errors.New("fake GetFile error for TKG Compatibility file")
 					})
 				})

@@ -68,14 +68,18 @@ func (od *OCIDiscovery) Type() string {
 
 // Manifest returns the manifest for a local repository.
 func (od *OCIDiscovery) Manifest() ([]plugin.Discovered, error) {
-	plugins := make([]plugin.Discovered, 0)
-
 	outputData, err := carvelhelpers.ProcessCarvelPackage(od.image)
 	if err != nil {
 		return nil, errors.Wrap(err, "error while processing package")
 	}
 
-	for _, resourceYAML := range strings.Split(string(outputData), "---") {
+	return processDiscoveryManifestData(outputData, od.name)
+}
+
+func processDiscoveryManifestData(data []byte, discoveryName string) ([]plugin.Discovered, error) {
+	plugins := make([]plugin.Discovered, 0)
+
+	for _, resourceYAML := range strings.Split(string(data), "---") {
 		scheme, err := cliv1alpha1.SchemeBuilder.Build()
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to create scheme")
@@ -85,15 +89,14 @@ func (od *OCIDiscovery) Manifest() ([]plugin.Discovered, error) {
 		var p cliv1alpha1.CLIPlugin
 		_, _, err = s.Decode([]byte(resourceYAML), nil, &p)
 		if err != nil {
-			return nil, errors.Wrap(err, "could not decode catalog file")
+			return nil, errors.Wrap(err, "could not decode discovery manifests")
 		}
 
 		dp := DiscoveredFromK8sV1alpha1(&p)
-		dp.Source = od.name
+		dp.Source = discoveryName
 		if dp.Name != "" {
 			plugins = append(plugins, dp)
 		}
 	}
-
 	return plugins, nil
 }
