@@ -66,6 +66,20 @@ ifndef TKG_DEFAULT_COMPATIBILITY_IMAGE_PATH
 TKG_DEFAULT_COMPATIBILITY_IMAGE_PATH = "framework-zshippable/tkg-compatibility"
 endif
 
+ifndef TKG_DEFAULT_IMAGE_REPOSITORY
+TKG_DEFAULT_IMAGE_REPOSITORY = "projects-stg.registry.vmware.com/tkg"
+endif
+ifndef TKG_DEFAULT_COMPATIBILITY_IMAGE_PATH
+# TODO change it to "tkg-compatibility" once the image is pushed to registry
+TKG_DEFAULT_COMPATIBILITY_IMAGE_PATH = "framework-zshippable/tkg-compatibility"
+endif
+ifndef TKG_DEFAULT_STANDALONE_DISCOVERY_IMAGE_PATH
+TKG_DEFAULT_STANDALONE_DISCOVERY_IMAGE_PATH = "packages/management/standalone-cliplugins"
+endif
+ifndef TKG_DEFAULT_STANDALONE_DISCOVERY_IMAGE_TAG
+TKG_DEFAULT_STANDALONE_DISCOVERY_IMAGE_TAG = "${BUILD_VERSION}"
+endif
+
 DOCKER_DIR := /app
 SWAGGER=docker run --rm -v ${PWD}:${DOCKER_DIR} quay.io/goswagger/swagger:v0.21.0
 
@@ -83,6 +97,16 @@ endif
 
 ifeq ($(TANZU_FORCE_NO_INIT), true)
 LD_FLAGS += -X 'github.com/vmware-tanzu/tanzu-framework/pkg/v1/cli/command/core.forceNoInit=true'
+endif
+
+ifneq ($(strip $(TKG_DEFAULT_IMAGE_REPOSITORY)),)
+LD_FLAGS += -X 'github.com/vmware-tanzu/tanzu-framework/pkg/v1/config.DefaultStandaloneDiscoveryRepository=$(TKG_DEFAULT_IMAGE_REPOSITORY)'
+endif
+ifneq ($(strip $(TKG_DEFAULT_STANDALONE_DISCOVERY_IMAGE_PATH)),)
+LD_FLAGS += -X 'github.com/vmware-tanzu/tanzu-framework/pkg/v1/config.DefaultStandaloneDiscoveryImagePath=$(TKG_DEFAULT_STANDALONE_DISCOVERY_IMAGE_PATH)'
+endif
+ifneq ($(strip $(TKG_DEFAULT_STANDALONE_DISCOVERY_IMAGE_TAG)),)
+LD_FLAGS += -X 'github.com/vmware-tanzu/tanzu-framework/pkg/v1/config.DefaultStandaloneDiscoveryImageTag=$(TKG_DEFAULT_STANDALONE_DISCOVERY_IMAGE_TAG)'
 endif
 
 BUILD_TAGS ?=

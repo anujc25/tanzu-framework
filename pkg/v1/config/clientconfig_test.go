@@ -11,6 +11,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	uuid "github.com/satori/go.uuid"
 	"github.com/stretchr/testify/require"
+	"github.com/tj/assert"
 
 	configv1alpha1 "github.com/vmware-tanzu/tanzu-framework/apis/config/v1alpha1"
 )
@@ -359,4 +360,89 @@ func TestConfigFeaturesDefaultsNoneAdded(t *testing.T) {
 	require.False(t, added, "addMissingDefaultFeatureFlags should NOT have added any default values")
 	require.Equal(t, cfg.ClientOptions.Features["existing"]["truthy"], "false", "addMissingDefaultFeatureFlags should have left existing FALSE value for truthy")
 	require.Equal(t, cfg.ClientOptions.Features["existing"]["falsey"], "true", "addMissingDefaultFeatureFlags should have left existing TRUE value for falsey")
+}
+
+func TestConfigPopulateDefaultStandaloneDiscovery(t *testing.T) {
+	cfg := &configv1alpha1.ClientConfig{
+		ClientOptions: &configv1alpha1.ClientOptions{
+			CLI: &configv1alpha1.CLIOptions{
+				DiscoverySources: []configv1alpha1.PluginDiscovery{},
+			},
+		},
+	}
+	DefaultStandaloneDiscoveryRepository = "fake.image.repo"
+	DefaultStandaloneDiscoveryImagePath = "package/standalone-plugins"
+	DefaultStandaloneDiscoveryImageTag = "v1.0.0"
+
+	assert := assert.New(t)
+
+	added := populateDefaultStandaloneDiscovery(cfg)
+	assert.Equal(true, added)
+	assert.Equal(len(cfg.ClientOptions.CLI.DiscoverySources), 1)
+	assert.Equal(cfg.ClientOptions.CLI.DiscoverySources[0].OCI.Name, DefaultStandaloneDiscoveryName)
+	assert.Equal(cfg.ClientOptions.CLI.DiscoverySources[0].OCI.Image, "fake.image.repo/package/standalone-plugins:v1.0.0")
+}
+
+func TestConfigPopulateDefaultStandaloneDiscoveryWhenPresentAndImageIsSame(t *testing.T) {
+	cfg := &configv1alpha1.ClientConfig{
+		ClientOptions: &configv1alpha1.ClientOptions{
+			CLI: &configv1alpha1.CLIOptions{
+				DiscoverySources: []configv1alpha1.PluginDiscovery{
+					configv1alpha1.PluginDiscovery{
+						OCI: &configv1alpha1.OCIDiscovery{
+							Name:  DefaultStandaloneDiscoveryName,
+							Image: "fake.image.repo/package/standalone-plugins:v1.0.0",
+						},
+					},
+				},
+			},
+		},
+	}
+	DefaultStandaloneDiscoveryRepository = "fake.image.repo"
+	DefaultStandaloneDiscoveryImagePath = "package/standalone-plugins"
+	DefaultStandaloneDiscoveryImageTag = "v1.0.0"
+
+	assert := assert.New(t)
+
+	added := populateDefaultStandaloneDiscovery(cfg)
+	assert.Equal(false, added)
+	assert.Equal(len(cfg.ClientOptions.CLI.DiscoverySources), 1)
+	assert.Equal(cfg.ClientOptions.CLI.DiscoverySources[0].OCI.Name, DefaultStandaloneDiscoveryName)
+	assert.Equal(cfg.ClientOptions.CLI.DiscoverySources[0].OCI.Image, "fake.image.repo/package/standalone-plugins:v1.0.0")
+}
+
+func TestConfigPopulateDefaultStandaloneDiscoveryWhenPresentAndImageIsNotSame(t *testing.T) {
+	cfg := &configv1alpha1.ClientConfig{
+		ClientOptions: &configv1alpha1.ClientOptions{
+			CLI: &configv1alpha1.CLIOptions{
+				DiscoverySources: []configv1alpha1.PluginDiscovery{
+					configv1alpha1.PluginDiscovery{
+						OCI: &configv1alpha1.OCIDiscovery{
+							Name:  DefaultStandaloneDiscoveryName,
+							Image: "fake.image/path:v2.0.0",
+						},
+					},
+					configv1alpha1.PluginDiscovery{
+						OCI: &configv1alpha1.OCIDiscovery{
+							Name:  "additional-discovery",
+							Image: "additional-discovery/path:v1.0.0",
+						},
+					},
+				},
+			},
+		},
+	}
+	DefaultStandaloneDiscoveryRepository = "fake.image.repo"
+	DefaultStandaloneDiscoveryImagePath = "package/standalone-plugins"
+	DefaultStandaloneDiscoveryImageTag = "v1.0.0"
+
+	assert := assert.New(t)
+
+	added := populateDefaultStandaloneDiscovery(cfg)
+	assert.Equal(true, added)
+	assert.Equal(len(cfg.ClientOptions.CLI.DiscoverySources), 2)
+	assert.Equal(cfg.ClientOptions.CLI.DiscoverySources[0].OCI.Name, DefaultStandaloneDiscoveryName)
+	assert.Equal(cfg.ClientOptions.CLI.DiscoverySources[0].OCI.Image, "fake.image.repo/package/standalone-plugins:v1.0.0")
+	assert.Equal(cfg.ClientOptions.CLI.DiscoverySources[1].OCI.Name, "additional-discovery")
+	assert.Equal(cfg.ClientOptions.CLI.DiscoverySources[1].OCI.Image, "additional-discovery/path:v1.0.0")
 }

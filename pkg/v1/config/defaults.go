@@ -4,8 +4,17 @@
 package config
 
 import (
+	"strings"
+
 	configv1alpha1 "github.com/vmware-tanzu/tanzu-framework/apis/config/v1alpha1"
 )
+
+// Default Standalone Discovery configuration
+// Value of this variables gets assigned during build time
+var DefaultStandaloneDiscoveryRepository = ""
+var DefaultStandaloneDiscoveryImagePath = ""
+var DefaultStandaloneDiscoveryImageTag = ""
+var DefaultStandaloneDiscoveryName = "default"
 
 // CoreRepositoryName is the core repository name.
 const CoreRepositoryName = "core"
@@ -36,4 +45,10 @@ var DefaultRepositories []configv1alpha1.PluginRepository = []configv1alpha1.Plu
 	{
 		GCPPluginRepository: &CoreGCPBucketRepository,
 	},
+}
+
+// DefaultStandaloneDiscoveryImage returns the default Standalone Discovery image
+// from the configured build time variables
+func DefaultStandaloneDiscoveryImage() string {
+	return strings.Trim(DefaultStandaloneDiscoveryRepository, "/") + "/" + strings.Trim(DefaultStandaloneDiscoveryImagePath, "/") + ":" + DefaultStandaloneDiscoveryImageTag
 }

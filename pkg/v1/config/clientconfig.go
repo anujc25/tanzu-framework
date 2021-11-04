@@ -119,6 +119,9 @@ func NewClientConfig() (*configv1alpha1.ClientConfig, error) {
 			},
 		},
 	}
+
+	_ = populateDefaultStandaloneDiscovery(c)
+
 	err := StoreClientConfig(c)
 	if err != nil {
 		return nil, err
@@ -129,6 +132,39 @@ func NewClientConfig() (*configv1alpha1.ClientConfig, error) {
 		return nil, err
 	}
 	return c, nil
+}
+
+func populateDefaultStandaloneDiscovery(c *configv1alpha1.ClientConfig) bool {
+	if c.ClientOptions == nil {
+		c.ClientOptions = &configv1alpha1.ClientOptions{}
+	}
+	if c.ClientOptions.CLI == nil {
+		c.ClientOptions.CLI = &configv1alpha1.CLIOptions{}
+	}
+	if c.ClientOptions.CLI.DiscoverySources == nil {
+		c.ClientOptions.CLI.DiscoverySources = make([]configv1alpha1.PluginDiscovery, 0)
+	}
+
+	defaultStandaloneDiscoveryImage := DefaultStandaloneDiscoveryImage()
+	for _, ds := range c.ClientOptions.CLI.DiscoverySources {
+		if ds.OCI != nil && ds.OCI.Name == DefaultStandaloneDiscoveryName {
+			if ds.OCI.Image == defaultStandaloneDiscoveryImage {
+				return false
+			}
+			ds.OCI.Image = defaultStandaloneDiscoveryImage
+			return true
+		}
+	}
+
+	defaultDiscovery := configv1alpha1.PluginDiscovery{
+		OCI: &configv1alpha1.OCIDiscovery{
+			Name:  DefaultStandaloneDiscoveryName,
+			Image: defaultStandaloneDiscoveryImage,
+		},
+	}
+	// Prepend default discovery to available discovery sources
+	c.ClientOptions.CLI.DiscoverySources = append([]configv1alpha1.PluginDiscovery{defaultDiscovery}, c.ClientOptions.CLI.DiscoverySources...)
+	return true
 }
 
 func populateDefaultCliFeatureValues(c *configv1alpha1.ClientConfig, defaultCliFeatureFlags map[string]bool) error {
@@ -225,8 +261,10 @@ func GetClientConfig() (cfg *configv1alpha1.ClientConfig, err error) {
 		return nil, errors.Wrap(err, "could not decode config file")
 	}
 
-	added := addMissingDefaultFeatureFlags(&c, DefaultCliFeatureFlags)
-	if added {
+	addedDefaultDiscovery := populateDefaultStandaloneDiscovery(&c)
+	addedFeatureFlags := addMissingDefaultFeatureFlags(&c, DefaultCliFeatureFlags)
+
+	if addedFeatureFlags || addedDefaultDiscovery {
 		_ = StoreClientConfig(&c)
 	}
 
