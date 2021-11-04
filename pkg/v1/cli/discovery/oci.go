@@ -14,7 +14,7 @@ import (
 	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/cli/plugin"
 )
 
-// OCIDiscovery is a artifact discovery endpoint utilizing OCI image
+// OCIDiscovery is an artifact discovery endpoint utilizing OCI image
 type OCIDiscovery struct {
 	// name is a name of the discovery
 	name string

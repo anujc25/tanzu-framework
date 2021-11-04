@@ -5,7 +5,7 @@ package discovery
 
 import "github.com/vmware-tanzu/tanzu-framework/pkg/v1/cli/plugin"
 
-// GCPDiscovery is a artifact discovery endpoing utilizing a GCP bucket.
+// GCPDiscovery is an artifact discovery endpoing utilizing a GCP bucket.
 type GCPDiscovery struct {
 	bucketName   string
 	manifestPath string

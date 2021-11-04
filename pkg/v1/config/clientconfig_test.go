@@ -370,9 +370,7 @@ func TestConfigPopulateDefaultStandaloneDiscovery(t *testing.T) {
 			},
 		},
 	}
-	DefaultStandaloneDiscoveryRepository = "fake.image.repo"
-	DefaultStandaloneDiscoveryImagePath = "package/standalone-plugins"
-	DefaultStandaloneDiscoveryImageTag = "v1.0.0"
+	configureTestDefaultStandaloneDiscovery()
 
 	assert := assert.New(t)
 
@@ -398,9 +396,7 @@ func TestConfigPopulateDefaultStandaloneDiscoveryWhenPresentAndImageIsSame(t *te
 			},
 		},
 	}
-	DefaultStandaloneDiscoveryRepository = "fake.image.repo"
-	DefaultStandaloneDiscoveryImagePath = "package/standalone-plugins"
-	DefaultStandaloneDiscoveryImageTag = "v1.0.0"
+	configureTestDefaultStandaloneDiscovery()
 
 	assert := assert.New(t)
 
@@ -432,9 +428,7 @@ func TestConfigPopulateDefaultStandaloneDiscoveryWhenPresentAndImageIsNotSame(t 
 			},
 		},
 	}
-	DefaultStandaloneDiscoveryRepository = "fake.image.repo"
-	DefaultStandaloneDiscoveryImagePath = "package/standalone-plugins"
-	DefaultStandaloneDiscoveryImageTag = "v1.0.0"
+	configureTestDefaultStandaloneDiscovery()
 
 	assert := assert.New(t)
 
@@ -445,4 +439,10 @@ func TestConfigPopulateDefaultStandaloneDiscoveryWhenPresentAndImageIsNotSame(t 
 	assert.Equal(cfg.ClientOptions.CLI.DiscoverySources[0].OCI.Image, "fake.image.repo/package/standalone-plugins:v1.0.0")
 	assert.Equal(cfg.ClientOptions.CLI.DiscoverySources[1].OCI.Name, "additional-discovery")
 	assert.Equal(cfg.ClientOptions.CLI.DiscoverySources[1].OCI.Image, "additional-discovery/path:v1.0.0")
+}
+
+func configureTestDefaultStandaloneDiscovery() {
+	DefaultStandaloneDiscoveryRepository = "fake.image.repo"
+	DefaultStandaloneDiscoveryImagePath = "package/standalone-plugins"
+	DefaultStandaloneDiscoveryImageTag = "v1.0.0"
 }

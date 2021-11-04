@@ -41,5 +41,8 @@ func CreateDiscoveryFromV1alpha1(pd v1alpha1.PluginDiscovery) (Discovery, error)
 	if pd.Local != nil {
 		return NewLocalDiscovery(pd.Local.Name, pd.Local.Path), nil
 	}
+	if pd.Kubernetes != nil {
+		return NewLocalDiscovery(pd.Local.Name, pd.Local.Path), nil
+	}
 	return nil, errors.New("unknown plugin discovery")
 }

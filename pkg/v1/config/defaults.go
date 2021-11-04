@@ -11,10 +11,14 @@ import (
 
 // Default Standalone Discovery configuration
 // Value of this variables gets assigned during build time
-var DefaultStandaloneDiscoveryRepository = ""
-var DefaultStandaloneDiscoveryImagePath = ""
-var DefaultStandaloneDiscoveryImageTag = ""
-var DefaultStandaloneDiscoveryName = "default"
+var (
+	DefaultStandaloneDiscoveryRepository = ""
+	DefaultStandaloneDiscoveryImagePath  = ""
+	DefaultStandaloneDiscoveryImageTag   = ""
+	DefaultStandaloneDiscoveryName       = "default"
+	DefaultStandaloneDiscoveryType       = "oci"
+	DefaultStandaloneDiscoveryLocalPath  = ""
+)
 
 // CoreRepositoryName is the core repository name.
 const CoreRepositoryName = "core"

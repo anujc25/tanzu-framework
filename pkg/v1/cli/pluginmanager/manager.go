@@ -113,7 +113,19 @@ func DiscoverServerPlugins(serverName string) (plugins []plugin.Discovered, err 
 		return
 	}
 
-	plugins, err = discoverPlugins(server.DiscoverySources)
+	discoverySources := server.DiscoverySources
+	if server.Type == v1alpha1.ManagementClusterServerType {
+		defaultClusterK8sDiscovery := v1alpha1.PluginDiscovery{
+			Kubernetes: &v1alpha1.KubernetesDiscovery{
+				Name:    fmt.Sprintf("default-%s", serverName),
+				Path:    server.ManagementClusterOpts.Path,
+				Context: server.ManagementClusterOpts.Context,
+			},
+		}
+		discoverySources = append(discoverySources, defaultClusterK8sDiscovery)
+	}
+
+	plugins, err = discoverPlugins(discoverySources)
 	if err != nil {
 		return
 	}
@@ -121,7 +133,7 @@ func DiscoverServerPlugins(serverName string) (plugins []plugin.Discovered, err 
 		plugins[i].Scope = common.PluginScopeContext
 		plugins[i].Status = common.PluginStatusNotInstalled
 	}
-	return
+	return plugins, err
 }
 
 // DiscoverPlugins returns the available plugins that can be used with the given server

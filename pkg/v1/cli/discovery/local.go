@@ -17,7 +17,7 @@ import (
 	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/cli/plugin"
 )
 
-// LocalDiscovery is a artifact discovery endpoint utilizing a local host os.
+// LocalDiscovery is an artifact discovery endpoint utilizing a local host os.
 type LocalDiscovery struct {
 	path string
 	name string

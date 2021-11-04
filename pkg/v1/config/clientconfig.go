@@ -145,6 +145,41 @@ func populateDefaultStandaloneDiscovery(c *configv1alpha1.ClientConfig) bool {
 		c.ClientOptions.CLI.DiscoverySources = make([]configv1alpha1.PluginDiscovery, 0)
 	}
 
+	switch DefaultStandaloneDiscoveryType {
+	case "oci":
+		return populateDefaultStandaloneDiscoveryOCI(c)
+	case "local":
+		return populateDefaultStandaloneDiscoveryLocal(c)
+	default:
+		log.Warning("unsupported default standalone discovery configuration")
+	}
+	return false
+}
+
+func populateDefaultStandaloneDiscoveryLocal(c *configv1alpha1.ClientConfig) bool {
+	for _, ds := range c.ClientOptions.CLI.DiscoverySources {
+		if ds.Local != nil && ds.Local.Name == DefaultStandaloneDiscoveryName {
+			if ds.Local.Path == DefaultStandaloneDiscoveryLocalPath {
+				return false
+			}
+			ds.Local.Path = DefaultStandaloneDiscoveryLocalPath
+			return true
+		}
+	}
+
+	defaultDiscovery := configv1alpha1.PluginDiscovery{
+		Local: &configv1alpha1.LocalDiscovery{
+			Name: DefaultStandaloneDiscoveryName,
+			Path: DefaultStandaloneDiscoveryLocalPath,
+		},
+	}
+
+	// Prepend default discovery to available discovery sources
+	c.ClientOptions.CLI.DiscoverySources = append([]configv1alpha1.PluginDiscovery{defaultDiscovery}, c.ClientOptions.CLI.DiscoverySources...)
+	return true
+}
+
+func populateDefaultStandaloneDiscoveryOCI(c *configv1alpha1.ClientConfig) bool {
 	defaultStandaloneDiscoveryImage := DefaultStandaloneDiscoveryImage()
 	for _, ds := range c.ClientOptions.CLI.DiscoverySources {
 		if ds.OCI != nil && ds.OCI.Name == DefaultStandaloneDiscoveryName {
@@ -162,6 +197,7 @@ func populateDefaultStandaloneDiscovery(c *configv1alpha1.ClientConfig) bool {
 			Image: defaultStandaloneDiscoveryImage,
 		},
 	}
+
 	// Prepend default discovery to available discovery sources
 	c.ClientOptions.CLI.DiscoverySources = append([]configv1alpha1.PluginDiscovery{defaultDiscovery}, c.ClientOptions.CLI.DiscoverySources...)
 	return true
