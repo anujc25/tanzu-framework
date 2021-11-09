@@ -11,6 +11,7 @@ import (
 	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/cli/common"
 	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/cli/plugin"
 	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/tkg/clusterclient"
+	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/tkg/log"
 )
 
 // KubernetesDiscovery is an artifact discovery utilizing CLIPlugin API in kubernetes cluster
@@ -61,10 +62,11 @@ func (k *KubernetesDiscovery) Manifest() ([]plugin.Discovered, error) {
 	plugins := make([]plugin.Discovered, 0)
 
 	// Create cluster client
-	clusterClientOptions := clusterclient.Options{GetClientInterval: 2 * time.Second, GetClientTimeout: 5 * time.Second}
+	clusterClientOptions := clusterclient.Options{GetClientInterval: 2 * time.Second, GetClientTimeout: 5 * time.Second, OperationTimeout: 5 * time.Second}
 	clusterClient, err := clusterclient.NewClient(k.kubeconfigPath, k.kubecontext, clusterClientOptions)
 	if err != nil {
-		return nil, err
+		log.Warning("error creating cluster client to fetch discovery source: %v", err.Error())
+		return nil, nil
 	}
 
 	// get all cliplugins resources available on the cluster

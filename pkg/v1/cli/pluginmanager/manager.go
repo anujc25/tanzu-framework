@@ -413,7 +413,7 @@ func SyncPlugins(serverName string) error {
 // Clean deletes all plugins and tests.
 func Clean() error {
 	if err := catalog.CleanCatalogCache(); err != nil {
-		return errors.Errorf("Failed to clean the catalog cache %v", err)
+		log.Debugf("Failed to clean the catalog cache %v", err)
 	}
 	return os.RemoveAll(common.DefaultPluginRoot)
 }
