@@ -13,6 +13,7 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/novln/docker-parser/docker"
 	"github.com/pkg/errors"
 	"go.uber.org/multierr"
 	"golang.org/x/mod/semver"
@@ -472,6 +473,11 @@ func SyncPlugins(serverName string) error {
 		return err
 	}
 
+	err = verifyPlugins(plugins)
+	if err != nil {
+		return errors.Wrap(err, "plugin verification failed")
+	}
+
 	installed := false
 
 	errList := make([]error, 0)
@@ -693,4 +699,45 @@ func getPluginDescriptorResource(pluginFilePath string) (*cliv1alpha1.PluginDesc
 		return nil, fmt.Errorf("could not unmarshal %s: %v", filepath.Base(pluginFilePath), err)
 	}
 	return &pd, nil
+}
+
+// verifyPlugins
+func verifyPlugins(plugins []plugin.Discovered) error {
+	for i := range plugins {
+		return verifyPlugin(plugins[i])
+	}
+	return nil
+}
+
+// verifyPlugin
+func verifyPlugin(p plugin.Discovered) error {
+	artifactInfo, err := p.Distribution.DescribeArtifact(p.RecommendedVersion, runtime.GOOS, runtime.GOARCH)
+	if err != nil {
+		return err
+	}
+	return verifyRegistry(artifactInfo.Image)
+}
+
+func verifyRegistry(registryURI string) error {
+	if registryURI == "" {
+		return nil
+	}
+
+	registryObj, err := docker.ParseNamed(registryURI)
+	if err != nil {
+		return err
+	}
+
+	trustedRegistries := config.GetDefaultTrustedRegistries()
+	for _, tr := range trustedRegistries {
+		trustedRegistryObj, err := docker.ParseNamed(tr)
+		if err != nil {
+			continue
+		}
+		if trustedRegistryObj.Hostname() == registryObj.Hostname() &&
+			strings.HasPrefix(registryObj.FullName(), trustedRegistryObj.FullName()) {
+			return nil
+		}
+	}
+	return errors.Errorf("untrusted registry %q detected", registryObj.FullName())
 }

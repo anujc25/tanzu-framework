@@ -545,3 +545,14 @@ func Test_InstallPluginsFromLocalSourceWithLegacyDirectoryStructure(t *testing.T
 	assert.Equal(2, len(installedStandalonePlugins))
 	assert.ElementsMatch([]string{"bar", "foo"}, []string{installedStandalonePlugins[0].Name, installedStandalonePlugins[1].Name})
 }
+
+func Test_verifyPlugin(t *testing.T) {
+	assert := assert.New(t)
+
+	err := verifyRegistry("projects-stg.registry.vmware.com/tkg/tanzu_core/tanzu-cli-plugins/kubernetes-release-windows-amd64@sha256:267e33ca87e8681b9cfe0ebe68794bc7f19303dd5011683ef562c98c09d96ec1")
+	assert.Nil(err)
+
+	err = verifyRegistry("projects-stg.registry.com/image")
+	assert.Nil(err)
+
+}
