@@ -80,8 +80,7 @@ end
 #! adheres to the convention of ending in "cc". Any overlay not meant to be used
 #! scenario should be guarded by calling this helper.
 def tkg_use_clusterclass():
-    return data.values.TKG_CUSTOM_IMAGE_REPOSITORY != ""
-    data.values.CLUSTER_PLAN != "" and data.values.CLUSTER_PLAN.endswith("cc")
+    return data.values.CLUSTER_PLAN != "" and data.values.CLUSTER_PLAN.endswith("cc")
 end
 
 def tkg_image_repo():
