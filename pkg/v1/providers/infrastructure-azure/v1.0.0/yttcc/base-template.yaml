@@ -11,7 +11,7 @@ spec:
     services:
       cidrBlocks: ["${SERVICE_CIDR}"]
   topology:
-    class: tkg-cluster-class
+    class: tkg-cluster-class-dev
     version: v1.21.2
     controlPlane:
       replicas: ${CONTROL_PLANE_MACHINE_COUNT}
@@ -116,53 +116,69 @@ spec:
     - selector:
         apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
         kind: AzureClusterTemplate
+        matchResources:
+          infrastructureCluster: true
       jsonPatches:
       - op: replace
-        path: "/spec/identityRef/name"
+        path: "/spec/template/spec/identityRef/name"
         valueFrom:
           template: '{{.builtin.cluster.name}}-identity'
       - op: replace
-        path: "/spec/location"
+        path: "/spec/template/spec/location"
         valueFrom:
           template: '{{.AZURE_LOCATION}}'
       - op: replace
-        path: "/spec/networkSpec/vnet"
+        path: "/spec/template/spec/networkSpec/vnet"
         valueFrom:
           template: |
             name: {{.builtin.cluster.name}}-vnet
+            # TODO (AZURE_VNET_RESOURCE_GROUP optionally)
             resourceGroup: {{.builtin.cluster.name}}
-            cidrBlock: {{.AZURE_VNET_CIDR}}
+            cidrBlocks: [{{.AZURE_VNET_CIDR}}]
       - op: replace
-        path: "/spec/resourceGroup"
+        path: "/spec/template/spec/resourceGroup"
         valueFrom:
-          # TODO (AZURE_RESOURCE_GROUP optionally)
           variable: builtin.cluster.name
       - op: replace
-        path: "/spec/subscriptionID"
+        path: "/spec/template/spec/subscriptionID"
         valueFrom:
           variable: AZURE_SUBSCRIPTION_ID
       - op: replace
-        path: "/spec/subnets"
+        path: "/spec/template/spec/networkSpec/subnets"
         valueFrom:
           template: |
             - name: {{ .AZURE_CONTROL_PLANE_SUBNET_NAME }}
               role: control-plane
-              cidrBlock: {{ .AZURE_CONTROL_PLANE_SUBNET_CIDR }}
+              cidrBlocks: [{{ .AZURE_CONTROL_PLANE_SUBNET_CIDR }}]
             - name: {{ .AZURE_NODE_SUBNET_NAME }}
               role: node
-              cidrBlock: {{ .AZURE_NODE_SUBNET_CIDR }}
+              cidrBlocks: [{{ .AZURE_NODE_SUBNET_CIDR }}]
+  - name: ACT_optional
+    enabledIf: '{{if .AZURE_RESOURCE_GROUP}}true{{end}}'
+    definitions:
+    - selector:
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        kind: AzureClusterTemplate
+        matchResources:
+          infrastructureCluster: true
+      jsonPatches:
+      - op: replace
+        path: "/spec/template/spec/resourceGroup"
+        valueFrom:
+          variable: AZURE_RESOURCE_GROUP
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: AzureClusterTemplate
 metadata:
   name: azure-cluster-template
+  namespace: default
 spec:
   template:
     spec:
       identityRef:
         apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
         kind: AzureClusterIdentity
-        name: ${CLUSTER_NAME}-identity
+        name: xxcnamexx-identity
         namespace: tkg-system
       location: ${AZURE_LOCATION}
       networkSpec:
@@ -184,6 +200,7 @@ apiVersion: controlplane.cluster.x-k8s.io/v1beta1
 kind: KubeadmControlPlaneTemplate
 metadata:
   name: tkg-kcp
+  namespace: default
 spec:
   template:
     spec:
@@ -274,11 +291,13 @@ spec:
           name: tkg-control-plane
       replicas: ${CONTROL_PLANE_MACHINE_COUNT}
       version: ${KUBERNETES_VERSION}
+
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: AzureMachineTemplate
 metadata:
   name: tkg-controlplane-azure-template
+  namespace: default
 spec:
   template:
     spec:
@@ -286,6 +305,8 @@ spec:
         - diskSizeGB: 256
           lun: 0
           nameSuffix: etcddisk
+      image:
+         id: image_id
       osDisk:
         diskSizeGB: 128
         managedDisk:
@@ -293,6 +314,7 @@ spec:
         osType: Linux
       sshPublicKey: ${AZURE_SSH_PUBLIC_KEY_B64:=""}
       vmSize: ${AZURE_CONTROL_PLANE_MACHINE_TYPE}
+
 #---
 #apiVersion: cluster.x-k8s.io/v1beta1
 #kind: MachineDeployment
@@ -325,6 +347,7 @@ apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: AzureMachineTemplate
 metadata:
   name: tkg-azure-template
+  namespace: default
 spec:
   template:
     spec:
@@ -333,13 +356,17 @@ spec:
         managedDisk:
           storageAccountType: Premium_LRS
         osType: Linux
+      image:
+         id: image_id
       sshPublicKey: ${AZURE_SSH_PUBLIC_KEY_B64:=""}
       vmSize: ${AZURE_NODE_MACHINE_TYPE}
+
 ---
 apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
 kind: KubeadmConfigTemplate
 metadata:
   name: tkg-bootstrap-template
+  namespace: default
 spec:
   template:
     spec:
