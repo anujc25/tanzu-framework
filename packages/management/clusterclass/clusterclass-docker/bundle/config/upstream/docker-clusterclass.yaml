@@ -1,0 +1,149 @@
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: ClusterClass
+metadata:
+  name: tkg-docker-clusterclass
+  namespace: default
+spec:
+  controlPlane:
+    ref:
+      apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+      kind: KubeadmControlPlaneTemplate
+      name: tkg-docker-kcp
+    machineInfrastructure:
+      ref:
+        kind: DockerMachineTemplate
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        name: tkg-controlplane-docker-template
+  infrastructure:
+    ref:
+      apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+      kind: DockerClusterTemplate
+      name: tkg-docker-cluster-template
+  workers:
+    machineDeployments:
+    - class: tkg-worker
+      template:
+        bootstrap:
+          ref:
+            apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+            kind: KubeadmConfigTemplate
+            name: tkg-docker-bootstrap-worker-template
+        infrastructure:
+          ref:
+            apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+            kind: DockerMachineTemplate
+            name: tkg-docker-worker-template
+  patches:
+  - name: KCP_main
+    description: "Sets the imageRepository, etcdImageTag, coreDNSImageTag used for the KubeadmControlPlane."
+    definitions:
+    - selector:
+        apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+        kind: KubeadmControlPlaneTemplate
+        matchResources:
+          controlPlane: true
+      jsonPatches:
+      - op: add
+        path: "/spec/template/spec/kubeadmConfigSpec/clusterConfiguration/imageRepository"
+        valueFrom:
+          variable: imageRepository
+      - op: add
+        path: "/spec/template/spec/kubeadmConfigSpec/clusterConfiguration/etcd"
+        valueFrom:
+          template: |
+            local:
+              imageTag: {{ .etcdImageTag }}
+      - op: add
+        path: "/spec/template/spec/kubeadmConfigSpec/clusterConfiguration/dns"
+        valueFrom:
+          template: |
+            imageTag: {{ .coreDNSImageTag }}
+
+  - name: dockerNodeImage
+    description: "Sets the container image that is used for running dockerMachines for the controlPlane and tkg-worker machineDeployments."
+    definitions:
+    - selector:
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        kind: DockerMachineTemplate
+        matchResources:
+          controlPlane: true
+          machineDeploymentClass:
+            names:
+            - tkg-worker
+      jsonPatches:
+      - op: add
+        path: "/spec/template/spec/customImage"
+        valueFrom:
+          variable: dockerNodeImage
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: DockerClusterTemplate
+metadata:
+  name: tkg-docker-cluster-template
+spec:
+  template:
+    spec: {}
+---
+kind: KubeadmControlPlaneTemplate
+apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+metadata:
+  name: tkg-docker-kcp
+spec:
+  template:
+    spec:
+      kubeadmConfigSpec:
+        clusterConfiguration:
+          controllerManager:
+            extraArgs: { enable-hostpath-provisioner: 'true' }
+          apiServer:
+            certSANs: [localhost, 127.0.0.1, 0.0.0.0]
+        initConfiguration:
+          nodeRegistration:
+            criSocket: /var/run/containerd/containerd.sock
+            kubeletExtraArgs:
+              #! We have to pin the cgroupDriver to cgroupfs as kubeadm >=1.21 defaults to systemd
+              #! kind will implement systemd support in: https://github.com/kubernetes-sigs/kind/issues/1726
+              cgroup-driver: cgroupfs
+              eviction-hard: 'nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%'
+        joinConfiguration:
+          nodeRegistration:
+            criSocket: /var/run/containerd/containerd.sock
+            kubeletExtraArgs:
+              #! We have to pin the cgroupDriver to cgroupfs as kubeadm >=1.21 defaults to systemd
+              #! kind will implement systemd support in: https://github.com/kubernetes-sigs/kind/issues/1726
+              cgroup-driver: cgroupfs
+              eviction-hard: 'nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%'
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: DockerMachineTemplate
+metadata:
+  name: tkg-controlplane-docker-template
+spec:
+  template:
+    spec:
+      extraMounts:
+      - containerPath: "/var/run/docker.sock"
+        hostPath: "/var/run/docker.sock"
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: DockerMachineTemplate
+metadata:
+  name: tkg-docker-worker-template
+spec:
+  template:
+    spec: {}
+---
+apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+kind: KubeadmConfigTemplate
+metadata:
+  name: tkg-docker-bootstrap-worker-template
+spec:
+  template:
+    spec:
+      joinConfiguration:
+        nodeRegistration:
+          kubeletExtraArgs:
+            #! We have to pin the cgroupDriver to cgroupfs as kubeadm >=1.21 defaults to systemd
+            #! kind will implement systemd support in: https://github.com/kubernetes-sigs/kind/issues/1726
+            cgroup-driver: cgroupfs
+            eviction-hard: 'nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%'

@@ -1,0 +1,22 @@
+#@data/values
+
+#@overlay/match-child-defaults missing_ok=True
+---
+
+#! User configurable values for clusterclass-docker
+
+configvalues:
+  DOCKER_MACHINE_TEMPLATE_IMAGE: ""
+
+TKR_KUBERNETES_SPEC:
+  version: ""
+  imageRepository: ""
+  etcd:
+    imageRepository: ""
+    imageTag: ""
+  pause:
+    imageRepository: ""
+    imageTag: ""
+  coredns:
+    imageRepository: ""
+    imageTag: ""

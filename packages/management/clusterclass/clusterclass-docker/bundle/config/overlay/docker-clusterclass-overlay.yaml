@@ -1,0 +1,56 @@
+#@ load("@ytt:overlay", "overlay")
+#@ load("@ytt:yaml", "yaml")
+#@ load("@ytt:data", "data")
+
+#@overlay/match by=overlay.subset({"kind":"ClusterClass","metadata":{"name": "tkg-docker-clusterclass"}})
+---
+kind: ClusterClass
+metadata:
+  name: tkg-docker-clusterclass
+spec:
+  #@overlay/match missing_ok=True
+  variables:
+  #@overlay/append
+  - name: imageRepository
+    required: true
+    schema:
+      openAPIV3Schema:
+        type: string
+        #@ if data.values.TKR_KUBERNETES_SPEC.imageRepository:
+        default: #@ data.values.TKR_KUBERNETES_SPEC.imageRepository
+        #@ end
+        example: "projects.registry.vmware.com/tkg"
+        description: #@  "imageRepository sets the container registry to pull images from. If empty, `{}` will be used by default".format(data.values.TKR_KUBERNETES_SPEC.imageRepository)
+  #@overlay/append
+  - name: etcdImageTag
+    required: true
+    schema:
+      openAPIV3Schema:
+        type: string
+        #@ if data.values.TKR_KUBERNETES_SPEC.etcd.imageTag:
+        default: #@ data.values.TKR_KUBERNETES_SPEC.etcd.imageTag
+        #@ end
+        example: "3.5.1-0"
+        description: "etcdImageTag sets the tag for the etcd image."
+  #@overlay/append
+  - name: coreDNSImageTag
+    required: true
+    schema:
+      openAPIV3Schema:
+        type: string
+        #@ if data.values.TKR_KUBERNETES_SPEC.coredns.imageTag:
+        default: #@ data.values.TKR_KUBERNETES_SPEC.coredns.imageTag
+        #@ end
+        example: "v1.8.5"
+        description: "coreDNSImageTag sets the tag for the coreDNS image."
+  #@overlay/append
+  - name: dockerNodeImage
+    required: true
+    schema:
+      openAPIV3Schema:
+        type: string
+        #@ if data.values.configvalues.DOCKER_MACHINE_TEMPLATE_IMAGE:
+        default: #@ data.values.configvalues.DOCKER_MACHINE_TEMPLATE_IMAGE
+        #@ end
+        example: "projects-stg.registry.vmware.com/tkg/kind/node:v1.22.3_vmware.1_v0.11.1_0825"
+        description: "coreDNSImageTag sets the tag for the coreDNS image."

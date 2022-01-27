@@ -1,0 +1,14 @@
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: PackageMetadata
+metadata:
+  name: clusterclass-docker.tanzu.vmware.com
+  namespace: default
+spec:
+  displayName: "clusterclass-docker"
+  longDescription: "Clusterclass for Docker provider package defines the default clusterclass resource"
+  shortDescription: "Clusterclass for Docker provider"
+  providerName: VMware
+  maintainers:
+    - name: ""
+  categories:
+    - "clusterclass"
