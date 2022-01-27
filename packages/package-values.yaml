@@ -36,6 +36,39 @@ managementPackageRepository:
       version: latest
       #! Gets replaced with imgpkg sha256 at build, this should be name:version
       sha256: "core-management-plugins:latest"
+      
+    - name: clusterclass-docker
+      displayName: clusterclass-docker
+      #! Relative path to package bundle
+      path: packages/management/clusterclass/clusterclass-docker
+      domain: tanzu.vmware.com
+      version: latest
+      #! Gets replaced with imgpkg sha256 at build, this should be name:version
+      sha256: "clusterclass-docker:latest"
+    - name: clusterclass-azure
+      displayName: clusterclass-azure
+      #! Relative path to package bundle
+      path: packages/management/clusterclass/clusterclass-azure
+      domain: tanzu.vmware.com
+      version: latest
+      #! Gets replaced with imgpkg sha256 at build, this should be name:version
+      sha256: "clusterclass-azure:latest"
+    - name: clusterclass-vsphere
+      displayName: clusterclass-vsphere
+      #! Relative path to package bundle
+      path: packages/management/clusterclass/clusterclass-vsphere
+      domain: tanzu.vmware.com
+      version: latest
+      #! Gets replaced with imgpkg sha256 at build, this should be name:version
+      sha256: "clusterclass-vsphere:latest"
+    - name: clusterclass-aws
+      displayName: clusterclass-aws
+      #! Relative path to package bundle
+      path: packages/management/clusterclass/clusterclass-aws
+      domain: tanzu.vmware.com
+      version: latest
+      #! Gets replaced with imgpkg sha256 at build, this should be name:version
+      sha256: "clusterclass-aws:latest"
 
 standalonePackageRepository:
   #! This gets overwritten by build
