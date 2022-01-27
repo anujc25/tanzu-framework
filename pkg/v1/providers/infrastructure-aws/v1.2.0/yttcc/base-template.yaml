@@ -22,8 +22,8 @@ spec:
         replicas: ${WORKER_MACHINE_COUNT}
     variables:
 ---
-# VVVV everything below would have been pre-generated prior to cluster creation
-# and deployed on the management cluster
+#! VVVV everything below would have been pre-generated prior to cluster creation
+#! and deployed on the management cluster
 apiVersion: cluster.x-k8s.io/v1beta1
 kind: ClusterClass
 metadata:
@@ -71,21 +71,25 @@ spec:
       openAPIV3Schema:
         type: string
   - name: BASTION_HOST_ENABLED
+    required: true
     schema:
       openAPIV3Schema:
         type: boolean
         default: true
   - name: AWS_VPC_CIDR
+    required: true
     schema:
       openAPIV3Schema:
         type: string
         default: "10.0.0.0/16"
   - name: AWS_VPC_ID
+    required: true
     schema:
       openAPIV3Schema:
         type: string
         default: ""
   - name: AWS_NODE_AZ
+    required: true
     schema:
       openAPIV3Schema:
         type: string
@@ -214,7 +218,7 @@ spec:
       region: "${AWS_REGION}"
       sshKeyName: "${AWS_SSH_KEY_NAME}"
       bastion:
-        enabled: ${BASTION_HOST_ENABLED}
+        enabled: true
       network:
         vpc:
           cidrBlock: '${AWS_VPC_CIDR}'
@@ -232,12 +236,6 @@ metadata:
 spec:
   template:
     spec:
-      machineTemplate:
-        infrastructureRef:
-          kind: AWSMachineTemplate
-          apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
-          name: control-plane
-          namespace: default
       kubeadmConfigSpec:
         useExperimentalRetryJoin: true
         clusterConfiguration:
@@ -251,16 +249,16 @@ spec:
               cloud-provider: aws
               tls-cipher-suites: TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
           dns:
-            imageRepository: projects.registry.vmware.com/tkg # TODO '${_TKG_COREDNS_IMAGE_REPOSITORY}' May be a variable for package level 
-            imageTag: v1.8.4_vmware.5 # TODO '${_TKG_COREDNS_IMAGE_TAG}' May be a variable for package level 
+            imageRepository: projects-stg.registry.vmware.com/tkg #! TODO '${_TKG_COREDNS_IMAGE_REPOSITORY}' May be a variable for package level
+            imageTag: v1.8.4_vmware.5 #! TODO '${_TKG_COREDNS_IMAGE_TAG}' May be a variable for package level
           etcd:
             local:
               dataDir: /var/lib/etcd
-              imageRepository: projects.registry.vmware.com/tkg #TODO '${_TKG_ETCD_IMAGE_REPOSITORY}' May be a variable for package level 
-              imageTag: v3.5.0_vmware.5 #TODO '${_TKG_ETCD_IMAGE_TAG}' May be a variable for package level 
+              imageRepository: projects-stg.registry.vmware.com/tkg #! TODO '${_TKG_ETCD_IMAGE_REPOSITORY}' May be a variable for package level
+              imageTag: v3.5.0_vmware.5 #! TODO '${_TKG_ETCD_IMAGE_TAG}' May be a variable for package level
               extraArgs:
                 cipher-suites: TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
-          imageRepository: registry.tkg.vmware.run #TODO '${_TKG_COREDNS_IMAGE_REPOSITORY}' May be a variable for package level
+          imageRepository: projects-stg.registry.vmware.com/tkg #! TODO '${_TKG_COREDNS_IMAGE_REPOSITORY}' May be a variable for package level
           scheduler:
             extraArgs:
               tls-cipher-suites: TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
@@ -276,9 +274,6 @@ spec:
             kubeletExtraArgs:
               cloud-provider: aws
               tls-cipher-suites: TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
-
-      replicas: ${CONTROL_PLANE_MACHINE_COUNT}
-      version: ${KUBERNETES_VERSION}
 ---
 kind: AWSMachineTemplate
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
