@@ -40,7 +40,7 @@ managementPackageRepository:
     - name: clusterclass-docker
       displayName: clusterclass-docker
       #! Relative path to package bundle
-      path: packages/management/clusterclass/clusterclass-docker
+      path: packages/management/clusterclass-docker
       domain: tanzu.vmware.com
       version: latest
       #! Gets replaced with imgpkg sha256 at build, this should be name:version
@@ -48,7 +48,7 @@ managementPackageRepository:
     - name: clusterclass-azure
       displayName: clusterclass-azure
       #! Relative path to package bundle
-      path: packages/management/clusterclass/clusterclass-azure
+      path: packages/management/clusterclass-azure
       domain: tanzu.vmware.com
       version: latest
       #! Gets replaced with imgpkg sha256 at build, this should be name:version
@@ -56,7 +56,7 @@ managementPackageRepository:
     - name: clusterclass-vsphere
       displayName: clusterclass-vsphere
       #! Relative path to package bundle
-      path: packages/management/clusterclass/clusterclass-vsphere
+      path: packages/management/clusterclass-vsphere
       domain: tanzu.vmware.com
       version: latest
       #! Gets replaced with imgpkg sha256 at build, this should be name:version
@@ -64,7 +64,7 @@ managementPackageRepository:
     - name: clusterclass-aws
       displayName: clusterclass-aws
       #! Relative path to package bundle
-      path: packages/management/clusterclass/clusterclass-aws
+      path: packages/management/clusterclass-aws
       domain: tanzu.vmware.com
       version: latest
       #! Gets replaced with imgpkg sha256 at build, this should be name:version
