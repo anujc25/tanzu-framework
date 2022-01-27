@@ -1,0 +1,28 @@
+---
+
+configvalues:
+  AWS_SSH_KEY_NAME: ""
+  AWS_REGION: "us-west-2"
+  BASTION_HOST_ENABLED: true
+  AWS_VPC_CIDR: "10.0.0.0/16"
+  AWS_VPC_ID: ""
+  AWS_NODE_AZ: ""
+  AWS_PRIVATE_NODE_CIDR: ""
+  AWS_PRIVATE_SUBNET_ID: ""
+  CONTROL_PLANE_MACHINE_TYPE: "t3.large"
+  NODE_MACHINE_TYPE: m5.large
+  AWS_CONTROL_PLANE_OS_DISK_SIZE_GIB: 80
+  AWS_NODE_OS_DISK_SIZE_GIB: 80
+
+TKR_KUBERNETES_SPEC:
+  version: "v1.21.2+vmware.1"
+  imageRepository: "projects-stg.registry.vmware.com/tkg"
+  etcd:
+    imageRepository: "projects-stg.registry.vmware.com/tkg"
+    imageTag: "v3.5.0_vmware.5"
+  pause:
+    imageRepository: "projects-stg.registry.vmware.com/tkg"
+    imageTag: "3.4.1"
+  coredns:
+    imageRepository: "projects-stg.registry.vmware.com/tkg"
+    imageTag: "v1.8.4_vmware.5"
