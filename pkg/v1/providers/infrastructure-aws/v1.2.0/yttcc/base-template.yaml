@@ -1,0 +1,483 @@
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: Cluster
+metadata:
+  name: ${CLUSTER_NAME}
+  labels:
+    tkg.tanzu.vmware.com/cluster-name: '${ CLUSTER_NAME }'
+spec:
+  clusterNetwork:
+    pods:
+      cidrBlocks: ["${CLUSTER_CIDR}"]
+    services:
+      cidrBlocks: ["${SERVICE_CIDR}"]
+  topology:
+    class: tkg-cluster-class-dev
+    version: v1.21.2
+    controlPlane:
+      replicas: ${CONTROL_PLANE_MACHINE_COUNT}
+    workers:
+      machineDeployments:
+      - class: tkg-worker
+        name: tkg-worker-pool
+        replicas: ${WORKER_MACHINE_COUNT}
+    variables:
+---
+#! VVVV everything below would have been pre-generated prior to cluster creation
+#! and deployed on the management cluster
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: ClusterClass
+metadata:
+  name: tkg-cluster-class-dev
+  namespace: default
+spec:
+  controlPlane:
+    ref:
+      apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+      kind: KubeadmControlPlaneTemplate
+      name: tkg-aws-kcp
+    machineInfrastructure:
+      ref:
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        kind: AWSMachineTemplate
+        name: tkg-aws-controlplane-template
+  workers:
+    machineDeployments:
+    - class: tkg-worker
+      template:
+         bootstrap:
+           ref:
+             apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+             kind: KubeadmConfigTemplate
+             name: tkg-aws-bootstrap-template
+         infrastructure:
+           ref:
+             apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+             kind: AWSMachineTemplate
+             name: tkg-aws-worker-template
+  infrastructure:
+     ref:
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        kind: AWSClusterTemplate
+        name: aws-cluster-template
+  variables:
+  - name: AWS_REGION
+    required: true
+    schema:
+      openAPIV3Schema:
+        type: string
+  - name: AWS_SSH_KEY_NAME
+    required: true
+    schema:
+      openAPIV3Schema:
+        type: string
+  - name: BASTION_HOST_ENABLED
+    required: true
+    schema:
+      openAPIV3Schema:
+        type: boolean
+        default: true
+  - name: AWS_VPC_CIDR
+    required: true
+    schema:
+      openAPIV3Schema:
+        type: string
+        default: "10.0.0.0/16"
+  - name: AWS_VPC_ID
+    required: true
+    schema:
+      openAPIV3Schema:
+        type: string
+        default: ""
+  - name: AWS_NODE_AZ
+    required: true
+    schema:
+      openAPIV3Schema:
+        type: string
+        default: ""
+  - name: AWS_PRIVATE_NODE_CIDR
+    required: true
+    schema:
+      openAPIV3Schema:
+        type: string
+        default: 10.0.0.0/24
+  - name: AWS_PRIVATE_SUBNET_ID
+    required: true
+    schema:
+      openAPIV3Schema:
+        type: string
+        default: ""
+  - name: AWS_PUBLIC_NODE_CIDR
+    required: true
+    schema:
+      openAPIV3Schema:
+        type: string
+        default: 10.0.1.0/24
+  - name: AWS_PUBLIC_SUBNET_ID
+    required: true
+    schema:
+      openAPIV3Schema:
+        type: string
+        default: ""
+  - name: CONTROL_PLANE_MACHINE_TYPE
+    required: true
+    schema:
+      openAPIV3Schema:
+        type: string
+        default: t3.large
+  - name: NODE_MACHINE_TYPE
+    required: true
+    schema:
+      openAPIV3Schema:
+        type: string
+        default: m5.large
+  - name: AWS_CONTROL_PLANE_OS_DISK_SIZE_GIB
+    required: true
+    schema:
+      openAPIV3Schema:
+        type: integer
+        default: 80
+  - name: AWS_NODE_OS_DISK_SIZE_GIB
+    required: true
+    schema:
+      openAPIV3Schema:
+        type: integer
+        default: 80
+  - name: AWS_SECURITY_GROUP_BASTION
+    required: true
+    schema:
+      openAPIV3Schema:
+        type: string
+        default: ""
+  - name: AWS_SECURITY_GROUP_CONTROLPLANE
+    required: true
+    schema:
+      openAPIV3Schema:
+        type: string
+        default: ""
+  - name: AWS_SECURITY_GROUP_APISERVER_LB
+    required: true
+    schema:
+      openAPIV3Schema:
+        type: string
+        default: ""
+  - name: AWS_SECURITY_GROUP_NODE
+    required: true
+    schema:
+      openAPIV3Schema:
+        type: string
+        default: ""
+  - name: AWS_SECURITY_GROUP_LB
+    required: true
+    schema:
+      openAPIV3Schema:
+        type: string
+        default: ""
+  - name: AWS_LOAD_BALANCER_SCHEME_INTERNAL
+    required: true
+    schema:
+      openAPIV3Schema:
+        type: boolean
+        default: false
+  - name: AWS_IDENTITY_REF_KIND
+    required: true
+    schema:
+      openAPIV3Schema:
+        type: string
+        default: ""
+  - name: AWS_IDENTITY_REF_NAME
+    required: true
+    schema:
+      openAPIV3Schema:
+        type: string
+        default: ""
+  patches:
+  - name: AWSCT_main
+    definitions:
+    - selector:
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        kind: AWSClusterTemplate
+        matchResources:
+          infrastructureCluster: true
+      jsonPatches:
+      - op: replace
+        path: "/spec/template/spec/region"
+        valueFrom:
+          template: '{{.AWS_REGION}}'
+      - op: replace
+        path: "/spec/template/spec/sshKeyName"
+        valueFrom:
+          variable: AWS_SSH_KEY_NAME
+      - op: replace
+        path: "/spec/template/spec/bastion/enabled"
+        valueFrom:
+          variable: BASTION_HOST_ENABLED
+      - op: replace
+        path: "/spec/template/spec/network/vpc"
+        valueFrom:
+          template: |
+            id: '{{.AWS_VPC_ID}}'
+            cidrBlock: {{.AWS_VPC_CIDR}}
+      - op: replace
+        path: "/spec/template/spec/network/subnets"
+        valueFrom:
+          template: |
+            - availabilityZone: {{if .AWS_NODE_AZ}} {{.AWS_NODE_AZ}} {{else if .AWS_REGION}} {{.AWS_REGION}}a{{end}} 
+              cidrBlock: {{.AWS_PRIVATE_NODE_CIDR}}
+              id: '{{.AWS_PRIVATE_SUBNET_ID}}'
+
+  - name: AWSCT_IdentityRef
+    enabledIf: '{{if .AWS_IDENTITY_REF_NAME }}true{{end}}'
+    definitions:
+    - selector:
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        kind: AWSClusterTemplate
+        matchResources:
+          infrastructureCluster: true
+      jsonPatches:
+      - op: add
+        path: "/spec/template/spec/identityRef"
+        valueFrom:
+          template: |
+            kind: {{if .AWS_IDENTITY_REF_KIND }} {{.AWS_IDENTITY_REF_KIND}} {{else}} "AWSClusterRoleIdentity"{{end}}
+            name: {{ .AWS_IDENTITY_REF_NAME }}
+
+  - name: AWSCT_ControlPlaneLoadBalancerScheme
+    enabledIf: '{{if eq .AWS_LOAD_BALANCER_SCHEME_INTERNAL true }}true{{end}}'
+    definitions:
+    - selector:
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        kind: AWSClusterTemplate
+        matchResources:
+          infrastructureCluster: true
+      jsonPatches:
+      - op: add
+        path: "/spec/template/spec/controlPlaneLoadBalancer"
+        valueFrom:
+          template: |
+            scheme: "internal"
+  
+  - name: AWSCT_AvailabilityZone_Public
+    enabledIf: '{{if or (not .AWS_VPC_ID) (.AWS_PUBLIC_SUBNET_ID) }}true{{end}}'
+    definitions:
+    - selector:
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        kind: AWSClusterTemplate
+        matchResources:
+          infrastructureCluster: true
+      jsonPatches:
+      - op: add
+        path: "/spec/template/spec/network/subnets/1"
+        valueFrom:
+          template: |
+            availabilityZone: {{if .AWS_NODE_AZ}} {{.AWS_NODE_AZ}} {{else if .AWS_REGION}} {{.AWS_REGION}}a{{end}}
+            cidrBlock: {{.AWS_PUBLIC_NODE_CIDR}}
+            isPublic: true
+            id: '{{.AWS_PUBLIC_SUBNET_ID}}'
+
+  - name: AWSCT_SecurityGroupOverrides
+    enabledIf: '{{if or ( ne .AWS_SECURITY_GROUP_BASTION "") (ne .AWS_SECURITY_GROUP_CONTROLPLANE "") (ne .AWS_SECURITY_GROUP_APISERVER_LB "") (ne .AWS_SECURITY_GROUP_NODE "") (ne .AWS_SECURITY_GROUP_LB "")}}true{{end}}'
+    definitions:
+    - selector:
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        kind: AWSClusterTemplate
+        matchResources:
+          infrastructureCluster: true
+      jsonPatches:
+      - op: add
+        path: "/spec/template/spec/network/securityGroupOverrides"
+        valueFrom:
+          template: |
+              {{if .AWS_SECURITY_GROUP_BASTION}}  bastion: {{.AWS_SECURITY_GROUP_BASTION}} {{end}}
+              {{if .AWS_SECURITY_GROUP_CONTROLPLANE }}  controlplane: {{.AWS_SECURITY_GROUP_CONTROLPLANE}} {{end}}
+              {{if .AWS_SECURITY_GROUP_APISERVER_LB }}  apiserver-lb:  {{.AWS_SECURITY_GROUP_APISERVER_LB}} {{end}}
+              {{if .AWS_SECURITY_GROUP_NODE }}  node: {{.AWS_SECURITY_GROUP_NODE}} {{end}}
+              {{if .AWS_SECURITY_GROUP_LB }}  lb: {{.AWS_SECURITY_GROUP_LB}} {{end}}
+
+  - name: AWS_MT_controlplane
+    definitions:
+    - selector:
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        kind: AWSMachineTemplate
+        matchResources:
+          controlPlane: true
+      jsonPatches:
+      - op: replace
+        path: "/spec/template/spec/instanceType"
+        valueFrom:
+          variable: CONTROL_PLANE_MACHINE_TYPE
+      - op: replace
+        path: "/spec/template/spec/sshKeyName"
+        valueFrom:
+          variable: AWS_SSH_KEY_NAME
+      - op: replace
+        path: "/spec/template/spec/rootVolume/size"
+        valueFrom:
+          variable: AWS_CONTROL_PLANE_OS_DISK_SIZE_GIB
+
+  - name: AWS_MT_worker
+    definitions:
+    - selector:
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        kind: AWSMachineTemplate
+        matchResources:
+          machineDeploymentClass:
+            names:
+            - "tkg-worker"
+      jsonPatches:
+      - op: replace
+        path: "/spec/template/spec/instanceType"
+        valueFrom:
+          variable: NODE_MACHINE_TYPE
+      - op: replace
+        path: "/spec/template/spec/sshKeyName"
+        valueFrom:
+          variable: AWS_SSH_KEY_NAME
+      - op: replace
+        path: "/spec/template/spec/rootVolume/size"
+        valueFrom:
+          variable: AWS_NODE_OS_DISK_SIZE_GIB
+              
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: AWSClusterTemplate
+metadata:
+  name: aws-cluster-template
+  namespace: default
+spec:
+  template:
+    spec:
+      region: "${AWS_REGION}"
+      sshKeyName: "${AWS_SSH_KEY_NAME}"
+      bastion:
+        enabled: true
+      network:
+        vpc:
+          cidrBlock: '${AWS_VPC_CIDR}'
+          id: '${AWS_VPC_ID}'
+        subnets:
+          - availabilityZone: '${AWS_NODE_AZ}'
+            cidrBlock: '${AWS_PRIVATE_NODE_CIDR}'
+            id: '${AWS_PRIVATE_SUBNET_ID}'
+---
+apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+kind: KubeadmControlPlaneTemplate
+metadata:
+  name: tkg-aws-kcp
+  namespace: default
+spec:
+  template:
+    spec:
+      kubeadmConfigSpec:
+        useExperimentalRetryJoin: true
+        clusterConfiguration:
+          apiServer:
+            timeoutForControlPlane: "8m0s"
+            extraArgs:
+              cloud-provider: aws
+              tls-cipher-suites: TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_256_GCM_SHA384
+          controllerManager:
+            extraArgs:
+              cloud-provider: aws
+              tls-cipher-suites: TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
+          dns:
+            imageRepository: projects-stg.registry.vmware.com/tkg #! TODO '${_TKG_COREDNS_IMAGE_REPOSITORY}' May be a variable for package level
+            imageTag: v1.8.4_vmware.5 #! TODO '${_TKG_COREDNS_IMAGE_TAG}' May be a variable for package level
+          etcd:
+            local:
+              dataDir: /var/lib/etcd
+              imageRepository: projects-stg.registry.vmware.com/tkg #! TODO '${_TKG_ETCD_IMAGE_REPOSITORY}' May be a variable for package level
+              imageTag: v3.5.0_vmware.5 #! TODO '${_TKG_ETCD_IMAGE_TAG}' May be a variable for package level
+              extraArgs:
+                cipher-suites: TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
+          imageRepository: projects-stg.registry.vmware.com/tkg #! TODO '${_TKG_COREDNS_IMAGE_REPOSITORY}' May be a variable for package level
+          scheduler:
+            extraArgs:
+              tls-cipher-suites: TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
+        initConfiguration:
+          nodeRegistration:
+            name: '{{ ds.meta_data.local_hostname }}'
+            kubeletExtraArgs:
+              cloud-provider: aws
+              tls-cipher-suites: TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
+        joinConfiguration:
+          nodeRegistration:
+            name: '{{ ds.meta_data.local_hostname }}'
+            kubeletExtraArgs:
+              cloud-provider: aws
+              tls-cipher-suites: TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
+---
+kind: AWSMachineTemplate
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+metadata:
+  name: tkg-aws-controlplane-template
+  namespace: default
+spec:
+  template:
+    spec:
+      instanceType: "${CONTROL_PLANE_MACHINE_TYPE}"
+      iamInstanceProfile: "control-plane.tkg.cloud.vmware.com"
+      sshKeyName: ${AWS_SSH_KEY_NAME}
+      ami:
+        id: "${AWS_AMI_ID}"
+      rootVolume:
+        size: 80
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: AWSMachineTemplate
+metadata:
+  name: tkg-aws-worker-template
+  namespace: default
+spec:
+  template:
+    spec:
+      instanceType: "${NODE_MACHINE_TYPE}"
+      iamInstanceProfile: "nodes.tkg.cloud.vmware.com"
+      sshKeyName: "${AWS_SSH_KEY_NAME}"
+      ami:
+        id: "${AWS_AMI_ID}"
+      rootVolume:
+        size: 80
+---
+apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+kind: KubeadmConfigTemplate
+metadata:
+  name: tkg-aws-bootstrap-template
+  namespace: default
+spec:
+  template:
+    spec:
+      useExperimentalRetryJoin: true
+      joinConfiguration:
+        nodeRegistration:
+          name: '{{ ds.meta_data.local_hostname }}'
+          kubeletExtraArgs:
+            cloud-provider: aws
+            tls-cipher-suites: TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
+
+# ---
+# apiVersion: cluster.x-k8s.io/v1beta1
+# kind: MachineDeployment
+# metadata:
+#   name: "${CLUSTER_NAME}-md-0"
+# spec:
+#   clusterName: "${CLUSTER_NAME}"
+#   replicas: ${WORKER_MACHINE_COUNT}
+#   selector:
+#     matchLabels:
+#   template:
+#     metadata:
+#       labels:
+#         node-pool: "${CLUSTER_NAME}-worker-pool"
+#     spec:
+#       clusterName: "${CLUSTER_NAME}"
+#       version: "${KUBERNETES_VERSION}"
+#       bootstrap:
+#         configRef:
+#           name: "${CLUSTER_NAME}-md-0"
+#           apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+#           kind: KubeadmConfigTemplate
+#       infrastructureRef:
+#         name: "${CLUSTER_NAME}-md-0"
+#         apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+#         kind: AWSMachineTemplate
+#       failureDomain: "${AWS_NODE_AZ}"
