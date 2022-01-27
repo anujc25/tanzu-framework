@@ -1,0 +1,14 @@
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: PackageMetadata
+metadata:
+  name: clusterclass-azure.tanzu.vmware.com
+  namespace: clusterclass-azure
+spec:
+  displayName: "clusterclass-azure"
+  longDescription: "Clusterclass for Azure provider package defines the default clusterclass resource"
+  shortDescription: "Clusterclass for Azure provider"
+  providerName: VMware
+  maintainers:
+    - name: ""
+  categories:
+    - "clusterclass"
