@@ -1,0 +1,36 @@
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: Cluster
+metadata:
+  name: test-cluster-1
+  namespace: default
+  labels:
+    cni: kindnet
+spec:
+  clusterNetwork:
+    pods:
+      cidrBlocks:
+      - 192.168.0.0/16
+    serviceDomain: cluster.local
+    services:
+      cidrBlocks:
+      - 10.128.0.0/12
+  topology:
+    class: tkg-docker-clusterclass
+    controlPlane:
+      metadata: {}
+      replicas: 1
+    variables:
+    - name: imageRepository
+      value: projects.registry.vmware.com/tkg
+    - name: etcdImageTag
+      value: v3.5.0_vmware.5
+    - name: coreDNSImageTag
+      value: v1.8.4_vmware.5
+    - name: dockerNodeImage
+      value: projects-stg.registry.vmware.com/tkg/kind/node:v1.22.3_vmware.1_v0.11.1_0825
+    version: v1.22.3+vmware.1
+    workers:
+      machineDeployments:
+      - class: tkg-worker
+        name: md-0
+        replicas: 1
