@@ -10,6 +10,12 @@ CLUSTERCTL=${CLUSTERCTL:-~/cluster-api/bin/clusterctl}
 TESTDATA=${TESTDATA:-testdata}
 CASES=${CASES:-*.case}
 BUILDER_IMAGE=gcr.io/eminent-nation-87317/tkg-go-ci:latest
+YQ4=${YQ4:-yq}
+
+TESTED_INFRAS=${TESTED_INFRAS:-"AWS AZURE VSPHERE"}
+AZURE_CASES=""
+AWS_CASES=""
+VSPHERE_CASES=""
 
 TKG_CONFIG_DIR="/tmp/test_tkg_config_dir"
 rm -rf $TKG_CONFIG_DIR
@@ -19,10 +25,16 @@ mkdir -p $TKG_CONFIG_DIR
 . "${TESTROOT}"/diffcluster/helpers.sh
 
 generate_cluster_configurations() {
-  outputdir=$1
-  cd "${TESTDATA}"
-  mkdir -p ${outputdir} || true
-  rm -rf ${outputdir}/*
+  local outputdir=$1
+  local infra=$2
+  pushd "${TESTDATA}"
+
+  VNAME=${infra}_CASES
+  CASES=${!VNAME}
+
+  if [ -z "$CASES" ]; then
+    CASES=$(for i in `grep ${infra} *.case | cut -d: -f1 | uniq | cut -d/ -f1 | head -20`; do echo -n "$i "; done; echo)
+  fi
 
   $TKG get mc --configdir ${TKG_CONFIG_DIR}
   docker run -t --rm -v ${TKG_CONFIG_DIR}:${TKG_CONFIG_DIR} -v ${TESTROOT}:/clustergen -w /clustergen -e TKG_CONFIG_DIR=${TKG_CONFIG_DIR} ${BUILDER_IMAGE} /bin/bash -c "./gen_duplicate_bom_azure.py $TKG_CONFIG_DIR"
@@ -69,24 +81,47 @@ generate_cluster_configurations() {
       cp /tmp/expected_cc.yaml ${outputdir}/"$t".cc.output
       ${CLUSTERCTL} alpha generate-normalized-topology -p -f ${outputdir}/"$t".cc.output > ${outputdir}/"$t".cc.norm.output
 
-      echo wdiff -s ${outputdir}/"$t".norm.output ${outputdir}/"$t".cc.norm.output
-      wdiff -s ${outputdir}/"$t".norm.output ${outputdir}/"$t".cc.norm.output | tail -2 | head -1 > ${outputdir}/"$t".diff_stats 
-      cat ${outputdir}/"$t".diff_stats 
-      echo
+      generate_diff_summary ${outputdir} $t
     fi
-
   done
+
+  compile_diff_stats ${outputdir} ${infra}
+  rm ${outputdir}/*.diff_stats
+  popd
+
   rm -rf $HOME/.tkg/bom/bom-clustergen-*
 }
 
-compile_diff_stats() {
-   echo "SAME,DELETED,CHANGED" > ${outputdir}/diff_summary.csv
-   for f in ${outputdir}/*.diff_stats; do
-      cat $f | perl -pe 's/^.*\D(\d+)%.*\D(\d+)%.*\D(\d+)%.*$/$1 $2 $3/' >> ${outputdir}/diff_summary.csv
-   done
-   cat ${outputdir}/diff_summary.csv
-   # TODO: compute mean/stddev of columns
+generate_diff_summary() {
+   local outputdir=$1
+   local t=$2
+
+   ${YQ4} e '. | select(.kind != "Secret")' ${outputdir}/"$t".norm.output > ${outputdir}/"$t".norm.for_diff.yaml
+   ${YQ4} e '. | select(.kind != "Secret")' ${outputdir}/"$t".cc.norm.output > ${outputdir}/"$t".cc.norm.for_diff.yaml
+
+   wdiff -s ${outputdir}/"$t".norm.for_diff.yaml ${outputdir}/"$t".cc.norm.for_diff.yaml | tail -2 | head -1 > ${outputdir}/"$t".diff_stats
+   cat ${outputdir}/"$t".diff_stats
 }
 
-generate_cluster_configurations $1
-compile_diff_stats $1
+compile_diff_stats() {
+   local outputdir=$1
+   local infra=$2
+   local outfile=${outputdir}/${infra}_diff_summary.csv
+
+   echo doing ${outfile}
+   echo "TEST,SAME,DELETED,CHANGED" > ${outfile}
+   for f in ${outputdir}/*.diff_stats; do
+      echo -n "$f," >> ${outfile}
+      cat $f | perl -pe 's/^.*\D(\d+)%.*\D(\d+)%.*\D(\d+)%.*$/$1,$2,$3/' >> ${outfile}
+   done
+   cat ${outfile}
+}
+
+outputdir=$1
+mkdir -p ${TESTDATA}/${outputdir} || true
+rm -rf ${TESTDATA}/${outputdir}/*
+for infra in ${TESTED_INFRAS}; do
+   generate_cluster_configurations $outputdir $infra
+done
+
+"${TESTROOT}"/summarize_diff_scores.py "${TESTDATA}/${outputdir}" "${TESTDATA}/${outputdir}/output.csv"
