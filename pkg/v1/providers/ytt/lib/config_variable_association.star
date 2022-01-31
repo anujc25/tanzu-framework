@@ -103,6 +103,7 @@ return {
 "NODE_MACHINE_TYPE_2": ["aws"],
 "AWS_SSH_KEY_NAME": ["aws"],
 "BASTION_HOST_ENABLED": ["aws"],
+"AWS_LOAD_BALANCER_SCHEME_INTERNAL": ["aws"],
 
 "CONTROL_PLANE_STORAGE_CLASS": ["tkg-service-vsphere"],
 "CONTROL_PLANE_VM_CLASS": ["tkg-service-vsphere"],

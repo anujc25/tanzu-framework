@@ -99,11 +99,25 @@ spec:
     schema:
       openAPIV3Schema:
         type: string
+        default: 10.0.0.0/24
   - name: AWS_PRIVATE_SUBNET_ID
     required: true
     schema:
       openAPIV3Schema:
         type: string
+        default: ""
+  - name: AWS_PUBLIC_NODE_CIDR
+    required: true
+    schema:
+      openAPIV3Schema:
+        type: string
+        default: 10.0.1.0/24
+  - name: AWS_PUBLIC_SUBNET_ID
+    required: true
+    schema:
+      openAPIV3Schema:
+        type: string
+        default: ""
   - name: CONTROL_PLANE_MACHINE_TYPE
     required: true
     schema:
@@ -128,7 +142,54 @@ spec:
       openAPIV3Schema:
         type: integer
         default: 80
- 
+  - name: AWS_SECURITY_GROUP_BASTION
+    required: true
+    schema:
+      openAPIV3Schema:
+        type: string
+        default: ""
+  - name: AWS_SECURITY_GROUP_CONTROLPLANE
+    required: true
+    schema:
+      openAPIV3Schema:
+        type: string
+        default: ""
+  - name: AWS_SECURITY_GROUP_APISERVER_LB
+    required: true
+    schema:
+      openAPIV3Schema:
+        type: string
+        default: ""
+  - name: AWS_SECURITY_GROUP_NODE
+    required: true
+    schema:
+      openAPIV3Schema:
+        type: string
+        default: ""
+  - name: AWS_SECURITY_GROUP_LB
+    required: true
+    schema:
+      openAPIV3Schema:
+        type: string
+        default: ""
+  - name: AWS_LOAD_BALANCER_SCHEME_INTERNAL
+    required: true
+    schema:
+      openAPIV3Schema:
+        type: boolean
+        default: false
+  - name: AWS_IDENTITY_REF_KIND
+    required: true
+    schema:
+      openAPIV3Schema:
+        type: string
+        default: ""
+  - name: AWS_IDENTITY_REF_NAME
+    required: true
+    schema:
+      openAPIV3Schema:
+        type: string
+        default: ""
   patches:
   - name: AWSCT_main
     definitions:
@@ -154,15 +215,84 @@ spec:
         path: "/spec/template/spec/network/vpc"
         valueFrom:
           template: |
-            id: {{.AWS_VPC_ID}}
+            id: '{{.AWS_VPC_ID}}'
             cidrBlock: {{.AWS_VPC_CIDR}}
       - op: replace
         path: "/spec/template/spec/network/subnets"
         valueFrom:
           template: |
-            - availabilityZone: {{.AWS_NODE_AZ}}
+            - availabilityZone: {{if .AWS_NODE_AZ}} {{.AWS_NODE_AZ}} {{else if .AWS_REGION}} {{.AWS_REGION}}a{{end}} 
               cidrBlock: {{.AWS_PRIVATE_NODE_CIDR}}
-              id: {{.AWS_PRIVATE_SUBNET_ID}}
+              id: '{{.AWS_PRIVATE_SUBNET_ID}}'
+
+  - name: AWSCT_IdentityRef
+    enabledIf: '{{if .AWS_IDENTITY_REF_NAME }}true{{end}}'
+    definitions:
+    - selector:
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        kind: AWSClusterTemplate
+        matchResources:
+          infrastructureCluster: true
+      jsonPatches:
+      - op: add
+        path: "/spec/template/spec/identityRef"
+        valueFrom:
+          template: |
+            kind: {{if .AWS_IDENTITY_REF_KIND }} {{.AWS_IDENTITY_REF_KIND}} {{else}} "AWSClusterRoleIdentity"{{end}}
+            name: {{ .AWS_IDENTITY_REF_NAME }}
+
+  - name: AWSCT_ControlPlaneLoadBalancerScheme
+    enabledIf: '{{if eq .AWS_LOAD_BALANCER_SCHEME_INTERNAL true }}true{{end}}'
+    definitions:
+    - selector:
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        kind: AWSClusterTemplate
+        matchResources:
+          infrastructureCluster: true
+      jsonPatches:
+      - op: add
+        path: "/spec/template/spec/controlPlaneLoadBalancer"
+        valueFrom:
+          template: |
+            scheme: "internal"
+  
+  - name: AWSCT_AvailabilityZone_Public
+    enabledIf: '{{if or (not .AWS_VPC_ID) (.AWS_PUBLIC_SUBNET_ID) }}true{{end}}'
+    definitions:
+    - selector:
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        kind: AWSClusterTemplate
+        matchResources:
+          infrastructureCluster: true
+      jsonPatches:
+      - op: add
+        path: "/spec/template/spec/network/subnets/1"
+        valueFrom:
+          template: |
+            availabilityZone: {{if .AWS_NODE_AZ}} {{.AWS_NODE_AZ}} {{else if .AWS_REGION}} {{.AWS_REGION}}a{{end}}
+            cidrBlock: {{.AWS_PUBLIC_NODE_CIDR}}
+            isPublic: true
+            id: '{{.AWS_PUBLIC_SUBNET_ID}}'
+
+  - name: AWSCT_SecurityGroupOverrides
+    enabledIf: '{{if or ( ne .AWS_SECURITY_GROUP_BASTION "") (ne .AWS_SECURITY_GROUP_CONTROLPLANE "") (ne .AWS_SECURITY_GROUP_APISERVER_LB "") (ne .AWS_SECURITY_GROUP_NODE "") (ne .AWS_SECURITY_GROUP_LB "")}}true{{end}}'
+    definitions:
+    - selector:
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        kind: AWSClusterTemplate
+        matchResources:
+          infrastructureCluster: true
+      jsonPatches:
+      - op: add
+        path: "/spec/template/spec/network/securityGroupOverrides"
+        valueFrom:
+          template: |
+              {{if .AWS_SECURITY_GROUP_BASTION}}  bastion: {{.AWS_SECURITY_GROUP_BASTION}} {{end}}
+              {{if .AWS_SECURITY_GROUP_CONTROLPLANE }}  controlplane: {{.AWS_SECURITY_GROUP_CONTROLPLANE}} {{end}}
+              {{if .AWS_SECURITY_GROUP_APISERVER_LB }}  apiserver-lb:  {{.AWS_SECURITY_GROUP_APISERVER_LB}} {{end}}
+              {{if .AWS_SECURITY_GROUP_NODE }}  node: {{.AWS_SECURITY_GROUP_NODE}} {{end}}
+              {{if .AWS_SECURITY_GROUP_LB }}  lb: {{.AWS_SECURITY_GROUP_LB}} {{end}}
+
   - name: AWS_MT_controlplane
     definitions:
     - selector:
@@ -183,6 +313,7 @@ spec:
         path: "/spec/template/spec/rootVolume/size"
         valueFrom:
           variable: AWS_CONTROL_PLANE_OS_DISK_SIZE_GIB
+
   - name: AWS_MT_worker
     definitions:
     - selector:
