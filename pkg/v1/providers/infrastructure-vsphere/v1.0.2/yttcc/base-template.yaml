@@ -7,7 +7,7 @@ spec:
   template:
     spec:
       controlPlaneEndpoint:
-        host: '${ VSPHERE_CONTROL_PLANE_ENDPOINT}'
+        host: '1.1.1.1'
         port: 6443
       identityRef:
         kind: Secret
@@ -18,41 +18,28 @@ spec:
 apiVersion: cluster.x-k8s.io/v1beta1
 kind: Cluster
 metadata:
-  name: '${ CLUSTER_NAME }'
-  namespace: '${ NAMESPACE }'
+  name: ${CLUSTER_NAME}
   labels:
     tkg.tanzu.vmware.com/cluster-name: '${ CLUSTER_NAME }'
 spec:
   clusterNetwork:
     pods:
-      cidrBlocks:
-      - '${ CLUSTER_CIDR}'
+      cidrBlocks: ["${CLUSTER_CIDR}"]
     services:
-      cidrBlocks:
-      - '${ SERVICE_CIDR }'
-  controlPlaneRef:
-    apiVersion: controlplane.cluster.x-k8s.io/v1beta1
-    kind: KubeadmControlPlane
-    name: '${ CLUSTER_NAME }-control-plane'
-  infrastructureRef:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
-    kind: VSphereCluster
-    name: '${ CLUSTER_NAME }'
----
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
-kind: VSphereCluster
-metadata:
-  name: '${ CLUSTER_NAME }'
-  namespace: '${ NAMESPACE }'
-spec:
-  controlPlaneEndpoint:
-    host: '${ VSPHERE_CONTROL_PLANE_ENDPOINT }'
-    port: 6443
-  identityRef:
-    kind: Secret
-    name: '${ CLUSTER_NAME }'
-  thumbprint: '${ VSPHERE_TLS_THUMBPRINT }'
-  server: '${ VSPHERE_SERVER }'
+      cidrBlocks: ["${SERVICE_CIDR}"]
+  topology:
+    class: tkg-cluster-class-dev
+    version: v1.21.2
+    controlPlane:
+      replicas: ${CONTROL_PLANE_MACHINE_COUNT}
+    workers:
+      machineDeployments:
+      - class: tkg-worker
+        name: tkg-worker-pool
+        replicas: ${WORKER_MACHINE_COUNT}
+    variables:
+    - name: controlPlaneEndpoint
+      value: "${VSPHERE_CONTROL_PLANE_ENDPOINT}"
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: VSphereMachineTemplate
@@ -287,7 +274,7 @@ stringData:
 apiVersion: cluster.x-k8s.io/v1beta1
 kind: ClusterClass
 metadata:
-  name: dev-class
+  name: tkg-cluster-class-dev
   namespace: '${ NAMESPACE }'
 spec:
   controlPlane:
@@ -321,14 +308,13 @@ spec:
               apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
               name: '${ CLUSTER_NAME }-md-1'
   variables:
-    defintions:
-    - name: controlPlaneEndpoint
-      schema:
-        openAPIV3Schema:
-          type: string
-          default: 0.0.0.0
+  - name: controlPlaneEndpoint
+    required: true
+    schema:
+      openAPIV3Schema:
+        type: string
   patches:
-  - name: namespace
+  - name: controlPlaneEndpoint
     definitions:
     - selector:
         apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
