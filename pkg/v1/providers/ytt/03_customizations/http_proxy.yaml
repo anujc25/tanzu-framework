@@ -2,7 +2,7 @@
 #@ load("@ytt:data", "data")
 #@ load("@ytt:overlay", "overlay")
 #@ load("http_proxy.lib.txt", "http_proxy_unit_file")
-#@ load("/lib/helpers.star", "get_no_proxy")
+#@ load("/lib/helpers.star", "get_no_proxy", "tkg_use_clusterclass")
 
 #! Validate proxy settings
 #@ if (data.values.TKG_HTTP_PROXY == "") != (data.values.TKG_HTTPS_PROXY == ""):
@@ -20,6 +20,7 @@
 
 #@ if data.values.TKG_HTTP_PROXY != "":
 #@ if data.values.PROVIDER_TYPE in ["vsphere", "aws", "azure", "docker"]:
+#@ if not tkg_use_clusterclass():
 #@overlay/match by=overlay.subset({"kind":"KubeadmControlPlane"})
 ---
 spec:
@@ -78,6 +79,7 @@ spec:
         - #@ exportEnvvar("HTTPS_PROXY", data.values.TKG_HTTPS_PROXY)
         #@overlay/append
         - #@ exportEnvvar("NO_PROXY", POPULATED_NO_PROXY)
+#@ end
 #@ end
 
 #@ if data.values.PROVIDER_TYPE == "tkg-service-vsphere":
