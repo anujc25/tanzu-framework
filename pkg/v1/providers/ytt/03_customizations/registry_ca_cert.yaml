@@ -1,8 +1,9 @@
 #@ load("@ytt:overlay", "overlay")
 #@ load("@ytt:data", "data")
-#@ load("/lib/helpers.star", "tkg_image_repo_customized", "tkg_image_repo_hostname", "tkg_image_repo_ca_cert", "tkg_image_repo_skip_tls_verify")
+#@ load("/lib/helpers.star", "tkg_image_repo_customized", "tkg_image_repo_hostname", "tkg_image_repo_ca_cert", "tkg_image_repo_skip_tls_verify", "tkg_use_clusterclass")
 
 #@ if tkg_image_repo_ca_cert() and not tkg_image_repo_skip_tls_verify():
+#@ if not tkg_use_clusterclass():
 #@overlay/match by=overlay.subset({"kind":"KubeadmControlPlane"})
 ---
 apiVersion: controlplane.cluster.x-k8s.io/v1beta1
@@ -24,6 +25,31 @@ spec:
         content: #@ tkg_image_repo_ca_cert()
         encoding: "base64"
         permissions: "0444"
+#@ else:
+#@overlay/match by=overlay.subset({"kind":"KubeadmControlPlaneTemplate"})
+---
+apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+kind: KubeadmControlPlaneTemplate
+spec:
+  template:
+    spec:
+      kubeadmConfigSpec:
+        #@overlay/match missing_ok=True
+        preKubeadmCommands:
+          #@overlay/append
+          - #@ "echo '[plugins.\"io.containerd.grpc.v1.cri\".registry.configs.\"" + tkg_image_repo_hostname() + "\".tls]' >> /etc/containerd/config.toml"
+          #@overlay/append
+          - #@ "echo '  ca_file = \"/etc/containerd/" + tkg_image_repo_hostname() + ".crt\"' >> /etc/containerd/config.toml"
+          #@overlay/append
+          - systemctl restart containerd
+        #@overlay/match missing_ok=True
+        files:
+          #@overlay/append
+          - path: #@ "/etc/containerd/" + tkg_image_repo_hostname() + ".crt"
+            content: #@ tkg_image_repo_ca_cert()
+            encoding: "base64"
+            permissions: "0444"
+#@ end
 #@overlay/match by=overlay.subset({"kind":"KubeadmConfigTemplate"}),expects="1+"
 ---
 apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
