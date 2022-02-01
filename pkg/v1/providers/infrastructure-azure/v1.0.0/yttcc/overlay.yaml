@@ -111,7 +111,7 @@ spec:
     #@overlay/match missing_ok=True
     variables: 
     #@ for configVariable in getClusterVariables():
-    #@  if data.values[configVariable] != None and configVariable in ["AZURE_LOCATION" ,"AZURE_VNET_NAME" ,"AZURE_VNET_CIDR" ,"AZURE_CONTROL_PLANE_SUBNET_NAME" ,"AZURE_CONTROL_PLANE_SUBNET_CIDR" ,"AZURE_NODE_SUBNET_NAME" ,"AZURE_NODE_SUBNET_CIDR" ,"AZURE_RESOURCE_GROUP" ,"AZURE_SUBSCRIPTION_ID" ,"CLUSTER_NAME"]:
+    #@  if data.values[configVariable] != None:
       - name: #@ configVariable
         value: #@ data.values[configVariable]
     #@ end

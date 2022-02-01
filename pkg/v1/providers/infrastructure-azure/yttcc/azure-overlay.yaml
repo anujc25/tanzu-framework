@@ -205,14 +205,6 @@
 #!      useExperimentalRetryJoin: true
 #!#@ end
 
-#@overlay/match by=overlay.subset({"kind":"AzureMachineTemplate"}),expects="1+"
----
-spec:
-  template:
-    spec:
-      #@overlay/match missing_ok=True
-      acceleratedNetworking: #@ data.values.AZURE_ENABLE_ACCELERATED_NETWORKING
-
 #@overlay/match by=overlay.subset({"kind":"KubeadmConfigTemplate"}),expects="1+"
 ---
 spec:
