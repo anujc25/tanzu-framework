@@ -12,11 +12,11 @@ type pkgClient struct {
 }
 
 // NewTKGPackageClient instantiates pkgClient
-func NewTKGPackageClient(kubeconfigPath string) (TKGPackageClient, error) {
+func NewTKGPackageClient(kubeconfigPath, kubeContext string) (TKGPackageClient, error) {
 	var err error
 	client := &pkgClient{}
 
-	if client.kappClient, err = kappclient.NewKappClient(kubeconfigPath); err != nil {
+	if client.kappClient, err = kappclient.NewKappClient(kubeconfigPath, kubeContext); err != nil {
 		return nil, err
 	}
 

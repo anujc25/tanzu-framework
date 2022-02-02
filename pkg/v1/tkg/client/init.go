@@ -18,12 +18,15 @@ import (
 	clusterctl "sigs.k8s.io/cluster-api/cmd/clusterctl/client"
 	crtclient "sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/config"
 	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/tkg/clusterclient"
 	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/tkg/constants"
 	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/tkg/kind"
 	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/tkg/log"
 	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/tkg/region"
 	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/tkg/tkgconfighelper"
+	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/tkg/tkgpackageclient"
+	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/tkg/tkgpackagedatamodel"
 	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/tkg/utils"
 	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/tkg/yamlprocessor"
 )
@@ -198,6 +201,11 @@ func (c *TkgClient) InitRegion(options *InitRegionOptions) error { //nolint:funl
 	// Initialize bootstrap cluster with providers
 	if err = c.InitializeProviders(options, bootStrapClusterClient, bootstrapClusterKubeconfigPath); err != nil {
 		return errors.Wrap(err, "unable to initialize providers")
+	}
+
+	// If clusterclass feature flag is enabled the deploy package repository
+	if config.IsFeatureActivated(config.FeatureFlagClusterClass) {
+		c.installTKGPackage(bootstrapClusterKubeconfigPath, "")
 	}
 
 	isStartedRegionalClusterCreation = true
@@ -700,3 +708,31 @@ func (c *TkgClient) safelyAddFeatureFlag(featureFlags map[string]string, feature
 	}
 	return featureFlags
 }
+
+func (c *TkgClient) installTKGPackage(kubeConfig, kubeContext string) error {
+	pkgClient, err := tkgpackageclient.NewTKGPackageClient(kubeConfig, kubeContext)
+	if err != nil {
+		return err
+	}
+
+	repositoryOptions := tkgpackagedatamodel.NewRepositoryOptions()
+	repositoryOptions.RepositoryName = "management"
+	repositoryOptions.RepositoryURL = "gcr.io/eminent-nation-87317/tkg/test/repo/management/packages/management/management@sha256:164dd18d9642969f5636126c0e5b67d296d56339d8bd7c0ca49fff0cf8e20ad3"
+
+	return pkgClient.UpdateRepository(repositoryOptions, nil, tkgpackagedatamodel.OperationTypeUpdate)
+}
+
+// type RepositoryOptions struct {
+// 	KubeConfig       string
+// 	Namespace        string
+// 	RepositoryName   string
+// 	RepositoryURL    string
+// 	PollInterval     time.Duration
+// 	PollTimeout      time.Duration
+// 	AllNamespaces    bool
+// 	CreateRepository bool
+// 	CreateNamespace  bool
+// 	IsForceDelete    bool
+// 	SkipPrompt       bool
+// 	Wait             bool
+// }

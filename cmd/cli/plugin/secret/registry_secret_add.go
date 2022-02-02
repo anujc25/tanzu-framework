@@ -61,12 +61,12 @@ func registrySecretAdd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	pkgClient, err := tkgpackageclient.NewTKGPackageClient(kubeConfig)
+	pkgClient, err := tkgpackageclient.NewTKGPackageClient(kubeConfig, "")
 	if err != nil {
 		return err
 	}
 
-	kc, err := kappclient.NewKappClient(kubeConfig)
+	kc, err := kappclient.NewKappClient(kubeConfig, "")
 	if err != nil {
 		return err
 	}
