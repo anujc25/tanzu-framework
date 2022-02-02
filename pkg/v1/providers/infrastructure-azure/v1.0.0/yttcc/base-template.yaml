@@ -188,7 +188,7 @@ spec:
       openAPIV3Schema:
         type: integer
         default: 128
-  - name: AZURE_NODE_OS_DISK_SIZE_GIB
+  - name: AZURE_NODE_DATA_DISK_SIZE_GIB
     schema:
       openAPIV3Schema:
         type: integer
@@ -242,7 +242,7 @@ spec:
             name: {{.builtin.cluster.name}}-identity
             namespace: tkg-system
   - name: AzureClusterIdentityName
-    enabledIf: '{{if .AZURE_IDENTITY_NAME}}true{{end}}'
+    enabledIf: '{{if or .AZURE_IDENTITY_NAME (eq .TKG_CLUSTER_ROLE "management")}}true{{end}}'
     definitions:
     - selector:
         apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
@@ -255,7 +255,7 @@ spec:
         valueFrom:
           variable: AZURE_IDENTITY_NAME
   - name: AzureClusterIdentityNamespace
-    enabledIf: '{{if .AZURE_IDENTITY_NAMESPACE}}true{{end}}'
+    enabledIf: '{{if or .AZURE_IDENTITY_NAME (eq .TKG_CLUSTER_ROLE "management")}}true{{end}}'
     definitions:
     - selector:
         apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
@@ -331,10 +331,11 @@ spec:
         path: "/spec/template/spec/acceleratedNetworking"
         valueFrom:
           variable: AZURE_ENABLE_ACCELERATED_NETWORKING
-      - op: replace
-        path: "/spec/template/spec/dataDisks/0/diskSizeGB"
-        valueFrom:
-          variable: AZURE_CONTROL_PLANE_DATA_DISK_SIZE_GIB
+          # TODO
+          #      - op: replace
+          #        path: "/spec/template/spec/dataDisks/0/diskSizeGB"
+          #        valueFrom:
+          #          variable: AZURE_CONTROL_PLANE_DATA_DISK_SIZE_GIB
       - op: replace
         path: "/spec/template/spec/osDisk"
         valueFrom:
