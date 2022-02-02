@@ -1,0 +1,14 @@
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: PackageMetadata
+metadata:
+  name: tkg-clusterclass-aws.tanzu.vmware.com
+  namespace: tkg-clusterclass-aws
+spec:
+  displayName: "tkg-clusterclass-aws"
+  longDescription: "Clusterclass for Azure provider package defines the default clusterclass resource"
+  shortDescription: "Clusterclass for Azure provider"
+  providerName: VMware
+  maintainers:
+    - name: ""
+  categories:
+    - "clusterclass"

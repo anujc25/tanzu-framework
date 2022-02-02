@@ -1,0 +1,28 @@
+#@ load("@ytt:overlay", "overlay")
+#@ load("@ytt:yaml", "yaml")
+#@ load("@ytt:data", "data")
+
+---
+apiVersion: packaging.carvel.dev/v1alpha1
+kind: PackageInstall
+metadata:
+  name: tkg-clusterclass-aws
+  namespace: tkg-system
+spec:
+  serviceAccountName: tanzu-aws-clusterclass-package-sa
+  packageRef:
+    refName: tkg-clusterclass-aws.tanzu.vmware.com
+    versionSelection:
+      prereleases: {}
+  values:
+  - secretRef:
+      name: tkg-clusterclass-aws-values
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: tkg-clusterclass-aws-values
+  namespace: tkg-system
+type: Opaque
+stringData:
+  values.yaml: #@ yaml.encode(data.values)

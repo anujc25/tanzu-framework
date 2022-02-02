@@ -1,0 +1,14 @@
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: PackageMetadata
+metadata:
+  name: tkg-clusterclass.tanzu.vmware.com
+  namespace: tkg-clusterclass
+spec:
+  displayName: "tkg-clusterclass"
+  longDescription: "Clusterclass composite package deploys clusterclass package for infra-providers"
+  shortDescription: "Clusterclass composite package"
+  providerName: VMware
+  maintainers:
+    - name: ""
+  categories:
+    - "clusterclass"

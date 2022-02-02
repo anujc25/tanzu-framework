@@ -1,0 +1,14 @@
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: PackageMetadata
+metadata:
+  name: tkg-clusterclass-vsphere.tanzu.vmware.com
+  namespace: tkg-clusterclass-vsphere
+spec:
+  displayName: "tkg-clusterclass-vsphere"
+  longDescription: "Clusterclass for Vsphere provider package defines the default clusterclass resource"
+  shortDescription: "Clusterclass for Vsphere provider"
+  providerName: VMware
+  maintainers:
+    - name: ""
+  categories:
+    - "clusterclass"
