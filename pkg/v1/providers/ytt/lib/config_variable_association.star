@@ -291,3 +291,14 @@ return {
 }
 
 end
+
+def get_cluster_variables():
+    vars = {}
+    kvs = config_variable_association()
+    for configVariable in kvs:
+        if data.values.PROVIDER_TYPE in kvs[configVariable]:
+            vars[configVariable] = data.values[configVariable]
+        end
+    end
+    return vars
+end
