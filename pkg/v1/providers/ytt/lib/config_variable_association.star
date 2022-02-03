@@ -162,7 +162,11 @@ return {
 "AZURE_IMAGE_VERSION": ["azure"],
 "AZURE_IDENTITY_NAME": ["azure"],
 "AZURE_IDENTITY_NAMESPACE": ["azure"],
-
+"AZURE_CONTROL_PLANE_OUTBOUND_LB_FRONTEND_IP_COUNT": ["azure"],
+"AZURE_ENABLE_CONTROL_PLANE_OUTBOUND_LB": ["azure"],
+"AZURE_NODE_OUTBOUND_LB_FRONTEND_IP_COUNT": ["azure"],
+"AZURE_ENABLE_NODE_OUTBOUND_LB": ["azure"],
+"AZURE_NODE_OUTBOUND_LB_IDLE_TIMEOUT_IN_MINUTES": ["azure"],
 "ENABLE_OIDC": ["vsphere", "aws", "azure", "docker"],
 "OIDC_ISSUER_URL": ["vsphere", "aws", "azure", "docker"],
 "OIDC_USERNAME_CLAIM": ["vsphere", "aws", "azure", "docker"],
