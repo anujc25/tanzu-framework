@@ -25,4 +25,4 @@ metadata:
   namespace: tkg-system
 type: Opaque
 stringData:
-  values.yaml: #@ yaml.encode(data.values.configvalues)
+  values.yaml: #@ yaml.encode(data.values)

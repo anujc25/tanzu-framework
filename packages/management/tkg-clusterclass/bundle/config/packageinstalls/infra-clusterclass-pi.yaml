@@ -1,0 +1,83 @@
+#@ load("@ytt:overlay", "overlay")
+#@ load("@ytt:yaml", "yaml")
+#@ load("@ytt:data", "data")
+
+#@ if data.values.metadata.infraProvider == "aws":
+
+---
+apiVersion: packaging.carvel.dev/v1alpha1
+kind: PackageInstall
+metadata:
+  name: tkg-clusterclass-aws
+  namespace: tkg-system
+spec:
+  serviceAccountName: tanzu-infra-clusterclass-package-sa
+  packageRef:
+    refName: tkg-clusterclass-aws.tanzu.vmware.com
+    versionSelection:
+      prereleases: {}
+  values:
+  - secretRef:
+      name: tkg-clusterclass-infra-values
+
+#@ end
+
+#@ if data.values.metadata.infraProvider == "docker":
+
+---
+apiVersion: packaging.carvel.dev/v1alpha1
+kind: PackageInstall
+metadata:
+  name: tkg-clusterclass-docker
+  namespace: tkg-system
+spec:
+  serviceAccountName: tanzu-infra-clusterclass-package-sa
+  packageRef:
+    refName: tkg-clusterclass-docker.tanzu.vmware.com
+    versionSelection:
+      prereleases: {}
+  values:
+  - secretRef:
+      name: tkg-clusterclass-infra-values
+
+#@ end
+
+#@ if data.values.metadata.infraProvider == "azure":
+
+---
+apiVersion: packaging.carvel.dev/v1alpha1
+kind: PackageInstall
+metadata:
+  name: tkg-clusterclass-azure
+  namespace: tkg-system
+spec:
+  serviceAccountName: tanzu-infra-clusterclass-package-sa
+  packageRef:
+    refName: tkg-clusterclass-azure.tanzu.vmware.com
+    versionSelection:
+      prereleases: {}
+  values:
+  - secretRef:
+      name: tkg-clusterclass-infra-values
+
+#@ end
+
+#@ if data.values.metadata.infraProvider == "vsphere":
+
+---
+apiVersion: packaging.carvel.dev/v1alpha1
+kind: PackageInstall
+metadata:
+  name: tkg-clusterclass-vsphere
+  namespace: tkg-system
+spec:
+  serviceAccountName: tanzu-infra-clusterclass-package-sa
+  packageRef:
+    refName: tkg-clusterclass-vsphere.tanzu.vmware.com
+    versionSelection:
+      prereleases: {}
+  values:
+  - secretRef:
+      name: tkg-clusterclass-infra-values
+
+#@ end
