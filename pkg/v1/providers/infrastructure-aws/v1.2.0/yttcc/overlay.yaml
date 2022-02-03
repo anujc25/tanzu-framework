@@ -2,7 +2,7 @@
 #@ load("@ytt:data", "data")
 #@ load("lib/helpers.star", "get_bom_data_for_tkr_name", "kubeadm_image_repo", "get_az_from_region")
 #@ load("lib/validate.star", "validate_configuration")
-#@ load("/lib/config_variable_association.star", "config_variable_association")
+#@ load("/lib/config_variable_association.star", "config_variable_association", "get_cluster_variables")
 
 #@ validate_configuration("aws")
 
@@ -12,19 +12,6 @@
 
 #@ def get_k8s_version_from_tkr(tkr_version):
 #@ return tkr_version.split('+')[0]
-#@ end
-
-#@ list_skip_variable_from_storing = []
-
-#@ def getClusterVariables():
-#@ vars = {}
-#@ kvs = config_variable_association()
-#@ for configVariable in kvs:
-#@ if configVariable not in list_skip_variable_from_storing and data.values.PROVIDER_TYPE in kvs[configVariable]:
-#@   vars[configVariable] =  data.values[configVariable]
-#@ end
-#@ end
-#@ return vars
 #@ end
 
 #@overlay/match by=overlay.subset({"kind":"Cluster"})
@@ -70,8 +57,8 @@ spec:
         replicas: #@ data.values.WORKER_MACHINE_COUNT
     #@overlay/match missing_ok=True
     variables: 
-    #@ for configVariable in getClusterVariables():
-    #@  if data.values[configVariable] != None and configVariable in ["AWS_REGION" ,"AWS_SSH_KEY_NAME" ,"BASTION_HOST_ENABLED" ,"AWS_VPC_CIDR" , "AWS_VPC_ID" , "AWS_NODE_AZ" ,"AWS_PRIVATE_NODE_CIDR" ,"AWS_PRIVATE_SUBNET_ID" ,"AWS_PUBLIC_NODE_CIDR","AWS_PUBLIC_SUBNET_ID","CONTROL_PLANE_MACHINE_TYPE" ,"NODE_MACHINE_TYPE","CLUSTER_NAME","AWS_CONTROL_PLANE_OS_DISK_SIZE_GIB","AWS_NODE_OS_DISK_SIZE_GIB","AWS_SECURITY_GROUP_BASTION","AWS_SECURITY_GROUP_CONTROLPLANE","AWS_SECURITY_GROUP_APISERVER_LB","AWS_SECURITY_GROUP_NODE","AWS_SECURITY_GROUP_LB","AWS_LOAD_BALANCER_SCHEME_INTERNAL","AWS_IDENTITY_REF_KIND","AWS_IDENTITY_REF_NAME"]:
+    #@ for configVariable in get_cluster_variables():
+       #@  if data.values[configVariable] != None and configVariable in ["AWS_REGION", "AWS_SSH_KEY_NAME", "BASTION_HOST_ENABLED", "AWS_VPC_CIDR", "AWS_VPC_ID", "AWS_NODE_AZ", "AWS_PRIVATE_NODE_CIDR", "AWS_PRIVATE_SUBNET_ID", "AWS_PUBLIC_NODE_CIDR", "AWS_PUBLIC_SUBNET_ID", "CONTROL_PLANE_MACHINE_TYPE", "NODE_MACHINE_TYPE", "CLUSTER_NAME", "AWS_CONTROL_PLANE_OS_DISK_SIZE_GIB", "AWS_NODE_OS_DISK_SIZE_GIB", "AWS_SECURITY_GROUP_BASTION", "AWS_SECURITY_GROUP_CONTROLPLANE", "AWS_SECURITY_GROUP_APISERVER_LB", "AWS_SECURITY_GROUP_NODE", "AWS_SECURITY_GROUP_LB", "AWS_LOAD_BALANCER_SCHEME_INTERNAL", "AWS_IDENTITY_REF_KIND", "AWS_IDENTITY_REF_NAME"]:
       - name: #@ configVariable
         value: #@ data.values[configVariable]
     #@ end
