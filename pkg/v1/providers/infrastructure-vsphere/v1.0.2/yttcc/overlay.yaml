@@ -6,10 +6,24 @@
 
 #@ load("lib/validate.star", "validate_configuration")
 #@ load("@ytt:yaml", "yaml")
+#@ load("/lib/config_variable_association.star", "config_variable_association")
 #@ validate_configuration("vsphere")
 
 #@ bomDataForK8sVersion = get_bom_data_for_tkr_name()
 #@ bomData = get_default_tkg_bom_data()
+
+#@ list_skip_variable_from_storing = []
+
+#@ def getClusterVariables():
+#@ vars = {}
+#@ kvs = config_variable_association()
+#@ for configVariable in kvs:
+#@ if configVariable not in list_skip_variable_from_storing and data.values.PROVIDER_TYPE in kvs[configVariable]:
+#@   vars[configVariable] =  data.values[configVariable]
+#@ end
+#@ end
+#@ return vars
+#@ end
 
 #@ if not data.values.IS_WINDOWS_WORKLOAD_CLUSTER:
 
@@ -100,9 +114,14 @@ spec:
       machineDeployments:
       #@overlay/match by=overlay.index(0)
       - replicas: #@ data.values.WORKER_MACHINE_COUNT
-    variables:
-    #@overlay/match by=overlay.index(0)
-    - value: #@ data.values.VSPHERE_CONTROL_PLANE_ENDPOINT
+    #@overlay/match missing_ok=True
+    variables: 
+    #@ for configVariable in getClusterVariables():
+    #@  if data.values[configVariable] != None:
+      - name: #@ configVariable
+        value: #@ data.values[configVariable]
+    #@ end
+    #@ end
 
 #@overlay/match by=overlay.subset({"kind":"VSphereClusterTemplate"})
 ---
