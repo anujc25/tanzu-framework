@@ -223,6 +223,11 @@ spec:
       openAPIV3Schema:
         type: integer
         default: 1
+  - name: AZURE_NODE_OUTBOUND_LB_IDLE_TIMEOUT_IN_MINUTES
+    schema:
+      openAPIV3Schema:
+        type: integer
+        default: 4
   patches:
   - name: AzureClusterIdentityRef
     enabledIf: '{{if or .AZURE_IDENTITY_NAME (eq .TKG_CLUSTER_ROLE "management")}}true{{end}}'
@@ -427,6 +432,7 @@ spec:
           template: |
             - "if [ -f /tmp/kubeadm-join-config.yaml ] || [ -f /run/kubeadm/kubeadm-join-config.yaml ]; then echo '127.0.0.1   apiserver.{{.builtin.cluster.name}}.capz.io apiserver' >> /etc/hosts; fi"
   - name: ACT_EnableControlPlaneOutboundLB
+    enabledIf: '{{if and .AZURE_ENABLE_PRIVATE_CLUSTER .AZURE_ENABLE_CONTROL_PLANE_OUTBOUND_LB}}true{{end}}'
     definitions:
     - selector:
         apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
@@ -439,6 +445,21 @@ spec:
         valueFrom:
           template: |
             frontendIPsCount: {{ .AZURE_CONTROL_PLANE_OUTBOUND_LB_FRONTEND_IP_COUNT }}
+  - name: ACT_EnableNodeOutboundLB
+    enabledIf: '{{if and .AZURE_ENABLE_PRIVATE_CLUSTER .AZURE_ENABLE_NODE_OUTBOUND_LB}}true{{end}}'
+    definitions:
+    - selector:
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        kind: AzureClusterTemplate
+        matchResources:
+          infrastructureCluster: true
+      jsonPatches:
+      - op: add
+        path: "/spec/template/spec/networkSpec/nodeOutboundLB"
+        valueFrom:
+          template: |
+            frontendIPsCount: {{ .AZURE_NODE_OUTBOUND_LB_FRONTEND_IP_COUNT }}
+            idleTimeoutInMinutes: {{ .AZURE_NODE_OUTBOUND_LB_IDLE_TIMEOUT_IN_MINUTES }}
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: AzureClusterTemplate
