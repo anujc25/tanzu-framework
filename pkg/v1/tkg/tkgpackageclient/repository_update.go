@@ -21,7 +21,7 @@ import (
 func (p *pkgClient) UpdateRepository(o *tkgpackagedatamodel.RepositoryOptions, progress *tkgpackagedatamodel.PackageProgress, operationType tkgpackagedatamodel.OperationType) error {
 	// If progress is provided invoke the updateRepository as error handling
 	// and progress logging will be handled outside the function call
-	if progress == nil {
+	if progress != nil {
 		p.updateRepository(o, progress, operationType)
 		return nil
 	}

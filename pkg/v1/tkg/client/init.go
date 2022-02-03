@@ -14,6 +14,7 @@ import (
 	"github.com/go-openapi/swag"
 	"github.com/juju/fslock"
 	"github.com/pkg/errors"
+	"gopkg.in/yaml.v3"
 	clusterctlv1 "sigs.k8s.io/cluster-api/cmd/clusterctl/api/v1alpha3"
 	clusterctl "sigs.k8s.io/cluster-api/cmd/clusterctl/client"
 	crtclient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -205,7 +206,7 @@ func (c *TkgClient) InitRegion(options *InitRegionOptions) error { //nolint:funl
 
 	// If clusterclass feature flag is enabled the deploy package repository
 	if config.IsFeatureActivated(config.FeatureFlagClusterClass) {
-		c.installTKGPackage(bootstrapClusterKubeconfigPath, "")
+		c.InstallManagementPackages(bootstrapClusterKubeconfigPath, "")
 	}
 
 	isStartedRegionalClusterCreation = true
@@ -709,20 +710,108 @@ func (c *TkgClient) safelyAddFeatureFlag(featureFlags map[string]string, feature
 	return featureFlags
 }
 
-func (c *TkgClient) installTKGPackage(kubeConfig, kubeContext string) error {
+func (c *TkgClient) InstallManagementPackages(kubeConfig, kubeContext string) error {
 	pkgClient, err := tkgpackageclient.NewTKGPackageClient(kubeConfig, kubeContext)
 	if err != nil {
 		return err
 	}
 
+	err = c.installManagementPackageRepository(pkgClient)
+	if err != nil {
+		return err
+	}
+
+	err = c.installTKGManagementPackage(pkgClient)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *TkgClient) installManagementPackageRepository(pkgClient tkgpackageclient.TKGPackageClient) error {
 	repositoryOptions := tkgpackagedatamodel.NewRepositoryOptions()
 	repositoryOptions.RepositoryName = "management"
-	repositoryOptions.RepositoryURL = "gcr.io/eminent-nation-87317/tkg/test/repo/management/packages/management/management@sha256:164dd18d9642969f5636126c0e5b67d296d56339d8bd7c0ca49fff0cf8e20ad3"
+	repositoryOptions.RepositoryURL = ""
+	repositoryOptions.Namespace = "tkg-system"
 
 	return pkgClient.UpdateRepository(repositoryOptions, nil, tkgpackagedatamodel.OperationTypeUpdate)
 }
 
-// type RepositoryOptions struct {
+func (c *TkgClient) installTKGManagementPackage(pkgClient tkgpackageclient.TKGPackageClient) error {
+	packageOptions := tkgpackagedatamodel.NewPackageOptions()
+	packageOptions.PackageName = "tkg.tanzu.vmware.com"
+	packageOptions.PkgInstallName = "tkg-pkg"
+	packageOptions.Namespace = "tkg-system"
+	packageOptions.Version = "0.17.0-dev"
+
+	valuesFilepath, err := getTKGPackageConfig()
+	if err != nil {
+		return err
+	}
+	defer os.Remove(valuesFilepath)
+
+	packageOptions.ValuesFile = valuesFilepath
+
+	return pkgClient.InstallPackage(packageOptions, nil, tkgpackagedatamodel.OperationTypeUpdate)
+}
+
+func getTKGPackageConfig() (string, error) {
+	tkgPackageConfig := TKGPackageConfig{
+		Metadata: Metadata{
+			InfraProvider: "aws",
+		},
+		ConfigValues: map[string]string{"AWS_REGION": "us-east-1"},
+	}
+
+	configBytes, err := yaml.Marshal(tkgPackageConfig)
+	if err != nil {
+		return "", err
+	}
+
+	valuesFile, err := utils.CreateTempFile("", "")
+	if err != nil {
+		return "", err
+	}
+
+	err = utils.WriteToFile(valuesFile, configBytes)
+	if err != nil {
+		return "", err
+	}
+	return valuesFile, nil
+}
+
+type TKGPackageConfig struct {
+	Metadata     Metadata          `yaml:"metadata"`
+	ConfigValues map[string]string `yaml:"configvalues"`
+}
+
+type Metadata struct {
+	InfraProvider string `yaml:"infraProvider"`
+}
+
+// // PackageOptions includes fields for package operations
+// type PackageOptions struct {
+// 	Available              string
+// 	ClusterRoleName        string
+// 	ClusterRoleBindingName string
+// 	Namespace              string
+// 	PackageName            string
+// 	PkgInstallName         string
+// 	SecretName             string
+// 	ServiceAccountName     string
+// 	ValuesFile             string
+// 	Version                string
+// 	PollInterval           time.Duration
+// 	PollTimeout            time.Duration
+// 	AllNamespaces          bool
+// 	CreateNamespace        bool
+// 	Install                bool
+// 	Wait                   bool
+// 	SkipPrompt             bool
+// }
+
+// // type RepositoryOptions struct {
 // 	KubeConfig       string
 // 	Namespace        string
 // 	RepositoryName   string
