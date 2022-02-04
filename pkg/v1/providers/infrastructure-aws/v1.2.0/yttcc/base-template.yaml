@@ -190,6 +190,11 @@ spec:
       openAPIV3Schema:
         type: string
         default: ""
+  - name: CLUSTER_NAME
+    required: true
+    schema:
+      openAPIV3Schema:
+        type: string
   patches:
   - name: AWSCT_main
     definitions:
@@ -266,7 +271,7 @@ spec:
           infrastructureCluster: true
       jsonPatches:
       - op: add
-        path: "/spec/template/spec/network/subnets/1"
+        path: "/spec/template/spec/network/subnets/-"
         valueFrom:
           template: |
             availabilityZone: {{if .AWS_NODE_AZ}} {{.AWS_NODE_AZ}} {{else if .AWS_REGION}} {{.AWS_REGION}}a{{end}}
