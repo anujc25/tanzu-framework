@@ -1,0 +1,6 @@
+---
+metadata:
+  infraProvider: "aws"
+
+configvalues:
+  AWS_REGION: "us-west-1"
