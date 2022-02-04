@@ -10,6 +10,9 @@ kind: PackageInstall
 metadata:
   name: tkg-clusterclass-aws
   namespace: tkg-system
+  annotations:
+    kapp.k14s.io/change-rule.0: "upsert after upserting v1/serviceaccount"
+    kapp.k14s.io/change-rule.1: "delete before deleting v1/serviceaccount"
 spec:
   serviceAccountName: tanzu-infra-clusterclass-package-sa
   packageRef:
@@ -30,6 +33,9 @@ kind: PackageInstall
 metadata:
   name: tkg-clusterclass-docker
   namespace: tkg-system
+  annotations:
+    kapp.k14s.io/change-rule.0: "upsert after upserting v1/serviceaccount"
+    kapp.k14s.io/change-rule.1: "delete before deleting v1/serviceaccount"
 spec:
   serviceAccountName: tanzu-infra-clusterclass-package-sa
   packageRef:
@@ -50,6 +56,9 @@ kind: PackageInstall
 metadata:
   name: tkg-clusterclass-azure
   namespace: tkg-system
+  annotations:
+    kapp.k14s.io/change-rule.0: "upsert after upserting v1/serviceaccount"
+    kapp.k14s.io/change-rule.1: "delete before deleting v1/serviceaccount"
 spec:
   serviceAccountName: tanzu-infra-clusterclass-package-sa
   packageRef:
@@ -70,6 +79,9 @@ kind: PackageInstall
 metadata:
   name: tkg-clusterclass-vsphere
   namespace: tkg-system
+  annotations:
+    kapp.k14s.io/change-rule.0: "upsert after upserting v1/serviceaccount"
+    kapp.k14s.io/change-rule.1: "delete before deleting v1/serviceaccount"
 spec:
   serviceAccountName: tanzu-infra-clusterclass-package-sa
   packageRef:

@@ -8,6 +8,9 @@ kind: PackageInstall
 metadata:
   name: tkg-clusterclass
   namespace: tkg-system
+  annotations:
+    kapp.k14s.io/change-rule.0: "upsert after upserting v1/serviceaccount"
+    kapp.k14s.io/change-rule.1: "delete before deleting v1/serviceaccount"
 spec:
   serviceAccountName: tanzu-tkg-package-sa
   packageRef:
@@ -23,6 +26,9 @@ kind: Secret
 metadata:
   name: tkg-clusterclass-values
   namespace: tkg-system
+  annotations:
+    kapp.k14s.io/change-rule.0: "upsert after upserting v1/serviceaccount"
+    kapp.k14s.io/change-rule.1: "delete before deleting v1/serviceaccount"
 type: Opaque
 stringData:
   values.yaml: #@ yaml.encode(data.values)
