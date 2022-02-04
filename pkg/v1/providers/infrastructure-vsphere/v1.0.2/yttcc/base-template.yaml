@@ -129,53 +129,6 @@ spec:
             extraArgs:
               tls-cipher-suites: TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
         files:
-        - content: |
-            apiVersion: v1
-            kind: Pod
-            metadata:
-              creationTimestamp: null
-              name: kube-vip
-              namespace: kube-system
-            spec:
-              containers:
-              - args:
-                - start
-                env:
-                - name: vip_arp
-                  value: "true"
-                - name: vip_leaderelection
-                  value: "true"
-                - name: address
-                  value: '${ VSPHERE_CONTROL_PLANE_ENDPOINT }'
-                - name: vip_interface
-                  value: '${ VIP_NETWORK_INTERFACE }'
-                - name: vip_leaseduration
-                  value: "30"
-                - name: vip_renewdeadline
-                  value: "20"
-                - name: vip_retryperiod
-                  value: "4"
-                image: '${ _TKG_KUBE_VIP_IMAGE }'
-                imagePullPolicy: IfNotPresent
-                name: kube-vip
-                resources: {}
-                securityContext:
-                  capabilities:
-                    add:
-                    - NET_ADMIN
-                    - SYS_TIME
-                volumeMounts:
-                - mountPath: /etc/kubernetes/admin.conf
-                  name: kubeconfig
-              hostNetwork: true
-              volumes:
-              - hostPath:
-                  path: /etc/kubernetes/admin.conf
-                  type: FileOrCreate
-                name: kubeconfig
-            status: {}
-          owner: root:root
-          path: /etc/kubernetes/manifests/kube-vip.yaml
         initConfiguration:
           nodeRegistration:
             criSocket: /var/run/containerd/containerd.sock
@@ -418,6 +371,11 @@ spec:
       openAPIV3Schema:
         type: string
         default: ""
+  - name: VIP_NETWORK_INTERFACE
+    schema:
+      openAPIV3Schema:
+        type: string
+        default: eth0
   - name: TKG_HTTP_PROXY
     schema:
       openAPIV3Schema:
@@ -431,8 +389,47 @@ spec:
   - name: TKG_NO_PROXY
     schema:
       openAPIV3Schema:
+        type: array
+        items:
+          type: string
+  - name: TKG_PROXY_CA_CERT
+    schema:
+      openAPIV3Schema:
         type: string
-        default: ""
+  - name: TKG_CUSTOM_IMAGE_REPOSITORY
+    schema:
+      openAPIV3Schema:
+        type: string
+  # TODO this is subset of above, try to remove this      
+  - name: TKG_CUSTOM_IMAGE_REPOSITORY_HOSTNAME
+    schema:
+      openAPIV3Schema:
+        type: string
+  - name: TKG_CUSTOM_IMAGE_REPOSITORY_SKIP_TLS_VERIFY
+    schema:
+      openAPIV3Schema:
+        type: string
+  - name: TKG_IP_FAMILY
+    schema:
+      openAPIV3Schema:
+        type: string
+  - name: AVI_CONTROL_PLANE_HA_PROVIDER
+    schema:
+      openAPIV3Schema:
+        type: boolean
+        default: false
+  - name: CLUSTER_API_SERVER_PORT
+    schema:
+      openAPIV3Schema:
+        type: integer
+  - name: SERVICE_CIDR
+    schema:
+      openAPIV3Schema:
+        type: string
+  - name: CLUSTER_CIDR
+    schema:
+      openAPIV3Schema:
+        type: string
   patches:
   - name: vsphereClusterTemplate
     definitions:
@@ -606,8 +603,8 @@ spec:
               sshAuthorizedKeys:
               - '{{.VSPHERE_SSH_AUTHORIZED_KEY}}'
               sudo: ALL=(ALL) NOPASSWD:ALL
-  - name: httpProxy
-    enabledIf: '{{ if eq "" .TKG_HTTP_PROXY}}false{{else}}true{{end}}'
+  - name: kubeVIPPod
+    enabledIf: '{{not .AVI_CONTROL_PLANE_HA_PROVIDER}}'
     definitions:
     - selector:
         apiVersion: controlplane.cluster.x-k8s.io/v1beta1
@@ -616,39 +613,154 @@ spec:
           controlPlane: true
       jsonPatches:
       - op: add
-        path: /spec/template/spec/kubeadmConfigSpec/files
+        path: /spec/template/spec/kubeadmConfigSpec/files/-
+        valueFrom:
+          # TODO fix the image path
+          template: |
+            owner: root:root
+            path: /etc/kubernetes/manifests/kube-vip.yaml
+            content: |
+              ---
+              apiVersion: v1
+              kind: Pod
+              metadata:
+                creationTimestamp: null
+                name: kube-vip
+                namespace: kube-system
+              spec:
+                containers:
+                - args:
+                  - start
+                  env:
+                  - name: vip_arp
+                    value: "true"
+                  - name: vip_leaderelection
+                    value: "true"
+                  - name: address
+                    value: {{.VSPHERE_CONTROL_PLANE_ENDPOINT}}
+                  {{- if and (not .AVI_CONTROL_PLANE_HA_PROVIDER) .CLUSTER_API_SERVER_PORT }}
+                  - name: port
+                    value: {{.CLUSTER_API_SERVER_PORT}}
+                  {{- end }}
+                  - name: vip_interface
+                    value: {{.VIP_NETWORK_INTERFACE}}
+                  - name: vip_leaseduration
+                    value: "30"
+                  - name: vip_renewdeadline
+                    value: "20"
+                  - name: vip_retryperiod
+                    value: "4"
+                  image: #@ "{}/{}:{}".format(get_image_repo_for_component(bomData.components["kube-vip"][0].images.kubeVipImage), bomData.components["kube-vip"][0].images.kubeVipImage.imagePath, bomData.components["kube-vip"][0].images.kubeVipImage.tag)
+                  imagePullPolicy: IfNotPresent
+                  name: kube-vip
+                  resources: {}
+                  securityContext:
+                    capabilities:
+                      add:
+                      - NET_ADMIN
+                      - SYS_TIME
+                  volumeMounts:
+                  - mountPath: /etc/kubernetes/admin.conf
+                    name: kubeconfig
+                hostNetwork: true
+                volumes:
+                - hostPath:
+                    path: /etc/kubernetes/admin.conf
+                    type: FileOrCreate
+                  name: kubeconfig
+              status: {}
+  - name: networkConfiguration
+    definitions:
+    - selector:
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        kind: VSphereMachineTemplate
+        matchResources:
+          controlPlane: true
+      jsonPatches:
+      - op: replace
+        path: /spec/template/spec/network
         valueFrom:
           template: |
-            - content: |
-                [Service]
-                Environment="HTTP_PROXY={{.TKG_HTTP_PROXY}}"
-                Environment="HTTPS_PROXY={{.TKG_HTTPS_PROXY}}"
-                Environment="NO_PROXY={{.TKG_NO_PROXY}}"
-              owner: root:root
-              path: /etc/systemd/system/containerd.service.d/http-proxy.conf
-              permissions: "0640"
+            devices:
+            - networkName: {{.VSPHERE_NETWORK}}
+              nameservers: {{.CONTROL_PLANE_NODE_NAMESERVERS}}
+              dhcp4: {{or (eq "ipv4" .TKG_IP_FAMILY) (or (eq "ipv4,ipv6" .TKG_IP_FAMILY) (eq "ipv6,ipv4" .TKG_IP_FAMILY))}}
+              dhcp6: {{or (eq "ipv6" .TKG_IP_FAMILY) (or (eq "ipv4,ipv6" .TKG_IP_FAMILY) (eq "ipv6,ipv4" .TKG_IP_FAMILY))}}
+    - selector:
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        kind: VSphereMachineTemplate
+        matchResources:
+          machineDeploymentClass:
+            names:
+            - tkg-worker
+      jsonPatches:
       - op: add
-        path: /spec/template/spec/kubeadmConfigSpec/files
+        path: /spec/template/spec/network
         valueFrom:
           template: |
-            - content: |
-                [Service]
-                Environment="HTTP_PROXY={{.TKG_HTTP_PROXY}}"
-                Environment="HTTPS_PROXY={{.TKG_HTTPS_PROXY}}"
-                Environment="NO_PROXY={{.TKG_NO_PROXY}}"
-              owner: root:root
-              path: /usr/lib/systemd/system/kubelet.service.d/http-proxy.conf
-              permissions: "0640"
+            devices:
+            - networkName: {{.VSPHERE_NETWORK}}
+              nameservers: {{.CONTROL_PLANE_NODE_NAMESERVERS}}
+              dhcp4: {{or (eq "ipv4" .TKG_IP_FAMILY) (or (eq "ipv4,ipv6" .TKG_IP_FAMILY) (eq "ipv6,ipv4" .TKG_IP_FAMILY))}}
+              dhcp6: {{or (eq "ipv6" .TKG_IP_FAMILY) (or (eq "ipv4,ipv6" .TKG_IP_FAMILY) (eq "ipv6,ipv4" .TKG_IP_FAMILY))}}
+  - name: controlPlaneEndpointConfiguration
+    enabledIf: '{{and (not .AVI_CONTROL_PLANE_HA_PROVIDER) (ne nil .CLUSTER_API_SERVER_PORT)}}'
+    definitions:
+    - selector:
+        apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+        kind: KubeadmControlPlaneTemplate
+        matchResources:
+          controlPlane: true
+      jsonPatches:
+      - op: replace
+        path: /spec/template/spec/kubeadmConfigSpec/initConfiguration/localAPIEndpoint/
+        valueFrom:
+          template: |
+            {{if or (eq "ipv6" .TKG_IP_FAMILY) (eq "ipv6,ipv4" .TKG_IP_FAMILY) }}advertiseAddress: '::/0'
+            {{- else }}
+            advertiseAddress: '0.0.0.0'
+            {{- end }}
+            bindPort: {{.CLUSTER_API_SERVER_PORT}}
+      - op: replace
+        path: /spec/template/spec/joinConfiguration/controlPlane/localAPIEndpoint
+        valueFrom:
+          template: |
+            {{if or (eq "ipv6" .TKG_IP_FAMILY) (eq "ipv6,ipv4" .TKG_IP_FAMILY) }}advertiseAddress: '::/0'
+            {{- else }}
+            advertiseAddress: '0.0.0.0'
+            {{- end }}
+            bindPort: {{.CLUSTER_API_SERVER_PORT}}
+  - name: bindAddressConfiguration
+    enabledIf: '{{eq "ipv6,ipv4" .TKG_IP_FAMILY}}'
+    definitions:
+    - selector:
+        apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+        kind: KubeadmControlPlaneTemplate
+        matchResources:
+          controlPlane: true
+      jsonPatches:
       - op: add
-        path: /spec/template/spec/kubeadmConfigSpec/preKubeadmCommands
+        path: /spec/template/spec/kubeadmConfigSpec/initConfiguration/nodeRegistration/kubeletExtraArgs
+        value:
+          node-ip: "::"
+      - op: add
+        path: /spec/template/spec/kubeadmConfigSpec/joinConfiguration/nodeRegistration/kubeletExtraArgs
+        value:
+          node-ip: "::"
+      - op: add
+        path: /spec/template/spec/kubeadmConfigSpec/clusterConfiguration/apiServer/extraArgs
         valueFrom:
           template: |
-            - systemctl daemon-reload
-            - systemctl stop containerd
-            - systemctl start containerd
-            - export HTTP_PROXY={{.TKG_HTTP_PROXY}}
-            - export HTTPS_PROXY={{.TKG_HTTPS_PROXY}}
-            - export NO_PROXY={{.TKG_NO_PROXY}}
+            advertise-address: {{.VSPHERE_CONTROL_PLANE_ENDPOINT}}
+            bind-address: "::"
+      - op: add
+        path: /spec/template/spec/kubeadmConfigSpec/clusterConfiguration/controllerManager/extraArgs
+        value:
+          bind-address: "::"
+      - op: add
+        path: /spec/template/spec/kubeadmConfigSpec/clusterConfiguratio/scheduler/extraArgs
+        value:
+          bind-address: "::"
     - selector:
         apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
         kind: KubeadmConfigTemplate
@@ -658,31 +770,242 @@ spec:
             - tkg-worker
       jsonPatches:
       - op: add
-        path: /spec/template/spec/files
-        valueFrom:
-          template: |
-            - content: |
-                [Service]
-                Environment="HTTP_PROXY={{.TKG_HTTP_PROXY}}"
-                Environment="HTTPS_PROXY={{.TKG_HTTPS_PROXY}}"
-                Environment="NO_PROXY={{.TKG_NO_PROXY}}"
-              owner: root:root
-              path: /etc/systemd/system/containerd.service.d/http-proxy.conf
-              permissions: "0640"
-            - content: |
-                [Service]
-                Environment="HTTP_PROXY={{.TKG_HTTP_PROXY}}"
-                Environment="HTTPS_PROXY={{.TKG_HTTPS_PROXY}}"
-                Environment="NO_PROXY={{.TKG_NO_PROXY}}"
-              owner: root:root
-              path: /usr/lib/systemd/system/kubelet.service.d/http-proxy.conf
-              permissions: "0640"
+        path: /spec/template/spec/joinConfiguration/nodeRegistration/kubeletExtraArgs
+        value:
+          node-ip: "::"
+  - name: ipv6Hack
+    enabledIf: '{{eq "ipv6" .TKG_IP_FAMILY}}'
+    definitions:
+    - selector:
+        apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+        kind: KubeadmControlPlaneTemplate
+        matchResources:
+          controlPlane: true
+      jsonPatches:
       - op: add
-        path: /spec/template/spec/preKubeadmCommands
+        path: /spec/template/spec/kubeadmConfigSpec/postKubeadmCommands/-
+        value: sed -i '/listen-client-urls/ s/$/,https:\/\/127.0.0.1:2379/' /etc/kubernetes/manifests/etcd.yaml
+  - name: httpProxy
+    enabledIf: '{{ne "" .TKG_HTTP_PROXY}}'
+    definitions:
+    - selector:
+        apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+        kind: KubeadmControlPlaneTemplate
+        matchResources:
+          controlPlane: true
+      jsonPatches:
+      - op: add
+        path: /spec/template/spec/kubeadmConfigSpec/files/-
         valueFrom:
           template: |
-            - systemctl daemon-reload
-            - systemctl restart containerd
-            - export HTTP_PROXY={{.TKG_HTTP_PROXY}}
-            - export HTTPS_PROXY={{.TKG_HTTPS_PROXY}}
-            - export NO_PROXY={{.TKG_NO_PROXY}}
+            content: |
+              [Service]
+              Environment="HTTP_PROXY={{.TKG_HTTP_PROXY}}"
+              Environment="HTTPS_PROXY={{.TKG_HTTPS_PROXY}}"
+              Environment="NO_PROXY={{- range .TKG_NO_PROXY}}{{.}},{{- end}}{{.SERVICE_CIDR}},{{.CLUSTER_CIDR}},localhost,127.0.0.1
+            {{- if or (eq "ipv6" .TKG_IP_FAMILY) (or (eq "ipv4,ipv6" .TKG_IP_FAMILY) (eq "ipv6,ipv4" .TKG__IP_FAMILY))}},::1{{end}},.scv,.svc.cluster.local"
+            owner: root:root
+            path: /etc/systemd/system/containerd.service.d/http-proxy.conf
+            permissions: "0640"
+      - op: add
+        path: /spec/template/spec/kubeadmConfigSpec/files/-
+        valueFrom:
+          template: |
+            content: |
+              [Service]
+              Environment="HTTP_PROXY={{.TKG_HTTP_PROXY}}"
+              Environment="HTTPS_PROXY={{.TKG_HTTPS_PROXY}}"
+              Environment="NO_PROXY={{- range .TKG_NO_PROXY}}{{.}},{{- end}}{{.SERVICE_CIDR}},{{.CLUSTER_CIDR}},localhost,127.0.0.1
+            {{- if or (eq "ipv6" .TKG_IP_FAMILY) (or (eq "ipv4,ipv6" .TKG_IP_FAMILY) (eq "ipv6,ipv4" .TKG__IP_FAMILY))}},::1{{end}},.scv,.svc.cluster.local"
+            owner: root:root
+            path: /usr/lib/systemd/system/kubelet.service.d/http-proxy.conf
+            permissions: "0640"
+      - op: add
+        path: /spec/template/spec/kubeadmConfigSpec/preKubeadmCommands/-
+        value: systemctl daemon-reload
+      - op: add
+        path: /spec/template/spec/kubeadmConfigSpec/preKubeadmCommands/-
+        value: systemctl stop containerd
+      - op: add
+        path: /spec/template/spec/kubeadmConfigSpec/preKubeadmCommands/-
+        value: systemctl start containerd
+      - op: add
+        path: /spec/template/spec/kubeadmConfigSpec/preKubeadmCommands/-
+        valueFrom:
+          template: |
+            export HTTP_PROXY={{.TKG_HTTP_PROXY}}
+      - op: add
+        path: /spec/template/spec/kubeadmConfigSpec/preKubeadmCommands/-
+        valueFrom:
+          template: |
+            export HTTPS_PROXY={{.TKG_HTTPS_PROXY}}
+      - op: add
+        path: /spec/template/spec/kubeadmConfigSpec/preKubeadmCommands/-
+        valueFrom:
+          template: |
+            export NO_PROXY={{- range .TKG_NO_PROXY}}{{.}},{{- end}}{{.SERVICE_CIDR}},{{.CLUSTER_CIDR}},localhost,127.0.0.1
+            {{- if or (eq "ipv6" .TKG_IP_FAMILY) (or (eq "ipv4,ipv6" .TKG_IP_FAMILY) (eq "ipv6,ipv4" .TKG__IP_FAMILY))}},::1{{end}},.scv,.svc.cluster.local
+    - selector:
+        apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+        kind: KubeadmConfigTemplate
+        matchResources:
+          machineDeploymentClass:
+            names:
+            - tkg-worker
+      jsonPatches:
+      - op: add
+        path: /spec/template/spec/files/-
+        valueFrom:
+          template: |
+            content: |
+              [Service]
+              Environment="HTTP_PROXY={{.TKG_HTTP_PROXY}}"
+              Environment="HTTPS_PROXY={{.TKG_HTTPS_PROXY}}"
+              Environment="NO_PROXY={{- range .TKG_NO_PROXY}}{{.}},{{- end}}{{.SERVICE_CIDR}},{{.CLUSTER_CIDR}},localhost,127.0.0.1
+            {{- if or (eq "ipv6" .TKG_IP_FAMILY) (or (eq "ipv4,ipv6" .TKG_IP_FAMILY) (eq "ipv6,ipv4" .TKG__IP_FAMILY))}},::1{{end}},.scv,.svc.cluster.local"
+            owner: root:root
+            path: /etc/systemd/system/containerd.service.d/http-proxy.conf
+            permissions: "0640"
+      - op: add
+        path: /spec/template/spec/files/-
+        valueFrom:
+          template: |
+            content: |
+              [Service]
+              Environment="HTTP_PROXY={{.TKG_HTTP_PROXY}}"
+              Environment="HTTPS_PROXY={{.TKG_HTTPS_PROXY}}"
+              Environment="NO_PROXY={{- range .TKG_NO_PROXY}}{{.}},{{- end}}{{.SERVICE_CIDR}},{{.CLUSTER_CIDR}},localhost,127.0.0.1
+            {{- if or (eq "ipv6" .TKG_IP_FAMILY) (or (eq "ipv4,ipv6" .TKG_IP_FAMILY) (eq "ipv6,ipv4" .TKG__IP_FAMILY))}},::1{{end}},.scv,.svc.cluster.local"
+            owner: root:root
+            path: /usr/lib/systemd/system/kubelet.service.d/http-proxy.conf
+            permissions: "0640"
+      - op: add
+        path: /spec/template/spec/preKubeadmCommands/-
+        value: systemctl daemon-reload
+      - op: add
+        path: /spec/template/spec/preKubeadmCommands/-
+        value: systemctl restart containerd
+      - op: add
+        path: /spec/template/spec/preKubeadmCommands/-
+        valueFrom:
+          template: |
+            export HTTP_PROXY={{.TKG_HTTP_PROXY}}
+      - op: add
+        path: /spec/template/spec/preKubeadmCommands/-
+        valueFrom:
+          template: |
+            export HTTPS_PROXY={{.TKG_HTTPS_PROXY}}
+      - op: add
+        path: /spec/template/spec/preKubeadmCommands/-
+        valueFrom:
+          template: |
+            export NO_PROXY={{- range .TKG_NO_PROXY}}{{.}},{{- end}}{{.SERVICE_CIDR}},{{.CLUSTER_CIDR}},localhost,127.0.0.1
+            {{- if or (eq "ipv6" .TKG_IP_FAMILY) (or (eq "ipv4,ipv6" .TKG_IP_FAMILY) (eq "ipv6,ipv4" .TKG__IP_FAMILY))}},::1{{end}},.scv,.svc.cluster.local
+  - name: registryCACert
+    enabledif: '{{and (ne "" (or .TKG_PROXY_CA_CERT .TKG_CUSTOM_IMAGE_REPOSITORY_CA_CERTIFICATE)) (and .TKG_CUSTOM_IMAGE_REPOSITORY_SKIP_TLS_VERIFY (ne "" .TKG_CUSTOM_IMAGE_REPOSITORY)) }}'
+    definitions:
+    - selector:
+        apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+        kind: KubeadmControlPlaneTemplate
+        matchResources:
+          controlPlane: true
+      jsonPatches:
+      - op: add
+        path: /spec/template/spec/kubeadmConfigSpec/preKubeadmCommands/-
+        valueFrom:
+          template: |
+            "echo '[plugins.\"io.containerd.grpc.v1.cri\".registry.configs.\"{{.TKG_CUSTOM_IMAGE_REPOSITORY_HOSTNAME}}\".tls]' >> /etc/containerd/config.toml"
+      - op: add
+        path: /spec/template/spec/kubeadmConfigSpec/preKubeadmCommands/-
+        valueFrom:
+          template: |
+            "echo '  ca_file = \"/etc/containerd/{{.TKG_CUSTOM_IMAGE_REPOSITORY_HOSTNAME}}.crt\"' >> /etc/containerd/config.toml"
+      - op: add
+        path: /spec/template/spec/kubeadmConfigSpec/preKubeadmCommands/-
+        value: systemctl restart containerd
+      - op: add
+        path: /spec/template/spec/kubeadmConfigSpec/files/-
+        valueFrom:
+          template: |
+            path: "/etc/containerd/{{.TKG_CUSTOM_IMAGE_REPOSITORY_HOSTNAME}}.crt"
+            content: {{or .TKG_PROXY_CA_CERT .TKG_CUSTOM_IMAGE_REPOSITORY_CA_CERTIFICATE}}
+            encoding: "base64"
+            permissions: "0444"
+    - selector:
+        apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+        kind: KubeadmConfigTemplate
+        matchResources:
+          machineDeploymentClass:
+            names:
+            - tkg-worker
+      jsonPatches:
+      - op: add
+        path: /spec/template/spec/preKubeadmCommands/-
+        valueFrom:
+          template: |
+            "echo '[plugins.\"io.containerd.grpc.v1.cri\".registry.configs.\"{{.TKG_CUSTOM_IMAGE_REPOSITORY_HOSTNAME}}\".tls]' >> /etc/containerd/config.toml"
+      - op: add
+        path: /spec/template/spec/preKubeadmCommands/-
+        valueFrom:
+          template: |
+            "echo '  ca_file = \"/etc/containerd/{{.TKG_CUSTOM_IMAGE_REPOSITORY_HOSTNAME}}.crt\"' >> /etc/containerd/config.toml"
+      - op: add
+        path: /spec/template/spec/preKubeadmCommands/-
+        value: systemctl restart containerd
+      - op: add
+        path: /spec/template/spec/files/-
+        valueFrom:
+          template: |
+            path: "/etc/containerd/{{.TKG_CUSTOM_IMAGE_REPOSITORY_HOSTNAME}}.crt"
+            content: {{or .TKG_PROXY_CA_CERT .TKG_CUSTOM_IMAGE_REPOSITORY_CA_CERTIFICATE}}
+            encoding: "base64"
+            permissions: "0444"
+  - name: registrySkipTLSVerify
+    enabledIf: '{{ne "" .TKG_CUSTOM_IMAGE_REPOSITORY}}'
+    definitions:
+    - selector:
+        apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+        kind: KubeadmControlPlaneTemplate
+        matchResources:
+          controlPlane: true
+      jsonPatches:
+      - op: add
+        path: /spec/template/spec/kubeadmConfigSpec/preKubeadmCommands/-
+        valueFrom:
+          template: |
+            sed -i 's|\".*/pause|\{{.TKG_IMAGE_REPO}}/pause|' /etc/containerd/config.toml
+      - op: add
+        path: /spec/template/spec/kubeadmConfigSpec/preKubeadmCommands/-
+        valueFrom:
+          # TODO fix value of TKG_CUSTOM_IMAGE_REPOSITORY_HOSTNAME
+          template: |
+            {{if .TKG_CUSTOM_IMAGE_REPOSITORY_SKIP_TLS_VERIFY}}
+            echo '[plugins.\"io.containerd.grpc.v1.cri\".registry.configs.\"{{.TKG_CUSTOM_IMAGE_REPOSITORY_HOSTNAME}}\".tls]' >> /etc/containerd/config.toml && echo '  insecure_skip_verify = true' >> /etc/containerd/config.toml
+            {{- end}}            
+      - op: add
+        path: /spec/template/spec/kubeadmConfigSpec/preKubeadmCommands/-
+        value: systemctl restart containerd
+    - selector:
+        apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+        kind: KubeadmConfigTemplate
+        matchResources:
+          machineDeploymentClass:
+            names:
+            - tkg-worker
+      jsonPatches:
+      - op: add
+        path: /spec/template/spec/preKubeadmCommands/-
+        valueFrom:
+          template: |
+            sed -i 's|\".*/pause|\{{.TKG_IMAGE_REPO}}/pause|' /etc/containerd/config.toml
+      - op: add
+        path: /spec/template/spec/preKubeadmCommands/-
+        valueFrom:
+          # TODO fix value of TKG_CUSTOM_IMAGE_REPOSITORY_HOSTNAME
+          template: |
+            {{if .TKG_CUSTOM_IMAGE_REPOSITORY_SKIP_TLS_VERIFY}}
+            echo '[plugins.\"io.containerd.grpc.v1.cri\".registry.configs.\"{{.TKG_CUSTOM_IMAGE_REPOSITORY_HOSTNAME}}\".tls]' >> /etc/containerd/config.toml && echo '  insecure_skip_verify = true' >> /etc/containerd/config.toml
+            {{- end}}
+      - op: add
+        path: /spec/template/spec/preKubeadmCommands/-
+        value: systemctl restart containerd
