@@ -4,20 +4,13 @@
 package client_test
 
 import (
-	"testing"
 	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	// nolint:staticcheck,nolintlint
 	. "github.com/vmware-tanzu/tanzu-framework/pkg/v1/tkg/client"
 )
-
-func TestKind(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "Package install client Suite")
-}
 
 var _ = FDescribe("Unit tests for management package installation", func() {
 	var (
@@ -32,10 +25,7 @@ var _ = FDescribe("Unit tests for management package installation", func() {
 		err = tkgClient.InstallManagementPackages("", "")
 	})
 
-	// Context("Test package installation", func() {
 	It("should not return an error and all status should be correct", func() {
 		Expect(err).NotTo(HaveOccurred())
 	})
-	// })
-
 })

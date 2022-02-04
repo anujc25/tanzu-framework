@@ -732,10 +732,14 @@ func (c *TkgClient) InstallManagementPackages(kubeConfig, kubeContext string) er
 func (c *TkgClient) installManagementPackageRepository(pkgClient tkgpackageclient.TKGPackageClient) error {
 	repositoryOptions := tkgpackagedatamodel.NewRepositoryOptions()
 	repositoryOptions.RepositoryName = "management"
-	repositoryOptions.RepositoryURL = ""
+	repositoryOptions.RepositoryURL = "gcr.io/eminent-nation-87317/tkg/test/repo/management/packages/management/management@sha256:afe1a792c7290e535522b4d3f2bf4f7b9e01ef1ad0cf9720f93a68de8eed539f"
 	repositoryOptions.Namespace = "tkg-system"
+	repositoryOptions.CreateRepository = true
+	repositoryOptions.Wait = true
+	repositoryOptions.PollInterval = time.Second * 5
+	repositoryOptions.PollTimeout = time.Second * 60
 
-	return pkgClient.UpdateRepository(repositoryOptions, nil, tkgpackagedatamodel.OperationTypeUpdate)
+	return pkgClient.UpdateRepository(repositoryOptions, nil, tkgpackagedatamodel.OperationTypeInstall)
 }
 
 func (c *TkgClient) installTKGManagementPackage(pkgClient tkgpackageclient.TKGPackageClient) error {
@@ -744,6 +748,10 @@ func (c *TkgClient) installTKGManagementPackage(pkgClient tkgpackageclient.TKGPa
 	packageOptions.PkgInstallName = "tkg-pkg"
 	packageOptions.Namespace = "tkg-system"
 	packageOptions.Version = "0.17.0-dev"
+	packageOptions.Install = true
+	packageOptions.Wait = true
+	packageOptions.PollInterval = time.Second * 5
+	packageOptions.PollTimeout = time.Minute * 5
 
 	valuesFilepath, err := getTKGPackageConfig()
 	if err != nil {
@@ -753,7 +761,7 @@ func (c *TkgClient) installTKGManagementPackage(pkgClient tkgpackageclient.TKGPa
 
 	packageOptions.ValuesFile = valuesFilepath
 
-	return pkgClient.InstallPackage(packageOptions, nil, tkgpackagedatamodel.OperationTypeUpdate)
+	return pkgClient.InstallPackage(packageOptions, nil, tkgpackagedatamodel.OperationTypeInstall)
 }
 
 func getTKGPackageConfig() (string, error) {
