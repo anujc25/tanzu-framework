@@ -336,11 +336,13 @@ spec:
         path: "/spec/template/spec/acceleratedNetworking"
         valueFrom:
           variable: AZURE_ENABLE_ACCELERATED_NETWORKING
-          # TODO
-          #      - op: replace
-          #        path: "/spec/template/spec/dataDisks/0/diskSizeGB"
-          #        valueFrom:
-          #          variable: AZURE_CONTROL_PLANE_DATA_DISK_SIZE_GIB
+      - op: replace
+        path: "/spec/template/spec/dataDisks"
+        valueFrom:
+          template: |
+            - diskSizeGB: {{ .AZURE_CONTROL_PLANE_DATA_DISK_SIZE_GIB }}
+              lun: 0
+              nameSuffix: etcddisk
       - op: replace
         path: "/spec/template/spec/osDisk"
         valueFrom:
