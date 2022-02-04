@@ -70,10 +70,8 @@ func (p *pkgClient) installPackage(o *tkgpackagedatamodel.PackageOptions, progre
 		if err != nil {
 			progress.Err <- err
 		}
-		if operationType == tkgpackagedatamodel.OperationTypeInstall {
-			close(progress.ProgressMsg)
-			close(progress.Done)
-		}
+		close(progress.ProgressMsg)
+		close(progress.Done)
 	}()
 
 	if pkgInstall, err = p.kappClient.GetPackageInstall(o.PkgInstallName, o.Namespace); err != nil {

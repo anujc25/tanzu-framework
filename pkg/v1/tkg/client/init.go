@@ -14,7 +14,6 @@ import (
 	"github.com/go-openapi/swag"
 	"github.com/juju/fslock"
 	"github.com/pkg/errors"
-	"gopkg.in/yaml.v3"
 	clusterctlv1 "sigs.k8s.io/cluster-api/cmd/clusterctl/api/v1alpha3"
 	clusterctl "sigs.k8s.io/cluster-api/cmd/clusterctl/client"
 	crtclient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -26,8 +25,6 @@ import (
 	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/tkg/log"
 	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/tkg/region"
 	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/tkg/tkgconfighelper"
-	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/tkg/tkgpackageclient"
-	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/tkg/tkgpackagedatamodel"
 	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/tkg/utils"
 	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/tkg/yamlprocessor"
 )
@@ -204,7 +201,7 @@ func (c *TkgClient) InitRegion(options *InitRegionOptions) error { //nolint:funl
 		return errors.Wrap(err, "unable to initialize providers")
 	}
 
-	// If clusterclass feature flag is enabled the deploy package repository
+	// If clusterclass feature flag is enabled then deploy management repository and packages
 	if config.IsFeatureActivated(config.FeatureFlagClusterClass) {
 		c.InstallManagementPackages(bootstrapClusterKubeconfigPath, "")
 	}
@@ -709,127 +706,3 @@ func (c *TkgClient) safelyAddFeatureFlag(featureFlags map[string]string, feature
 	}
 	return featureFlags
 }
-
-func (c *TkgClient) InstallManagementPackages(kubeConfig, kubeContext string) error {
-	pkgClient, err := tkgpackageclient.NewTKGPackageClient(kubeConfig, kubeContext)
-	if err != nil {
-		return err
-	}
-
-	err = c.installManagementPackageRepository(pkgClient)
-	if err != nil {
-		return err
-	}
-
-	err = c.installTKGManagementPackage(pkgClient)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (c *TkgClient) installManagementPackageRepository(pkgClient tkgpackageclient.TKGPackageClient) error {
-	repositoryOptions := tkgpackagedatamodel.NewRepositoryOptions()
-	repositoryOptions.RepositoryName = "management"
-	repositoryOptions.RepositoryURL = "gcr.io/eminent-nation-87317/tkg/test/repo/management/packages/management/management@sha256:afe1a792c7290e535522b4d3f2bf4f7b9e01ef1ad0cf9720f93a68de8eed539f"
-	repositoryOptions.Namespace = "tkg-system"
-	repositoryOptions.CreateRepository = true
-	repositoryOptions.Wait = true
-	repositoryOptions.PollInterval = time.Second * 5
-	repositoryOptions.PollTimeout = time.Second * 60
-
-	return pkgClient.UpdateRepository(repositoryOptions, nil, tkgpackagedatamodel.OperationTypeInstall)
-}
-
-func (c *TkgClient) installTKGManagementPackage(pkgClient tkgpackageclient.TKGPackageClient) error {
-	packageOptions := tkgpackagedatamodel.NewPackageOptions()
-	packageOptions.PackageName = "tkg.tanzu.vmware.com"
-	packageOptions.PkgInstallName = "tkg-pkg"
-	packageOptions.Namespace = "tkg-system"
-	packageOptions.Version = "0.17.0-dev"
-	packageOptions.Install = true
-	packageOptions.Wait = true
-	packageOptions.PollInterval = time.Second * 5
-	packageOptions.PollTimeout = time.Minute * 5
-
-	valuesFilepath, err := getTKGPackageConfig()
-	if err != nil {
-		return err
-	}
-	defer os.Remove(valuesFilepath)
-
-	packageOptions.ValuesFile = valuesFilepath
-
-	return pkgClient.InstallPackage(packageOptions, nil, tkgpackagedatamodel.OperationTypeInstall)
-}
-
-func getTKGPackageConfig() (string, error) {
-	tkgPackageConfig := TKGPackageConfig{
-		Metadata: Metadata{
-			InfraProvider: "aws",
-		},
-		ConfigValues: map[string]string{"AWS_REGION": "us-east-1"},
-	}
-
-	configBytes, err := yaml.Marshal(tkgPackageConfig)
-	if err != nil {
-		return "", err
-	}
-
-	valuesFile, err := utils.CreateTempFile("", "")
-	if err != nil {
-		return "", err
-	}
-
-	err = utils.WriteToFile(valuesFile, configBytes)
-	if err != nil {
-		return "", err
-	}
-	return valuesFile, nil
-}
-
-type TKGPackageConfig struct {
-	Metadata     Metadata          `yaml:"metadata"`
-	ConfigValues map[string]string `yaml:"configvalues"`
-}
-
-type Metadata struct {
-	InfraProvider string `yaml:"infraProvider"`
-}
-
-// // PackageOptions includes fields for package operations
-// type PackageOptions struct {
-// 	Available              string
-// 	ClusterRoleName        string
-// 	ClusterRoleBindingName string
-// 	Namespace              string
-// 	PackageName            string
-// 	PkgInstallName         string
-// 	SecretName             string
-// 	ServiceAccountName     string
-// 	ValuesFile             string
-// 	Version                string
-// 	PollInterval           time.Duration
-// 	PollTimeout            time.Duration
-// 	AllNamespaces          bool
-// 	CreateNamespace        bool
-// 	Install                bool
-// 	Wait                   bool
-// 	SkipPrompt             bool
-// }
-
-// // type RepositoryOptions struct {
-// 	KubeConfig       string
-// 	Namespace        string
-// 	RepositoryName   string
-// 	RepositoryURL    string
-// 	PollInterval     time.Duration
-// 	PollTimeout      time.Duration
-// 	AllNamespaces    bool
-// 	CreateRepository bool
-// 	CreateNamespace  bool
-// 	IsForceDelete    bool
-// 	SkipPrompt       bool
-// 	Wait             bool
-// }
