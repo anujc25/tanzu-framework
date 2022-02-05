@@ -65,24 +65,29 @@ spec:
     schema:
       openAPIV3Schema:
         type: string
+        default: ""
   - name: AZURE_VNET_NAME
     required: true
     schema:
       openAPIV3Schema:
         type: string
+        default: ""
   - name: AZURE_VNET_CIDR
     required: true
     schema:
       openAPIV3Schema:
         type: string
+        default: ""
   - name: AZURE_CONTROL_PLANE_SUBNET_NAME
     schema:
       openAPIV3Schema:
         type: string
+        default: ""
   - name: AZURE_CONTROL_PLANE_SUBNET_SECURITY_GROUP
     schema:
       openAPIV3Schema:
         type: string
+        default: ""
   - name: AZURE_CONTROL_PLANE_SUBNET_CIDR
     schema:
       openAPIV3Schema:
@@ -92,10 +97,12 @@ spec:
     schema:
       openAPIV3Schema:
         type: string
+        default: ""
   - name: AZURE_NODE_SUBNET_SECURITY_GROUP
     schema:
       openAPIV3Schema:
         type: string
+        default: ""
   - name: AZURE_NODE_SUBNET_CIDR
     required: true
     schema:
@@ -106,15 +113,18 @@ spec:
     schema:
       openAPIV3Schema:
         type: string
+        default: ""
   - name: AZURE_VNET_RESOURCE_GROUP
     schema:
       openAPIV3Schema:
         type: string
+        default: ""
   - name: AZURE_SUBSCRIPTION_ID
     required: true
     schema:
       openAPIV3Schema:
         type: string
+        default: ""
   - name: CLUSTER_NAME
     required: true
     schema:
@@ -124,15 +134,18 @@ spec:
     schema:
       openAPIV3Schema:
         type: string
+        default: ""
   - name: AZURE_IDENTITY_NAMESPACE
     schema:
       openAPIV3Schema:
         type: string
+        default: ""
   - name: TKG_CLUSTER_ROLE
     required: true
     schema:
       openAPIV3Schema:
         type: string
+        default: ""
   - name: AZURE_ENVIRONMENT
     schema:
       openAPIV3Schema:
@@ -143,6 +156,7 @@ spec:
     schema:
       openAPIV3Schema:
         type: string
+        default: ""
   - name: AZURE_CONTROL_PLANE_MACHINE_TYPE
     schema:
       openAPIV3Schema:
