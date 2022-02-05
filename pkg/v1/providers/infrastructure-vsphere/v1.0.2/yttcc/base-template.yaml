@@ -362,25 +362,30 @@ spec:
     schema:
       openAPIV3Schema:
         type: string
+        default: ""
   - name: VSPHERE_DATASTORE
     required: true
     schema:
       openAPIV3Schema:
         type: string
+        default: ""
   - name: VSPHERE_FOLDER
     required: true
     schema:
       openAPIV3Schema:
         type: string
+        default: ""
   - name: VSPHERE_RESOURCE_POOL
     required: true
     schema:
       openAPIV3Schema:
         type: string
+        default: ""
   - name: VSPHERE_STORAGE_POLICY_ID
     schema:
       openAPIV3Schema:
         type: string
+        default: ""
   - name: VSPHERE_SERVER
     required: true
     schema:
@@ -390,36 +395,44 @@ spec:
     schema:
       openAPIV3Schema:
         type: string
+        default: ""
   - name: VSPHERE_SSH_AUTHORIZED_KEY
     schema:
       openAPIV3Schema:
         type: string
+        default: ""
   - name: VSPHERE_TEMPLATE
     required: true
     schema:
       openAPIV3Schema:
         type: string
+        default: ""
   - name: VSPHERE_WINDOWS_TEMPLATE
     schema:
       openAPIV3Schema:
         type: string
+        default: ""
   - name: VSPHERE_CONTROL_PLANE_ENDPOINT
     required: true
     schema:
       openAPIV3Schema:
         type: string
+        default: ""
   - name: TKG_HTTP_PROXY
     schema:
       openAPIV3Schema:
         type: string
+        default: ""
   - name: TKG_HTTPS_PROXY
     schema:
       openAPIV3Schema:
         type: string
+        default: ""
   - name: TKG_NO_PROXY
     schema:
       openAPIV3Schema:
         type: string
+        default: ""
   patches:
   - name: vsphereClusterTemplate
     definitions:
