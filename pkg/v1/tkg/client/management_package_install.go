@@ -9,8 +9,6 @@ import (
 
 	"gopkg.in/yaml.v3"
 
-	"github.com/pkg/errors"
-
 	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/tkg/constants"
 	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/tkg/tkgpackageclient"
 	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/tkg/tkgpackagedatamodel"
@@ -49,14 +47,14 @@ func (c *TkgClient) InstallManagementPackages(kubeConfig, kubeContext string) er
 }
 
 func (c *TkgClient) installManagementPackageRepository(pkgClient tkgpackageclient.TKGPackageClient) error {
-	managementPackageRepoImage, err := c.tkgBomClient.GetManagementPackageRepositoryImage()
-	if err != nil {
-		return errors.Wrap(err, "unable to get management package repository image")
-	}
+	// managementPackageRepoImage, err := c.tkgBomClient.GetManagementPackageRepositoryImage()
+	// if err != nil {
+	// 	return errors.Wrap(err, "unable to get management package repository image")
+	// }
 
 	repositoryOptions := tkgpackagedatamodel.NewRepositoryOptions()
 	repositoryOptions.RepositoryName = constants.TKGManagementPackageRepositoryName
-	repositoryOptions.RepositoryURL = managementPackageRepoImage
+	// repositoryOptions.RepositoryURL = managementPackageRepoImage
 
 	// TODO(anuj): Remove this hard coded repository url
 	repositoryOptions.RepositoryURL = "gcr.io/eminent-nation-87317/tkg/test/repo/management/packages/management/management@sha256:afe1a792c7290e535522b4d3f2bf4f7b9e01ef1ad0cf9720f93a68de8eed539f"
@@ -91,11 +89,16 @@ func (c *TkgClient) installTKGManagementPackage(pkgClient tkgpackageclient.TKGPa
 }
 
 func (c *TkgClient) getTKGPackageConfig() (string, error) {
+	userProviderConfigValues, err := c.getUserConfigVariables()
+	if err != nil {
+		return "", err
+	}
+
 	tkgPackageConfig := TKGPackageConfig{
 		Metadata: Metadata{
-			InfraProvider: "aws",
+			InfraProvider: userProviderConfigValues[constants.ConfigVariableProviderType],
 		},
-		ConfigValues: map[string]string{"AWS_REGION": "us-east-1"},
+		ConfigValues: userProviderConfigValues,
 	}
 
 	configBytes, err := yaml.Marshal(tkgPackageConfig)
@@ -113,4 +116,31 @@ func (c *TkgClient) getTKGPackageConfig() (string, error) {
 		return "", err
 	}
 	return valuesFile, nil
+}
+
+func (c *TkgClient) getUserConfigVariables() (map[string]string, error) {
+	path, err := c.tkgConfigPathsClient.GetConfigDefaultsFilePath()
+	if err != nil {
+		return nil, err
+	}
+
+	bytes, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	configValues := map[string]string{}
+	err = yaml.Unmarshal(bytes, &configValues)
+	if err != nil {
+		return nil, err
+	}
+
+	userProvidedConfigValues := map[string]string{}
+	for k := range configValues {
+		if v, e := c.TKGConfigReaderWriter().Get(k); e == nil {
+			userProvidedConfigValues[k] = v
+		}
+	}
+
+	return userProvidedConfigValues, nil
 }
