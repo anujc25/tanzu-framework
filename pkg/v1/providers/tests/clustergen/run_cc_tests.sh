@@ -16,6 +16,7 @@ TESTED_INFRAS=${TESTED_INFRAS:-"AWS AZURE VSPHERE"}
 AZURE_CASES=${AZURE_CASES:-""}
 AWS_CASES=${AWS_CASES:-""}
 VSPHERE_CASES=${VSPHERE_CASES:-""}
+MAX_CASES_PER_INFRA=${MAX_CASES_PER_INFRA:-20}
 
 TKG_CONFIG_DIR="/tmp/test_tkg_config_dir"
 rm -rf $TKG_CONFIG_DIR
@@ -33,7 +34,7 @@ generate_cluster_configurations() {
   CASES=${!VNAME}
 
   if [ -z "$CASES" ]; then
-    CASES=$(for i in `grep ${infra} *.case | cut -d: -f1 | uniq | cut -d/ -f1 | head -20`; do echo -n "$i "; done; echo)
+    CASES=$(for i in `grep ${infra} *.case | cut -d: -f1 | uniq | cut -d/ -f1 | head -${MAX_CASES_PER_INFRA}`; do echo -n "$i "; done; echo)
   fi
 
   $TKG get mc --configdir ${TKG_CONFIG_DIR}
