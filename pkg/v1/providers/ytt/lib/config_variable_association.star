@@ -1,7 +1,7 @@
 load("@ytt:data", "data")
 load("@ytt:overlay", "overlay")
 load("@ytt:yaml", "yaml")
-
+load("/lib/helpers.star", "get_default_tkg_bom_data")
 
 #! This file contains function 'config_variable_association' which specifies all configuration variables
 #! mentioned in 'config_default.yaml' and describes association of each configuration variable with
@@ -305,4 +305,23 @@ def get_cluster_variables():
         end
     end
     return vars
+end
+
+def populate_variables(desired):
+    vals = []
+    for configVariable in desired:
+        if configVariable == "TKG_NO_PROXY" and data.values[configVariable] != "":
+            vals.append({"name": configVariable, "value": data.values[configVariable].split(",")})
+            continue
+        end
+        if configVariable == "TKG_CUSTOM_IMAGE_REPOSITORY":
+            repo = data.values[configVariable] if data.values[configVariable] else get_default_tkg_bom_data().imageConfig.imageRepository
+            vals.append({"name": configVariable, "value": repo})
+            vals.append({"name": configVariable + "_HOSTNAME", "value": repo.split("/")[0]})
+            continue
+        end
+
+        vals.append({"name": configVariable, "value": data.values[configVariable]})
+    end
+    return vals
 end
