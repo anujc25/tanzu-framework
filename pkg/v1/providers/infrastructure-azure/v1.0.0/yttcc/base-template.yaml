@@ -242,6 +242,53 @@ spec:
       openAPIV3Schema:
         type: integer
         default: 4
+  - name: TKG_HTTP_PROXY
+    schema:
+      openAPIV3Schema:
+        type: string
+        default: ""
+  - name: TKG_HTTPS_PROXY
+    schema:
+      openAPIV3Schema:
+        type: string
+        default: ""
+  - name: TKG_NO_PROXY
+    schema:
+      openAPIV3Schema:
+        type: array
+        items:
+          type: string
+  - name: TKG_PROXY_CA_CERT
+    schema:
+      openAPIV3Schema:
+        type: string
+        default: ""
+  - name: TKG_CUSTOM_IMAGE_REPOSITORY
+    schema:
+      openAPIV3Schema:
+        type: string
+        default: ""
+  # TODO this is subset of above, try to remove this      
+  - name: TKG_CUSTOM_IMAGE_REPOSITORY_HOSTNAME
+    schema:
+      openAPIV3Schema:
+        type: string
+        default: ""
+  - name: TKG_CUSTOM_IMAGE_REPOSITORY_CA_CERTIFICATE
+    schema:
+      openAPIV3Schema:
+        type: string
+        default: ""
+  - name: TKG_CUSTOM_IMAGE_REPOSITORY_SKIP_TLS_VERIFY
+    schema:
+      openAPIV3Schema:
+        type: string
+        default: ""
+  - name: ENABLE_AUDIT_LOGGING
+    schema:
+      openAPIV3Schema:
+        type: boolean
+        default: false
   patches:
   - name: AzureClusterIdentityRef
     enabledIf: '{{if or .AZURE_IDENTITY_NAME (eq .TKG_CLUSTER_ROLE "management")}}true{{end}}'
@@ -511,6 +558,406 @@ spec:
           template: |
             frontendIPsCount: {{ .AZURE_NODE_OUTBOUND_LB_FRONTEND_IP_COUNT }}
             idleTimeoutInMinutes: {{ .AZURE_NODE_OUTBOUND_LB_IDLE_TIMEOUT_IN_MINUTES }}
+  - name: httpProxy
+    enabledIf: '{{ne "" .TKG_HTTP_PROXY}}'
+    definitions:
+    - selector:
+        apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+        kind: KubeadmControlPlaneTemplate
+        matchResources:
+          controlPlane: true
+      jsonPatches:
+      - op: add
+        path: /spec/template/spec/kubeadmConfigSpec/files/-
+        valueFrom:
+          template: |
+            content: |
+              [Service]
+              Environment="HTTP_PROXY={{.TKG_HTTP_PROXY}}"
+              Environment="HTTPS_PROXY={{.TKG_HTTPS_PROXY}}"
+              Environment="NO_PROXY={{- range .TKG_NO_PROXY}}{{.}},{{- end}}{{.AWS_VPC_CIDR}},169.254.0.0/16,{{.SERVICE_CIDR}},{{.CLUSTER_CIDR}},localhost,127.0.0.1,.scv,.svc.cluster.local"
+            owner: root:root
+            path: /etc/systemd/system/containerd.service.d/http-proxy.conf
+            permissions: "0640"
+      - op: add
+        path: /spec/template/spec/kubeadmConfigSpec/files/-
+        valueFrom:
+          template: |
+            content: |
+              [Service]
+              Environment="HTTP_PROXY={{.TKG_HTTP_PROXY}}"
+              Environment="HTTPS_PROXY={{.TKG_HTTPS_PROXY}}"
+              Environment="NO_PROXY={{- range .TKG_NO_PROXY}}{{.}},{{- end}}{{.AWS_VPC_CIDR}},169.254.0.0/16,{{.SERVICE_CIDR}},{{.CLUSTER_CIDR}},localhost,127.0.0.1,.scv,.svc.cluster.local"
+            owner: root:root
+            path: /usr/lib/systemd/system/kubelet.service.d/http-proxy.conf
+            permissions: "0640"
+      - op: add
+        path: /spec/template/spec/kubeadmConfigSpec/preKubeadmCommands/-
+        value: systemctl daemon-reload
+      - op: add
+        path: /spec/template/spec/kubeadmConfigSpec/preKubeadmCommands/-
+        value: systemctl stop containerd
+      - op: add
+        path: /spec/template/spec/kubeadmConfigSpec/preKubeadmCommands/-
+        value: systemctl start containerd
+      - op: add
+        path: /spec/template/spec/kubeadmConfigSpec/preKubeadmCommands/-
+        valueFrom:
+          template: |
+            export HTTP_PROXY={{.TKG_HTTP_PROXY}}
+      - op: add
+        path: /spec/template/spec/kubeadmConfigSpec/preKubeadmCommands/-
+        valueFrom:
+          template: |
+            export HTTPS_PROXY={{.TKG_HTTPS_PROXY}}
+      - op: add
+        path: /spec/template/spec/kubeadmConfigSpec/preKubeadmCommands/-
+        valueFrom:
+          template: |
+            export NO_PROXY={{- range .TKG_NO_PROXY}}{{.}},{{- end}}{{.AWS_VPC_CIDR}},169.254.0.0/16,{{.SERVICE_CIDR}},{{.CLUSTER_CIDR}},localhost,127.0.0.1,.scv,.svc.cluster.local
+    - selector:
+        apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+        kind: KubeadmConfigTemplate
+        matchResources:
+          machineDeploymentClass:
+            names:
+            - tkg-worker
+      jsonPatches:
+      - op: add
+        path: /spec/template/spec/files/-
+        valueFrom:
+          template: |
+            content: |
+              [Service]
+              Environment="HTTP_PROXY={{.TKG_HTTP_PROXY}}"
+              Environment="HTTPS_PROXY={{.TKG_HTTPS_PROXY}}"
+              Environment="NO_PROXY={{- range .TKG_NO_PROXY}}{{.}},{{- end}}{{.AWS_VPC_CIDR}},169.254.0.0/16,{{.SERVICE_CIDR}},{{.CLUSTER_CIDR}},localhost,127.0.0.1,.scv,.svc.cluster.local"
+            owner: root:root
+            path: /etc/systemd/system/containerd.service.d/http-proxy.conf
+            permissions: "0640"
+      - op: add
+        path: /spec/template/spec/files/-
+        valueFrom:
+          template: |
+            content: |
+              [Service]
+              Environment="HTTP_PROXY={{.TKG_HTTP_PROXY}}"
+              Environment="HTTPS_PROXY={{.TKG_HTTPS_PROXY}}"
+              Environment="NO_PROXY={{- range .TKG_NO_PROXY}}{{.}},{{- end}}{{.AWS_VPC_CIDR}},169.254.0.0/16,{{.SERVICE_CIDR}},{{.CLUSTER_CIDR}},localhost,127.0.0.1,.scv,.svc.cluster.local"
+            owner: root:root
+            path: /usr/lib/systemd/system/kubelet.service.d/http-proxy.conf
+            permissions: "0640"
+      - op: add
+        path: /spec/template/spec/preKubeadmCommands/-
+        value: systemctl daemon-reload
+      - op: add
+        path: /spec/template/spec/preKubeadmCommands/-
+        value: systemctl restart containerd
+      - op: add
+        path: /spec/template/spec/preKubeadmCommands/-
+        valueFrom:
+          template: |
+            export HTTP_PROXY={{.TKG_HTTP_PROXY}}
+      - op: add
+        path: /spec/template/spec/preKubeadmCommands/-
+        valueFrom:
+          template: |
+            export HTTPS_PROXY={{.TKG_HTTPS_PROXY}}
+      - op: add
+        path: /spec/template/spec/preKubeadmCommands/-
+        valueFrom:
+          template: |
+            export NO_PROXY={{- range .TKG_NO_PROXY}}{{.}},{{- end}}{{.AWS_VPC_CIDR}},169.254.0.0/16,{{.SERVICE_CIDR}},{{.CLUSTER_CIDR}},localhost,127.0.0.1,.scv,.svc.cluster.local
+  - name: registryCACert
+    enabledif: '{{and (ne "" (or .TKG_PROXY_CA_CERT .TKG_CUSTOM_IMAGE_REPOSITORY_CA_CERTIFICATE)) (and .TKG_CUSTOM_IMAGE_REPOSITORY_SKIP_TLS_VERIFY (ne "" .TKG_CUSTOM_IMAGE_REPOSITORY)) }}'
+    definitions:
+    - selector:
+        apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+        kind: KubeadmControlPlaneTemplate
+        matchResources:
+          controlPlane: true
+      jsonPatches:
+      - op: add
+        path: /spec/template/spec/kubeadmConfigSpec/preKubeadmCommands/-
+        valueFrom:
+          template: |
+            "echo '[plugins.\"io.containerd.grpc.v1.cri\".registry.configs.\"{{.TKG_CUSTOM_IMAGE_REPOSITORY_HOSTNAME}}\".tls]' >> /etc/containerd/config.toml"
+      - op: add
+        path: /spec/template/spec/kubeadmConfigSpec/preKubeadmCommands/-
+        valueFrom:
+          template: |
+            "echo '  ca_file = \"/etc/containerd/{{.TKG_CUSTOM_IMAGE_REPOSITORY_HOSTNAME}}.crt\"' >> /etc/containerd/config.toml"
+      - op: add
+        path: /spec/template/spec/kubeadmConfigSpec/preKubeadmCommands/-
+        value: systemctl restart containerd
+      - op: add
+        path: /spec/template/spec/kubeadmConfigSpec/files/-
+        valueFrom:
+          template: |
+            path: "/etc/containerd/{{.TKG_CUSTOM_IMAGE_REPOSITORY_HOSTNAME}}.crt"
+            content: {{or .TKG_PROXY_CA_CERT .TKG_CUSTOM_IMAGE_REPOSITORY_CA_CERTIFICATE}}
+            encoding: "base64"
+            permissions: "0444"
+    - selector:
+        apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+        kind: KubeadmConfigTemplate
+        matchResources:
+          machineDeploymentClass:
+            names:
+            - tkg-worker
+      jsonPatches:
+      - op: add
+        path: /spec/template/spec/preKubeadmCommands/-
+        valueFrom:
+          template: |
+            "echo '[plugins.\"io.containerd.grpc.v1.cri\".registry.configs.\"{{.TKG_CUSTOM_IMAGE_REPOSITORY_HOSTNAME}}\".tls]' >> /etc/containerd/config.toml"
+      - op: add
+        path: /spec/template/spec/preKubeadmCommands/-
+        valueFrom:
+          template: |
+            "echo '  ca_file = \"/etc/containerd/{{.TKG_CUSTOM_IMAGE_REPOSITORY_HOSTNAME}}.crt\"' >> /etc/containerd/config.toml"
+      - op: add
+        path: /spec/template/spec/preKubeadmCommands/-
+        value: systemctl restart containerd
+      - op: add
+        path: /spec/template/spec/files/-
+        valueFrom:
+          template: |
+            path: "/etc/containerd/{{.TKG_CUSTOM_IMAGE_REPOSITORY_HOSTNAME}}.crt"
+            content: {{or .TKG_PROXY_CA_CERT .TKG_CUSTOM_IMAGE_REPOSITORY_CA_CERTIFICATE}}
+            encoding: "base64"
+            permissions: "0444"
+  - name: registrySkipTLSVerify
+    enabledIf: '{{ne "" .TKG_CUSTOM_IMAGE_REPOSITORY}}'
+    definitions:
+    - selector:
+        apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+        kind: KubeadmControlPlaneTemplate
+        matchResources:
+          controlPlane: true
+      jsonPatches:
+      - op: add
+        path: /spec/template/spec/kubeadmConfigSpec/preKubeadmCommands/-
+        valueFrom:
+          template: |
+            sed -i 's|\".*/pause|\{{.TKG_IMAGE_REPO}}/pause|' /etc/containerd/config.toml
+      - op: add
+        path: /spec/template/spec/kubeadmConfigSpec/preKubeadmCommands/-
+        valueFrom:
+          # TODO fix value of TKG_CUSTOM_IMAGE_REPOSITORY_HOSTNAME
+          template: |
+            {{if .TKG_CUSTOM_IMAGE_REPOSITORY_SKIP_TLS_VERIFY}}
+            echo '[plugins.\"io.containerd.grpc.v1.cri\".registry.configs.\"{{.TKG_CUSTOM_IMAGE_REPOSITORY_HOSTNAME}}\".tls]' >> /etc/containerd/config.toml && echo '  insecure_skip_verify = true' >> /etc/containerd/config.toml
+            {{- end}}            
+      - op: add
+        path: /spec/template/spec/kubeadmConfigSpec/preKubeadmCommands/-
+        value: systemctl restart containerd
+    - selector:
+        apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+        kind: KubeadmConfigTemplate
+        matchResources:
+          machineDeploymentClass:
+            names:
+            - tkg-worker
+      jsonPatches:
+      - op: add
+        path: /spec/template/spec/preKubeadmCommands/-
+        valueFrom:
+          template: |
+            sed -i 's|\".*/pause|\{{.TKG_IMAGE_REPO}}/pause|' /etc/containerd/config.toml
+      - op: add
+        path: /spec/template/spec/preKubeadmCommands/-
+        valueFrom:
+          # TODO fix value of TKG_CUSTOM_IMAGE_REPOSITORY_HOSTNAME
+          template: |
+            {{if .TKG_CUSTOM_IMAGE_REPOSITORY_SKIP_TLS_VERIFY}}
+            echo '[plugins.\"io.containerd.grpc.v1.cri\".registry.configs.\"{{.TKG_CUSTOM_IMAGE_REPOSITORY_HOSTNAME}}\".tls]' >> /etc/containerd/config.toml && echo '  insecure_skip_verify = true' >> /etc/containerd/config.toml
+            {{- end}}
+      - op: add
+        path: /spec/template/spec/preKubeadmCommands/-
+        value: systemctl restart containerd
+  - name: auditLogging
+    enabledIf: '{{.ENABLE_AUDIT_LOGGING}}'
+    definitions:
+    - selector:
+        apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+        kind: KubeadmControlPlaneTemplate
+        matchResources:
+          controlPlane: true
+      jsonPatches:
+      - op: add
+        path: /spec/template/spec/kubeadmConfigSpec/clusterConfiguration/apiServer/extraArgs/-
+        value:
+          audit-log-path: /var/log/kubernetes/audit.log
+      - op: add
+        path: /spec/template/spec/kubeadmConfigSpec/clusterConfiguration/apiServer/extraArgs/-
+        value:
+          audit-policy-file: /etc/kubernetes/audit-policy.yaml
+      - op: add
+        path: /spec/template/spec/kubeadmConfigSpec/clusterConfiguration/apiServer/extraArgs/-
+        value:
+          audit-log-maxage: "30"
+      - op: add
+        path: /spec/template/spec/kubeadmConfigSpec/clusterConfiguration/apiServer/extraArgs/-
+        value:
+          audit-log-maxbackup: "10"
+      - op: add
+        path: /spec/template/spec/kubeadmConfigSpec/clusterConfiguration/apiServer/extraArgs/-
+        value:
+          audit-log-maxsize: "100"
+      - op: add
+        path: /spec/template/spec/kubeadmConfigSpec/clusterConfiguration/apiServer/extraVolumes/-
+        value:
+          name: audit-policy
+          hostPath: /etc/kubernetes/audit-policy.yaml
+          mountPath: /etc/kubernetes/audit-policy.yaml
+      - op: add
+        path: /spec/template/spec/kubeadmConfigSpec/clusterConfiguration/apiServer/extraVolumes/-
+        value:
+          name: audit-logs
+          hostPath: /var/log/kubernetes
+          mountPath: /var/log/kubernetes
+      - op: add
+        path: /spec/template/spec/kubeadmConfigSpec/files/-
+        value:
+          path: /etc/kubernetes/audit-policy.yaml
+          owner: "root:root"
+          permissions: "0600"
+          content: |
+            ---
+            apiVersion: audit.k8s.io/v1beta1
+            kind: Policy
+            rules:
+              #! The following requests were manually identified as high-volume and low-risk,
+              #! so drop them.
+              - level: None
+                users: ["system:serviceaccount:kube-system:kube-proxy"]
+                verbs: ["watch"]
+                resources:
+                  - group: "" #! core
+                    resources: ["endpoints", "services", "services/status"]
+              - level: None
+                userGroups: ["system:nodes"]
+                verbs: ["get"]
+                resources:
+                  - group: "" #! core
+                    resources: ["nodes", "nodes/status"]
+              - level: None
+                users:
+                  - system:kube-controller-manager
+                  - system:kube-scheduler
+                  - system:serviceaccount:kube-system:endpoint-controller
+                verbs: ["get", "update"]
+                namespaces: ["kube-system"]
+                resources:
+                  - group: "" #! core
+                    resources: ["endpoints"]
+              - level: None
+                users: ["system:apiserver"]
+                verbs: ["get"]
+                resources:
+                  - group: "" #! core
+                    resources: ["namespaces", "namespaces/status", "namespaces/finalize"]
+              #! Don't log HPA fetching metrics.
+              - level: None
+                users:
+                  - system:kube-controller-manager
+                verbs: ["get", "list"]
+                resources:
+                  - group: "metrics.k8s.io"
+              #! Don't log these read-only URLs.
+              - level: None
+                nonResourceURLs:
+                  - /healthz*
+                  - /version
+                  - /swagger*
+              #! Don't log events requests.
+              - level: None
+                resources:
+                  - group: "" #! core
+                    resources: ["events"]
+              #! Don't log TMC service account performing read operations because they are high-volume.
+              - level: None
+                userGroups: ["system:serviceaccounts:vmware-system-tmc"]
+                verbs: ["get", "list", "watch"]
+              #! Don't log read requests from garbage collector because they are high-volume.
+              - level: None
+                users: ["system:serviceaccount:kube-system:generic-garbage-collector"]
+                verbs: ["get", "list", "watch"]
+              #! node and pod status calls from nodes are high-volume and can be large, don't log responses for expected updates from nodes
+              - level: Request
+                userGroups: ["system:nodes"]
+                verbs: ["update","patch"]
+                resources:
+                  - group: "" #! core
+                    resources: ["nodes/status", "pods/status"]
+                omitStages:
+                  - "RequestReceived"
+              #! deletecollection calls can be large, don't log responses for expected namespace deletions
+              - level: Request
+                users: ["system:serviceaccount:kube-system:namespace-controller"]
+                verbs: ["deletecollection"]
+                omitStages:
+                  - "RequestReceived"
+              #! Secrets, ConfigMaps, and TokenReviews can contain sensitive & binary data,
+              #! so only log at the Metadata level.
+              - level: Metadata
+                resources:
+                  - group: "" #! core
+                    resources: ["secrets", "configmaps"]
+                  - group: authentication.k8s.io
+                    resources: ["tokenreviews"]
+                omitStages:
+                  - "RequestReceived"
+              #! Get repsonses can be large; skip them.
+              - level: Request
+                verbs: ["get", "list", "watch"]
+                resources:
+                  - group: "" #! core
+                  - group: "admissionregistration.k8s.io"
+                  - group: "apiextensions.k8s.io"
+                  - group: "apiregistration.k8s.io"
+                  - group: "apps"
+                  - group: "authentication.k8s.io"
+                  - group: "authorization.k8s.io"
+                  - group: "autoscaling"
+                  - group: "batch"
+                  - group: "certificates.k8s.io"
+                  - group: "extensions"
+                  - group: "metrics.k8s.io"
+                  - group: "networking.k8s.io"
+                  - group: "policy"
+                  - group: "rbac.authorization.k8s.io"
+                  - group: "settings.k8s.io"
+                  - group: "storage.k8s.io"
+                omitStages:
+                  - "RequestReceived"
+              #! Default level for known APIs
+              - level: RequestResponse
+                resources:
+                  - group: "" #! core
+                  - group: "admissionregistration.k8s.io"
+                  - group: "apiextensions.k8s.io"
+                  - group: "apiregistration.k8s.io"
+                  - group: "apps"
+                  - group: "authentication.k8s.io"
+                  - group: "authorization.k8s.io"
+                  - group: "autoscaling"
+                  - group: "batch"
+                  - group: "certificates.k8s.io"
+                  - group: "extensions"
+                  - group: "metrics.k8s.io"
+                  - group: "networking.k8s.io"
+                  - group: "policy"
+                  - group: "rbac.authorization.k8s.io"
+                  - group: "settings.k8s.io"
+                  - group: "storage.k8s.io"
+                omitStages:
+                  - "RequestReceived"
+              #! Default level for all other requests.
+              - level: Metadata
+                omitStages:
+                  - "RequestReceived"
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: AzureClusterTemplate

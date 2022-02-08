@@ -5,7 +5,7 @@
 
 #@ load("@ytt:yaml", "yaml")
 #@ load("@ytt:struct", "struct")
-#@ load("/lib/config_variable_association.star", "config_variable_association", "get_cluster_variables")
+#@ load("/lib/config_variable_association.star", "config_variable_association", "populate_variables")
 
 #@ load("lib/helpers.star", "get_bom_data_for_tkr_name", "kubeadm_image_repo", "get_azure_image")
 #@ load("lib/validate.star", "validate_configuration")
@@ -100,14 +100,42 @@ spec:
         failureDomain: #@ data.values.AZURE_NODE_AZ_2 or "3"
       #@ end
     #@overlay/match missing_ok=True
-    variables: 
-    #@ for configVariable in get_cluster_variables():
-    #@  if data.values[configVariable] != None and configVariable in ["AZURE_LOCATION", "AZURE_VNET_NAME", "AZURE_VNET_CIDR", "AZURE_CONTROL_PLANE_SUBNET_NAME", "AZURE_CONTROL_PLANE_SUBNET_SECURITY_GROUP", "AZURE_CONTROL_PLANE_SUBNET_CIDR", "AZURE_NODE_SUBNET_NAME", "AZURE_NODE_SUBNET_SECURITY_GROUP", "AZURE_NODE_SUBNET_CIDR", "AZURE_RESOURCE_GROUP", "AZURE_VNET_RESOURCE_GROUP", "AZURE_SUBSCRIPTION_ID", "CLUSTER_NAME", "AZURE_IDENTITY_NAME", "AZURE_IDENTITY_NAMESPACE", "TKG_CLUSTER_ROLE", "AZURE_ENVIRONMENT", "AZURE_SSH_PUBLIC_KEY_B64", "AZURE_CONTROL_PLANE_MACHINE_TYPE", "AZURE_NODE_MACHINE_TYPE", "AZURE_ENABLE_ACCELERATED_NETWORKING", "AZURE_ENABLE_NODE_DATA_DISK", "AZURE_CONTROL_PLANE_OS_DISK_STORAGE_ACCOUNT_TYPE", "AZURE_NODE_OS_DISK_STORAGE_ACCOUNT_TYPE", "AZURE_CONTROL_PLANE_OS_DISK_SIZE_GIB", "AZURE_CONTROL_PLANE_DATA_DISK_SIZE_GIB", "AZURE_NODE_OS_DISK_SIZE_GIB", "AZURE_NODE_DATA_DISK_SIZE_GIB", "AZURE_ENABLE_PRIVATE_CLUSTER", "AZURE_ENABLE_CONTROL_PLANE_OUTBOUND_LB", "AZURE_ENABLE_NODE_OUTBOUND_LB", "AZURE_FRONTEND_PRIVATE_IP", "AZURE_CONTROL_PLANE_OUTBOUND_LB_FRONTEND_IP_COUNT", "AZURE_NODE_OUTBOUND_LB_FRONTEND_IP_COUNT"]:
-      - name: #@ configVariable
-        value: #@ data.values[configVariable]
-    #@ end
-    #@ end
+    variables: #@ populate_variables(["AZURE_LOCATION", "AZURE_VNET_NAME", "AZURE_VNET_CIDR", "AZURE_CONTROL_PLANE_SUBNET_NAME", "AZURE_CONTROL_PLANE_SUBNET_SECURITY_GROUP", "AZURE_CONTROL_PLANE_SUBNET_CIDR", "AZURE_NODE_SUBNET_NAME", "AZURE_NODE_SUBNET_SECURITY_GROUP", "AZURE_NODE_SUBNET_CIDR", "AZURE_RESOURCE_GROUP", "AZURE_VNET_RESOURCE_GROUP", "AZURE_SUBSCRIPTION_ID", "CLUSTER_NAME", "AZURE_IDENTITY_NAME", "AZURE_IDENTITY_NAMESPACE", "TKG_CLUSTER_ROLE", "AZURE_ENVIRONMENT", "AZURE_SSH_PUBLIC_KEY_B64", "AZURE_CONTROL_PLANE_MACHINE_TYPE", "AZURE_NODE_MACHINE_TYPE", "AZURE_ENABLE_ACCELERATED_NETWORKING", "AZURE_ENABLE_NODE_DATA_DISK", "AZURE_CONTROL_PLANE_OS_DISK_STORAGE_ACCOUNT_TYPE", "AZURE_NODE_OS_DISK_STORAGE_ACCOUNT_TYPE", "AZURE_CONTROL_PLANE_OS_DISK_SIZE_GIB", "AZURE_CONTROL_PLANE_DATA_DISK_SIZE_GIB", "AZURE_NODE_OS_DISK_SIZE_GIB", "AZURE_NODE_DATA_DISK_SIZE_GIB", "AZURE_ENABLE_PRIVATE_CLUSTER", "AZURE_ENABLE_CONTROL_PLANE_OUTBOUND_LB", "AZURE_ENABLE_NODE_OUTBOUND_LB", "AZURE_FRONTEND_PRIVATE_IP", "AZURE_CONTROL_PLANE_OUTBOUND_LB_FRONTEND_IP_COUNT", "AZURE_NODE_OUTBOUND_LB_FRONTEND_IP_COUNT"])
   
+#@overlay/match by=overlay.subset({"kind":"ClusterClass"})
+---
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: ClusterClass
+spec:
+  controlPlane:
+    #@overlay/match missing_ok=True
+    machineHealthCheck:
+      #@ if data.values.ENABLE_MHC or data.values.ENABLE_MHC_CONTROL_PLANE:
+      nodeStartupTimeout: #@ data.values.NODE_STARTUP_TIMEOUT
+      unhealthyConditions:
+      - type: Ready
+        status: Unknown
+        timeout: #@ data.values.MHC_UNKNOWN_STATUS_TIMEOUT
+      - type: Ready
+        status: "False"
+        timeout: #@ data.values.MHC_FALSE_STATUS_TIMEOUT
+      #@ end
+  workers:
+    machineDeployments:
+      #@overlay/match by=overlay.index(0)
+      - class: tkg-worker
+        #@overlay/match missing_ok=True
+        machineHealthCheck:
+          #@ if data.values.ENABLE_MHC or data.values.ENABLE_MHC_WORKER_NODE:
+          nodeStartupTimeout: #@ data.values.NODE_STARTUP_TIMEOUT
+          unhealthyConditions:
+          - type: Ready
+            status: Unknown
+            timeout: #@ data.values.MHC_UNKNOWN_STATUS_TIMEOUT
+          - type: Ready
+            status: "False"
+            timeout: #@ data.values.MHC_FALSE_STATUS_TIMEOUT
+          #@ end
 
 #!#@overlay/match by=overlay.subset({"kind":"AzureClusterTemplate"})
 #!---
