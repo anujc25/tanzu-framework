@@ -80,7 +80,8 @@ generate_cluster_configurations() {
       $TKG --file /tmp/test_tkg_config_cc --configdir ${TKG_CONFIG_DIR} --log_file /tmp/"$t"_cc.log config cluster "${cmdargs[@]}" 2>/tmp/err_cc.txt 1>/tmp/expected_cc.yaml
       #normalize_cc /tmp/expected_cc.yaml ${outputdir}/"$t".cc.output
       cp /tmp/expected_cc.yaml ${outputdir}/"$t".cc.output
-      ${CLUSTERCTL} alpha generate-normalized-topology -p -f ${outputdir}/"$t".cc.output > ${outputdir}/"$t".cc.norm.output
+      ${CLUSTERCTL} alpha generate-normalized-topology -p -f ${outputdir}/"$t".cc.output > ${outputdir}/"$t".cc.gnt.yaml
+      denoise_dryrun ${outputdir}/"$t".cc.gnt.yaml ${outputdir}/"$t".cc.norm.output
 
       generate_diff_summary ${outputdir} $t
     fi
