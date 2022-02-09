@@ -49,7 +49,7 @@ func repositoryDelete(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	pkgClient, err := tkgpackageclient.NewTKGPackageClient(kubeConfig)
+	pkgClient, err := tkgpackageclient.NewTKGPackageClient(kubeConfig, "")
 	if err != nil {
 		return err
 	}
@@ -63,7 +63,7 @@ func repositoryDelete(cmd *cobra.Command, args []string) error {
 	go pkgClient.DeleteRepository(repoOp, pp)
 
 	initialMsg := fmt.Sprintf("Deleting package repository '%s'", repoOp.RepositoryName)
-	if err := DisplayProgress(initialMsg, pp); err != nil {
+	if err := tkgpackageclient.DisplayProgress(initialMsg, pp); err != nil {
 		if err.Error() == tkgpackagedatamodel.ErrRepoNotExists {
 			log.Warningf("package repository '%s' does not exist in namespace '%s'", repoOp.RepositoryName, repoOp.Namespace)
 			return nil

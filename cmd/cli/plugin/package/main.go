@@ -59,7 +59,7 @@ func getOutputFormat() string {
 }
 
 func isPackagingAPIAvailable(kubeCfgPath string) (bool, error) {
-	cfg, err := kappclient.GetKubeConfig(kubeCfgPath)
+	cfg, err := kappclient.GetKubeConfig(kubeCfgPath, "")
 	if err != nil {
 		return false, err
 	}

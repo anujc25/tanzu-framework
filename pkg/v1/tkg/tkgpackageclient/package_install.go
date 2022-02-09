@@ -31,7 +31,35 @@ const (
 )
 
 // InstallPackage installs the PackageInstall and its associated resources in the cluster
-func (p *pkgClient) InstallPackage(o *tkgpackagedatamodel.PackageOptions, progress *tkgpackagedatamodel.PackageProgress, operationType tkgpackagedatamodel.OperationType) {
+func (p *pkgClient) InstallPackage(o *tkgpackagedatamodel.PackageOptions, progress *tkgpackagedatamodel.PackageProgress, operationType tkgpackagedatamodel.OperationType) error {
+	// If progress is provided invoke the updateRepository as error handling
+	// and progress logging will be handled outside the function call
+	if progress != nil {
+		p.installPackage(o, progress, operationType)
+		return nil
+	}
+
+	pp := &tkgpackagedatamodel.PackageProgress{
+		ProgressMsg: make(chan string, 10),
+		Err:         make(chan error),
+		Done:        make(chan struct{}),
+	}
+
+	go p.installPackage(o, pp, tkgpackagedatamodel.OperationTypeUpdate)
+
+	initialMsg := fmt.Sprintf("Installing package '%s'", o.PackageName)
+	if err := DisplayProgress(initialMsg, pp); err != nil {
+		if err.Error() == tkgpackagedatamodel.ErrPackageAlreadyExists {
+			log.Infof("Updated installed package '%s'", o.PkgInstallName)
+			return nil
+		}
+		return err
+	}
+
+	return nil
+}
+
+func (p *pkgClient) installPackage(o *tkgpackagedatamodel.PackageOptions, progress *tkgpackagedatamodel.PackageProgress, operationType tkgpackagedatamodel.OperationType) {
 	var (
 		pkgInstall                      *kappipkg.PackageInstall
 		pkgPluginResourceCreationStatus *tkgpackagedatamodel.PkgPluginResourceCreationStatus
@@ -42,10 +70,8 @@ func (p *pkgClient) InstallPackage(o *tkgpackagedatamodel.PackageOptions, progre
 		if err != nil {
 			progress.Err <- err
 		}
-		if operationType == tkgpackagedatamodel.OperationTypeInstall {
-			close(progress.ProgressMsg)
-			close(progress.Done)
-		}
+		close(progress.ProgressMsg)
+		close(progress.Done)
 	}()
 
 	if pkgInstall, err = p.kappClient.GetPackageInstall(o.PkgInstallName, o.Namespace); err != nil {

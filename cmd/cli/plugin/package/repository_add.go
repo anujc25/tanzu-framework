@@ -37,7 +37,7 @@ func init() {
 func repositoryAdd(_ *cobra.Command, args []string) error { //nolint
 	repoOp.RepositoryName = args[0]
 
-	pkgClient, err := tkgpackageclient.NewTKGPackageClient(kubeConfig)
+	pkgClient, err := tkgpackageclient.NewTKGPackageClient(kubeConfig, "")
 	if err != nil {
 		return err
 	}
@@ -50,7 +50,7 @@ func repositoryAdd(_ *cobra.Command, args []string) error { //nolint
 	go pkgClient.AddRepository(repoOp, pp, tkgpackagedatamodel.OperationTypeInstall)
 
 	initialMsg := fmt.Sprintf("Adding package repository '%s'", repoOp.RepositoryName)
-	if err := DisplayProgress(initialMsg, pp); err != nil {
+	if err := tkgpackageclient.DisplayProgress(initialMsg, pp); err != nil {
 		if err.Error() == tkgpackagedatamodel.ErrRepoAlreadyExists {
 			log.Infof("Updated package repository '%s' in namespace '%s'", repoOp.RepositoryName, repoOp.Namespace)
 			return nil

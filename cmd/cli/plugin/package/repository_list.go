@@ -34,7 +34,7 @@ func init() {
 }
 
 func repositoryList(cmd *cobra.Command, _ []string) error {
-	pkgClient, err := tkgpackageclient.NewTKGPackageClient(kubeConfig)
+	pkgClient, err := tkgpackageclient.NewTKGPackageClient(kubeConfig, "")
 	if err != nil {
 		return err
 	}

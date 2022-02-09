@@ -38,7 +38,7 @@ func init() {
 func repositoryUpdate(_ *cobra.Command, args []string) error { //nolint
 	repoOp.RepositoryName = args[0]
 
-	pkgClient, err := tkgpackageclient.NewTKGPackageClient(kubeConfig)
+	pkgClient, err := tkgpackageclient.NewTKGPackageClient(kubeConfig, "")
 	if err != nil {
 		return err
 	}
@@ -51,7 +51,7 @@ func repositoryUpdate(_ *cobra.Command, args []string) error { //nolint
 	go pkgClient.UpdateRepository(repoOp, pp, tkgpackagedatamodel.OperationTypeUpdate)
 
 	initialMsg := fmt.Sprintf("Updating package repository '%s'", repoOp.RepositoryName)
-	if err := DisplayProgress(initialMsg, pp); err != nil {
+	if err := tkgpackageclient.DisplayProgress(initialMsg, pp); err != nil {
 		if err.Error() == tkgpackagedatamodel.ErrRepoNotExists {
 			log.Warningf("package repository '%s' does not exist in namespace '%s'. Consider using the --create flag to add the package repository", repoOp.RepositoryName, repoOp.Namespace)
 			return nil

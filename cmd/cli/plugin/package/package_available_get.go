@@ -66,7 +66,7 @@ func validatePackage(cmd *cobra.Command, args []string) error {
 }
 
 func packageAvailableGet(cmd *cobra.Command, args []string) error {
-	kc, kcErr := kappclient.NewKappClient(kubeConfig)
+	kc, kcErr := kappclient.NewKappClient(kubeConfig, "")
 	if kcErr != nil {
 		return kcErr
 	}
