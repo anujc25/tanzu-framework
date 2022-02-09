@@ -47,7 +47,7 @@ func init() {
 func packageInstall(cmd *cobra.Command, args []string) error {
 	packageInstallOp.PkgInstallName = args[0]
 
-	pkgClient, err := tkgpackageclient.NewTKGPackageClient(kubeConfig)
+	pkgClient, err := tkgpackageclient.NewTKGPackageClient(kubeConfig, "")
 	if err != nil {
 		return err
 	}
@@ -60,7 +60,7 @@ func packageInstall(cmd *cobra.Command, args []string) error {
 	go pkgClient.InstallPackage(packageInstallOp, pp, tkgpackagedatamodel.OperationTypeInstall)
 
 	initialMsg := fmt.Sprintf("Installing package '%s'", packageInstallOp.PackageName)
-	if err := DisplayProgress(initialMsg, pp); err != nil {
+	if err := tkgpackageclient.DisplayProgress(initialMsg, pp); err != nil {
 		if err.Error() == tkgpackagedatamodel.ErrPackageAlreadyExists {
 			log.Infof("Updated installed package '%s'", packageInstallOp.PkgInstallName)
 			return nil

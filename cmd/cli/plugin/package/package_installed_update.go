@@ -53,7 +53,7 @@ func packageUpdate(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	pkgClient, err := tkgpackageclient.NewTKGPackageClient(kubeConfig)
+	pkgClient, err := tkgpackageclient.NewTKGPackageClient(kubeConfig, "")
 	if err != nil {
 		return err
 	}
@@ -66,7 +66,7 @@ func packageUpdate(cmd *cobra.Command, args []string) error {
 	go pkgClient.UpdatePackage(packageInstalledOp, pp, tkgpackagedatamodel.OperationTypeUpdate)
 
 	initialMsg := fmt.Sprintf("Updating installed package '%s'", packageInstalledOp.PkgInstallName)
-	if err := DisplayProgress(initialMsg, pp); err != nil {
+	if err := tkgpackageclient.DisplayProgress(initialMsg, pp); err != nil {
 		if err.Error() == tkgpackagedatamodel.ErrPackageNotInstalled {
 			log.Warningf("package '%s' is not among the list of installed packages in namespace '%s'. Consider using the --install flag to install the package", packageInstalledOp.PkgInstallName, packageInstalledOp.Namespace)
 			return nil

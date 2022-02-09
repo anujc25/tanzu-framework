@@ -14,10 +14,38 @@ import (
 	kappipkg "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/packaging/v1alpha1"
 	versions "github.com/vmware-tanzu/carvel-vendir/pkg/vendir/versions/v1alpha1"
 
+	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/tkg/log"
 	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/tkg/tkgpackagedatamodel"
 )
 
-func (p *pkgClient) UpdateRepository(o *tkgpackagedatamodel.RepositoryOptions, progress *tkgpackagedatamodel.PackageProgress, operationType tkgpackagedatamodel.OperationType) {
+func (p *pkgClient) UpdateRepository(o *tkgpackagedatamodel.RepositoryOptions, progress *tkgpackagedatamodel.PackageProgress, operationType tkgpackagedatamodel.OperationType) error {
+	// If progress is provided invoke the updateRepository as error handling
+	// and progress logging will be handled outside the function call
+	if progress != nil {
+		p.updateRepository(o, progress, operationType)
+		return nil
+	}
+
+	pp := &tkgpackagedatamodel.PackageProgress{
+		ProgressMsg: make(chan string, 10),
+		Err:         make(chan error),
+		Done:        make(chan struct{}),
+	}
+
+	go p.updateRepository(o, pp, tkgpackagedatamodel.OperationTypeUpdate)
+
+	initialMsg := fmt.Sprintf("Updating package repository '%s'", o.RepositoryName)
+	if err := DisplayProgress(initialMsg, pp); err != nil {
+		if err.Error() == tkgpackagedatamodel.ErrRepoNotExists {
+			log.Warningf("package repository '%s' does not exist in namespace '%s'. Consider using the --create flag to add the package repository", o.RepositoryName, o.Namespace)
+			return nil
+		}
+		return err
+	}
+	return nil
+}
+
+func (p *pkgClient) updateRepository(o *tkgpackagedatamodel.RepositoryOptions, progress *tkgpackagedatamodel.PackageProgress, operationType tkgpackagedatamodel.OperationType) {
 	var (
 		existingRepository *kappipkg.PackageRepository
 		err                error

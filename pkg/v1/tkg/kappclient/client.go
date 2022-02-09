@@ -36,7 +36,7 @@ func (c *client) GetClient() crtclient.Client {
 }
 
 // NewKappClient returns a new kapp client
-func NewKappClient(kubeCfgPath string) (Client, error) {
+func NewKappClient(kubeCfgPath, kubeContext string) (Client, error) {
 	var (
 		restConfig *rest.Config
 		err        error
@@ -62,7 +62,7 @@ func NewKappClient(kubeCfgPath string) (Client, error) {
 		return nil, err
 	}
 
-	if restConfig, err = GetKubeConfig(kubeCfgPath); err != nil {
+	if restConfig, err = GetKubeConfig(kubeCfgPath, kubeContext); err != nil {
 		return nil, err
 	}
 
@@ -78,7 +78,7 @@ func NewKappClient(kubeCfgPath string) (Client, error) {
 }
 
 // GetKubeConfig gets kubeconfig from the provided kubeconfig path. Otherwise, it gets the kubeconfig from "$HOME/.kube/config" if existing
-func GetKubeConfig(kubeCfgPath string) (*rest.Config, error) {
+func GetKubeConfig(kubeCfgPath, context string) (*rest.Config, error) {
 	var (
 		restConfig *rest.Config
 		err        error
@@ -92,6 +92,9 @@ func GetKubeConfig(kubeCfgPath string) (*rest.Config, error) {
 		config, err := clientcmd.LoadFromFile(kubeCfgPath)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to load kubeconfig from %s", kubeCfgPath)
+		}
+		if context != "" {
+			config.CurrentContext = context
 		}
 		rawConfig, err := clientcmd.Write(*config)
 		if err != nil {

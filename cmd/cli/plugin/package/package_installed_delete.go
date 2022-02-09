@@ -44,7 +44,7 @@ func packageUninstall(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	pkgClient, err := tkgpackageclient.NewTKGPackageClient(kubeConfig)
+	pkgClient, err := tkgpackageclient.NewTKGPackageClient(kubeConfig, "")
 	if err != nil {
 		return err
 	}
@@ -57,7 +57,7 @@ func packageUninstall(cmd *cobra.Command, args []string) error {
 	go pkgClient.UninstallPackage(packageInstalledOp, pp)
 
 	initialMsg := fmt.Sprintf("Uninstalling package '%s' from namespace '%s'", packageInstalledOp.PkgInstallName, packageInstalledOp.Namespace)
-	if err := DisplayProgress(initialMsg, pp); err != nil {
+	if err := tkgpackageclient.DisplayProgress(initialMsg, pp); err != nil {
 		if err.Error() == tkgpackagedatamodel.ErrPackageNotInstalled {
 			log.Warningf("package '%s' is not installed in namespace '%s'.", packageInstalledOp.PkgInstallName, packageInstalledOp.Namespace)
 			return nil

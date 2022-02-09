@@ -46,6 +46,9 @@ const (
 	// AVI_MANAGEMENT_CLUSTER_CONTROL_PLANE_VIP_NETWORK_NAME and AVI_MANAGEMENT_CLUSTER_CONTROL_PLANE_VIP_NETWORK_CIDR
 	// when creating a cluster.
 	FeatureFlagManagementClusterNetworkSeparation = "features.management-cluster.network-separation-beta"
+	// ClusterClass feature flag determines whether to use clusterclass based management and workload
+	// cluster provisioning or legacy way of cluster provisioning
+	FeatureFlagClusterClass = "features.global.use-clusterclass-beta"
 )
 
 // DefaultCliFeatureFlags is used to populate an initially empty config file with default values for feature flags.
@@ -73,6 +76,7 @@ var (
 		FeatureFlagManagementClusterCustomNameservers:         false,
 		FeatureFlagClusterCustomNameservers:                   false,
 		FeatureFlagManagementClusterNetworkSeparation:         false,
+		FeatureFlagClusterClass:                               false,
 	}
 )
 
