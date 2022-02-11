@@ -65,11 +65,23 @@ spec:
         name: md-1
         replicas: #@ data.values.WORKER_MACHINE_COUNT_1
         failureDomain: #@ default_az_1
+        #@ if data.values.NODE_MACHINE_TYPE_1:
+        variables:
+          overrides:
+          - name: NODE_MACHINE_TYPE
+            value: #@ data.values.NODE_MACHINE_TYPE_1
+        #@ end
       #@overlay/append
       - class: tkg-worker
         name: md-2
         replicas: #@ data.values.WORKER_MACHINE_COUNT_2
         failureDomain: #@ default_az_2
+        #@ if data.values.NODE_MACHINE_TYPE_2:
+        variables:
+          overrides:
+          - name: NODE_MACHINE_TYPE
+            value: #@ data.values.NODE_MACHINE_TYPE_2
+        #@ end
       #@ end
     #@overlay/match missing_ok=True
     variables: 
