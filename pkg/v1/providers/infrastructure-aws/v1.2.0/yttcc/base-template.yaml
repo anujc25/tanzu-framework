@@ -94,13 +94,49 @@ spec:
       openAPIV3Schema:
         type: string
         default: ""
+  - name: AWS_NODE_AZ_1
+    required: true
+    schema:
+      openAPIV3Schema:
+        type: string
+        default: ""
+  - name: AWS_NODE_AZ_2
+    required: true
+    schema:
+      openAPIV3Schema:
+        type: string
+        default: ""
   - name: AWS_PRIVATE_NODE_CIDR
     required: true
     schema:
       openAPIV3Schema:
         type: string
         default: 10.0.0.0/24
+  - name: AWS_PRIVATE_NODE_CIDR_1
+    required: true
+    schema:
+      openAPIV3Schema:
+        type: string
+        default: 10.0.2.0/24
+  - name: AWS_PRIVATE_NODE_CIDR_2
+    required: true
+    schema:
+      openAPIV3Schema:
+        type: string
+        default: 10.0.4.0/24
   - name: AWS_PRIVATE_SUBNET_ID
+    required: true
+    schema:
+      openAPIV3Schema:
+        type: string
+        default: ""
+  - name: AWS_PRIVATE_SUBNET_ID_1
+    required: true
+    schema:
+      openAPIV3Schema:
+        type: string
+        default: ""
+  - name: AWS_PRIVATE_SUBNET_ID_2
     required: true
     schema:
       openAPIV3Schema:
@@ -112,7 +148,31 @@ spec:
       openAPIV3Schema:
         type: string
         default: 10.0.1.0/24
+  - name: AWS_PUBLIC_NODE_CIDR_1
+    required: true
+    schema:
+      openAPIV3Schema:
+        type: string
+        default: 10.0.3.0/24
+  - name: AWS_PUBLIC_NODE_CIDR_2
+    required: true
+    schema:
+      openAPIV3Schema:
+        type: string
+        default: 10.0.5.0/24
   - name: AWS_PUBLIC_SUBNET_ID
+    required: true
+    schema:
+      openAPIV3Schema:
+        type: string
+        default: ""
+  - name: AWS_PUBLIC_SUBNET_ID_1
+    required: true
+    schema:
+      openAPIV3Schema:
+        type: string
+        default: ""
+  - name: AWS_PUBLIC_SUBNET_ID_2
     required: true
     schema:
       openAPIV3Schema:
@@ -191,6 +251,11 @@ spec:
         type: string
         default: ""
   - name: CLUSTER_NAME
+    required: true
+    schema:
+      openAPIV3Schema:
+        type: string
+  - name: CLUSTER_PLAN
     required: true
     schema:
       openAPIV3Schema:
@@ -278,7 +343,63 @@ spec:
             cidrBlock: {{.AWS_PUBLIC_NODE_CIDR}}
             isPublic: true
             id: '{{.AWS_PUBLIC_SUBNET_ID}}'
-
+  - name: AWSCT_AvailabilityZone_1_Public
+    enabledIf: '{{if and (eq .CLUSTER_PLAN "prodcc") (or (not .AWS_VPC_ID) (.AWS_PUBLIC_SUBNET_ID_1)) }}true{{end}}'
+    definitions:
+    - selector:
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        kind: AWSClusterTemplate
+        matchResources:
+          infrastructureCluster: true
+      jsonPatches:
+      - op: add
+        path: "/spec/template/spec/network/subnets/-"
+        valueFrom:
+          template: |
+            availabilityZone: {{if .AWS_NODE_AZ_1}} {{.AWS_NODE_AZ_1}} {{else if .AWS_REGION}} {{.AWS_REGION}}b{{end}}
+            cidrBlock: {{.AWS_PUBLIC_NODE_CIDR_1}}
+            isPublic: true
+            id: '{{.AWS_PUBLIC_SUBNET_ID_1}}'
+  - name: AWSCT_AvailabilityZone_2_Public
+    enabledIf: '{{if and (eq .CLUSTER_PLAN "prodcc") (or (not .AWS_VPC_ID) (.AWS_PUBLIC_SUBNET_ID_2)) }}true{{end}}'
+    definitions:
+    - selector:
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        kind: AWSClusterTemplate
+        matchResources:
+          infrastructureCluster: true
+      jsonPatches:
+      - op: add
+        path: "/spec/template/spec/network/subnets/-"
+        valueFrom:
+          template: |
+            availabilityZone: {{if .AWS_NODE_AZ_2}} {{.AWS_NODE_AZ_2}} {{else if .AWS_REGION}} {{.AWS_REGION}}c{{end}}
+            cidrBlock: {{.AWS_PUBLIC_NODE_CIDR_2}}
+            isPublic: true
+            id: '{{.AWS_PUBLIC_SUBNET_ID_2}}'
+  - name: AWSCT_AvailabilityZone_Private
+    enabledIf: '{{if eq .CLUSTER_PLAN "prodcc"}}true{{end}}'
+    definitions:
+    - selector:
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        kind: AWSClusterTemplate
+        matchResources:
+          infrastructureCluster: true
+      jsonPatches:
+      - op: add
+        path: "/spec/template/spec/network/subnets/-"
+        valueFrom:
+          template: |
+            availabilityZone: {{if .AWS_NODE_AZ_1}} {{.AWS_NODE_AZ_1}} {{else if .AWS_REGION}} {{.AWS_REGION}}b{{end}}
+            cidrBlock: {{.AWS_PRIVATE_NODE_CIDR_1}}
+            id: '{{.AWS_PRIVATE_SUBNET_ID_1}}'
+      - op: add
+        path: "/spec/template/spec/network/subnets/-"
+        valueFrom:
+          template: |
+            availabilityZone: {{if .AWS_NODE_AZ_2}} {{.AWS_NODE_AZ_2}} {{else if .AWS_REGION}} {{.AWS_REGION}}c{{end}}
+            cidrBlock: {{.AWS_PRIVATE_NODE_CIDR_2}}
+            id: '{{.AWS_PRIVATE_SUBNET_ID_2}}'
   - name: AWSCT_SecurityGroupOverrides
     enabledIf: '{{if or ( ne .AWS_SECURITY_GROUP_BASTION "") (ne .AWS_SECURITY_GROUP_CONTROLPLANE "") (ne .AWS_SECURITY_GROUP_APISERVER_LB "") (ne .AWS_SECURITY_GROUP_NODE "") (ne .AWS_SECURITY_GROUP_LB "")}}true{{end}}'
     definitions:

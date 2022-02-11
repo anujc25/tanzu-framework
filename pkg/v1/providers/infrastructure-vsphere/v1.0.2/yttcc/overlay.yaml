@@ -100,7 +100,30 @@ spec:
     workers:
       machineDeployments:
       #@overlay/match by=overlay.index(0)
-      - replicas: #@ data.values.WORKER_MACHINE_COUNT
+      - class: tkg-worker
+        name: md-0
+        #@overlay/match missing_ok=True
+        replicas: #@ data.values.WORKER_MACHINE_COUNT
+        #@ if data.values.VSPHERE_AZ_0:
+        #@overlay/match missing_ok=True
+        failureDomain: #@ data.values.VSPHERE_AZ_0
+        #@ end
+      #@ if data.values.CLUSTER_PLAN == "prod":
+      #@overlay/append
+      - class: tkg-worker
+        name: md-1
+        replicas: #@ data.values.WORKER_MACHINE_COUNT_1
+        #@ if data.values.VSPHERE_AZ_1:
+        failureDomain: #@ data.values.VSPHERE_AZ_1
+        #@ end
+      #@overlay/append
+      - class: tkg-worker
+        name: md-2
+        replicas: #@ data.values.WORKER_MACHINE_COUNT_2
+        #@ if data.values.VSPHERE_AZ_2:
+        failureDomain: #@ data.values.VSPHERE_AZ_2
+        #@ end
+      #@ end
     #@overlay/match missing_ok=True
     variables: 
     #@ for configVariable in get_cluster_variables():

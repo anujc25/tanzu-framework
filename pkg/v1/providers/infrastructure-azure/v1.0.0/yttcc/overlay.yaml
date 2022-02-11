@@ -83,8 +83,22 @@ spec:
       machineDeployments:
       #@overlay/match by=overlay.index(0)
       - class: tkg-worker
-        name: tkg-worker-pool
+        name: md-0
         replicas: #@ data.values.WORKER_MACHINE_COUNT
+        #@overlay/match missing_ok=True
+        failureDomain: #@ str(data.values.AZURE_NODE_AZ) or "1"
+      #@ if data.values.CLUSTER_PLAN == "prodcc":
+      #@overlay/append
+      - class: tkg-worker
+        name: md-1
+        replicas: #@ data.values.WORKER_MACHINE_COUNT_1
+        failureDomain: #@ data.values.AZURE_NODE_AZ_1 or "2"
+      #@overlay/append
+      - class: tkg-worker
+        name: md-2
+        replicas: #@ data.values.WORKER_MACHINE_COUNT_2
+        failureDomain: #@ data.values.AZURE_NODE_AZ_2 or "3"
+      #@ end
     #@overlay/match missing_ok=True
     variables: 
     #@ for configVariable in get_cluster_variables():
