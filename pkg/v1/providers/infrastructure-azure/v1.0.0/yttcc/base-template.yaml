@@ -361,6 +361,7 @@ spec:
         path: "/spec/template/spec/osDisk"
         valueFrom:
           template: |
+            osType: Linux
             diskSizeGB: {{.AZURE_CONTROL_PLANE_OS_DISK_SIZE_GIB}}
             managedDisk:
               storageAccountType: {{.AZURE_CONTROL_PLANE_OS_DISK_STORAGE_ACCOUNT_TYPE}}
@@ -390,10 +391,11 @@ spec:
         path: "/spec/template/spec/osDisk"
         valueFrom:
           template: |
+            osType: Linux
             diskSizeGB: {{ .AZURE_NODE_OS_DISK_SIZE_GIB }}
             managedDisk:
               storageAccountType: {{ .AZURE_NODE_OS_DISK_STORAGE_ACCOUNT_TYPE }}
-  - name: EnableNodeDataDisk
+  - name: AMT_EnableNodeDataDisk
     enabledIf: '{{if .AZURE_ENABLE_NODE_DATA_DISK}}true{{end}}'
     definitions:
     - selector:
@@ -411,6 +413,39 @@ spec:
             - diskSizeGB: {{ .AZURE_NODE_DATA_DISK_SIZE_GIB }}
               lun: 0
               nameSuffix: nodedisk
+  - name: KCT_EnableNodeDataDisk
+    enabledIf: '{{if .AZURE_ENABLE_NODE_DATA_DISK}}true{{end}}'
+    definitions:
+    - selector:
+        apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+        kind: KubeadmConfigTemplate
+        matchResources:
+          machineDeploymentClass:
+            names:
+              - tkg-worker
+      jsonPatches:
+      - op: add
+        path: "/spec/template/spec/diskSetup"
+        valueFrom:
+          template: |
+            filesystems:
+            - device: /dev/disk/azure/scsi1/lun0
+              extraOpts:
+              - -E
+              - lazy_itable_init=1,lazy_journal_init=1
+              filesystem: ext4
+              label: node_disk
+            partitions:
+            - device: /dev/disk/azure/scsi1/lun0
+              layout: true
+              overwrite: false
+              tableType: gpt
+      - op: add
+        path: "/spec/template/spec/mounts"
+        valueFrom:
+          template: |
+            - - LABEL=node_disk
+              - /var/lib/nodedisk
   - name: ACT_EnablePrivatCluster
     enabledIf: '{{if .AZURE_ENABLE_PRIVATE_CLUSTER}}true{{end}}'
     definitions:
