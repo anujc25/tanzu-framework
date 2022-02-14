@@ -301,27 +301,18 @@ def get_cluster_variables():
     kvs = config_variable_association()
     for configVariable in kvs:
         if data.values.PROVIDER_TYPE in kvs[configVariable]:
-            vars[configVariable] = data.values[configVariable]
+            if data.values[configVariable] != None:
+                vars[configVariable] = data.values[configVariable]
+            else:
+                continue
+            end
+            if configVariable == "TKG_NO_PROXY":
+                vars[configVariable] = vars[configVariable].split(",")
+            end
+            if configVariable == "TKG_CUSTOM_IMAGE_REPOSITORY":
+                vars["TKG_CUSTOM_IMAGE_REPOSITORY_HOSTNAME"] = vars[configVariable].split("/")[0]
+            end
         end
     end
     return vars
-end
-
-def populate_variables(desired):
-    vals = []
-    for configVariable in desired:
-        if configVariable == "TKG_NO_PROXY" and data.values[configVariable] != "":
-            vals.append({"name": configVariable, "value": data.values[configVariable].split(",")})
-            continue
-        end
-        if configVariable == "TKG_CUSTOM_IMAGE_REPOSITORY":
-            repo = data.values[configVariable] if data.values[configVariable] else get_default_tkg_bom_data().imageConfig.imageRepository
-            vals.append({"name": configVariable, "value": repo})
-            vals.append({"name": configVariable + "_HOSTNAME", "value": repo.split("/")[0]})
-            continue
-        end
-
-        vals.append({"name": configVariable, "value": data.values[configVariable]})
-    end
-    return vals
 end
