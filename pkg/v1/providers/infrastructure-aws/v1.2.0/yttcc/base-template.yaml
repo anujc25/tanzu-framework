@@ -300,8 +300,8 @@ spec:
   - name: TKG_CUSTOM_IMAGE_REPOSITORY_SKIP_TLS_VERIFY
     schema:
       openAPIV3Schema:
-        type: string
-        default: ""
+        type: boolean
+        default: false
   - name: ENABLE_AUDIT_LOGGING
     schema:
       openAPIV3Schema:
@@ -679,6 +679,39 @@ spec:
             encoding: "base64"
             permissions: "0444"
   - name: registrySkipTLSVerify
+    enabledIf: '{{and (ne "" .TKG_CUSTOM_IMAGE_REPOSITORY) .TKG_CUSTOM_IMAGE_REPOSITORY_SKIP_TLS_VERIFY}}'
+    definitions:
+    - selector:
+        apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+        kind: KubeadmControlPlaneTemplate
+        matchResources:
+          controlPlane: true
+      jsonPatches:
+      - op: add
+        path: /spec/template/spec/kubeadmConfigSpec/preKubeadmCommands/-
+        valueFrom:
+          template: |
+            echo '[plugins.\"io.containerd.grpc.v1.cri\".registry.configs.\"{{.TKG_CUSTOM_IMAGE_REPOSITORY_HOSTNAME}}\".tls]' >> /etc/containerd/config.toml
+      - op: add
+        path: /spec/template/spec/kubeadmConfigSpec/preKubeadmCommands/-
+        value: echo '  insecure_skip_verify = true' >> /etc/containerd/config.toml
+    - selector:
+        apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+        kind: KubeadmConfigTemplate
+        matchResources:
+          machineDeploymentClass:
+            names:
+            - tkg-worker
+      jsonPatches:
+      - op: add
+        path: /spec/template/spec/preKubeadmCommands/-
+        valueFrom:
+          template: |
+            echo '[plugins.\"io.containerd.grpc.v1.cri\".registry.configs.\"{{.TKG_CUSTOM_IMAGE_REPOSITORY_HOSTNAME}}\".tls]' >> /etc/containerd/config.toml
+      - op: add
+        path: /spec/template/spec/preKubeadmCommands/-
+        value: echo '  insecure_skip_verify = true' >> /etc/containerd/config.toml
+  - name: customRepository
     enabledIf: '{{ne "" .TKG_CUSTOM_IMAGE_REPOSITORY}}'
     definitions:
     - selector:
@@ -691,15 +724,7 @@ spec:
         path: /spec/template/spec/kubeadmConfigSpec/preKubeadmCommands/-
         valueFrom:
           template: |
-            sed -i 's|\".*/pause|\{{.TKG_IMAGE_REPO}}/pause|' /etc/containerd/config.toml
-      - op: add
-        path: /spec/template/spec/kubeadmConfigSpec/preKubeadmCommands/-
-        valueFrom:
-          # TODO fix value of TKG_CUSTOM_IMAGE_REPOSITORY_HOSTNAME
-          template: |
-            {{if .TKG_CUSTOM_IMAGE_REPOSITORY_SKIP_TLS_VERIFY}}
-            echo '[plugins.\"io.containerd.grpc.v1.cri\".registry.configs.\"{{.TKG_CUSTOM_IMAGE_REPOSITORY_HOSTNAME}}\".tls]' >> /etc/containerd/config.toml && echo '  insecure_skip_verify = true' >> /etc/containerd/config.toml
-            {{- end}}            
+            sed -i 's|\".*/pause|\{{.TKG_IMAGE_REPO}}/pause|' /etc/containerd/config.toml            
       - op: add
         path: /spec/template/spec/kubeadmConfigSpec/preKubeadmCommands/-
         value: systemctl restart containerd
@@ -716,14 +741,6 @@ spec:
         valueFrom:
           template: |
             sed -i 's|\".*/pause|\{{.TKG_IMAGE_REPO}}/pause|' /etc/containerd/config.toml
-      - op: add
-        path: /spec/template/spec/preKubeadmCommands/-
-        valueFrom:
-          # TODO fix value of TKG_CUSTOM_IMAGE_REPOSITORY_HOSTNAME
-          template: |
-            {{if .TKG_CUSTOM_IMAGE_REPOSITORY_SKIP_TLS_VERIFY}}
-            echo '[plugins.\"io.containerd.grpc.v1.cri\".registry.configs.\"{{.TKG_CUSTOM_IMAGE_REPOSITORY_HOSTNAME}}\".tls]' >> /etc/containerd/config.toml && echo '  insecure_skip_verify = true' >> /etc/containerd/config.toml
-            {{- end}}
       - op: add
         path: /spec/template/spec/preKubeadmCommands/-
         value: systemctl restart containerd
