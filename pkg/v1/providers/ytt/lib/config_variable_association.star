@@ -306,8 +306,16 @@ def get_cluster_variables():
             else:
                 continue
             end
-            if configVariable == "TKG_NO_PROXY":
-                vars[configVariable] = vars[configVariable].split(",")
+            if configVariable == "TKG_HTTP_PROXY":
+                if vars["TKG_HTTP_PROXY"] != "":
+                    vars["proxy"] = {
+                        "httpProxy": vars["TKG_HTTP_PROXY"],
+                        "httpsProxy": data.values["TKG_HTTPS_PROXY"],
+                        "noProxy": data.values["TKG_NO_PROXY"].split(",")
+                    }
+                else:
+                    vars["proxy"] = None
+                end
             end
             if configVariable == "TKG_CUSTOM_IMAGE_REPOSITORY":
                 vars["TKG_CUSTOM_IMAGE_REPOSITORY_HOSTNAME"] = vars[configVariable].split("/")[0]

@@ -242,22 +242,25 @@ spec:
       openAPIV3Schema:
         type: integer
         default: 4
-  - name: TKG_HTTP_PROXY
+  - name: proxy
     schema:
       openAPIV3Schema:
-        type: string
-        default: ""
-  - name: TKG_HTTPS_PROXY
-    schema:
-      openAPIV3Schema:
-        type: string
-        default: ""
-  - name: TKG_NO_PROXY
-    schema:
-      openAPIV3Schema:
-        type: array
-        items:
-          type: string
+        type: object
+        properties:
+          httpProxy:
+            type: string
+            default: ""
+          httpsProxy:
+            type: string
+            default: ""
+          noProxy:
+            type: array
+            items:
+              type: string
+        required:
+          - httpProxy
+          - httpsProxy
+          - noProxy
   - name: TKG_PROXY_CA_CERT
     schema:
       openAPIV3Schema:
@@ -559,7 +562,7 @@ spec:
             frontendIPsCount: {{ .AZURE_NODE_OUTBOUND_LB_FRONTEND_IP_COUNT }}
             idleTimeoutInMinutes: {{ .AZURE_NODE_OUTBOUND_LB_IDLE_TIMEOUT_IN_MINUTES }}
   - name: httpProxy
-    enabledIf: '{{ne "" .TKG_HTTP_PROXY}}'
+    enabledIf: '{{not (not .proxy)}}'
     definitions:
     - selector:
         apiVersion: controlplane.cluster.x-k8s.io/v1beta1
@@ -573,9 +576,9 @@ spec:
           template: |
             content: |
               [Service]
-              Environment="HTTP_PROXY={{.TKG_HTTP_PROXY}}"
-              Environment="HTTPS_PROXY={{.TKG_HTTPS_PROXY}}"
-              Environment="NO_PROXY={{- range .TKG_NO_PROXY}}{{.}},{{- end}}{{.AZURE_VNET_CIDR}},169.254.0.0/16,168.63.129.16,{{.SERVICE_CIDR}},{{.CLUSTER_CIDR}},localhost,127.0.0.1,.scv,.svc.cluster.local"
+              Environment="HTTP_PROXY={{.proxy.httpProxy}}"
+              Environment="HTTPS_PROXY={{.proxy.httpsProxy}}"
+              Environment="NO_PROXY={{- range .proxy.noProxy}}{{.}},{{- end}}{{.AZURE_VNET_CIDR}},169.254.0.0/16,168.63.129.16,{{.SERVICE_CIDR}},{{.CLUSTER_CIDR}},localhost,127.0.0.1,.scv,.svc.cluster.local"
             owner: root:root
             path: /etc/systemd/system/containerd.service.d/http-proxy.conf
             permissions: "0640"
@@ -585,9 +588,9 @@ spec:
           template: |
             content: |
               [Service]
-              Environment="HTTP_PROXY={{.TKG_HTTP_PROXY}}"
-              Environment="HTTPS_PROXY={{.TKG_HTTPS_PROXY}}"
-              Environment="NO_PROXY={{- range .TKG_NO_PROXY}}{{.}},{{- end}}{{.AZURE_VNET_CIDR}},169.254.0.0/16,168.63.129.16,{{.SERVICE_CIDR}},{{.CLUSTER_CIDR}},localhost,127.0.0.1,.scv,.svc.cluster.local"
+              Environment="HTTP_PROXY={{.proxy.httpProxy}}"
+              Environment="HTTPS_PROXY={{.proxy.httpsProxy}}"
+              Environment="NO_PROXY={{- range .proxy.noProxy}}{{.}},{{- end}}{{.AZURE_VNET_CIDR}},169.254.0.0/16,168.63.129.16,{{.SERVICE_CIDR}},{{.CLUSTER_CIDR}},localhost,127.0.0.1,.scv,.svc.cluster.local"
             owner: root:root
             path: /usr/lib/systemd/system/kubelet.service.d/http-proxy.conf
             permissions: "0640"
@@ -604,17 +607,17 @@ spec:
         path: /spec/template/spec/kubeadmConfigSpec/preKubeadmCommands/-
         valueFrom:
           template: |
-            export HTTP_PROXY={{.TKG_HTTP_PROXY}}
+            export HTTP_PROXY={{.proxy.httpProxy}}
       - op: add
         path: /spec/template/spec/kubeadmConfigSpec/preKubeadmCommands/-
         valueFrom:
           template: |
-            export HTTPS_PROXY={{.TKG_HTTPS_PROXY}}
+            export HTTPS_PROXY={{.proxy.httpsProxy}}
       - op: add
         path: /spec/template/spec/kubeadmConfigSpec/preKubeadmCommands/-
         valueFrom:
           template: |
-            export NO_PROXY={{- range .TKG_NO_PROXY}}{{.}},{{- end}}{{.AZURE_VNET_CIDR}},169.254.0.0/16,168.63.129.16,{{.SERVICE_CIDR}},{{.CLUSTER_CIDR}},localhost,127.0.0.1,.scv,.svc.cluster.local
+            export NO_PROXY={{- range .proxy.noProxy}}{{.}},{{- end}}{{.AZURE_VNET_CIDR}},169.254.0.0/16,168.63.129.16,{{.SERVICE_CIDR}},{{.CLUSTER_CIDR}},localhost,127.0.0.1,.scv,.svc.cluster.local
     - selector:
         apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
         kind: KubeadmConfigTemplate
@@ -629,9 +632,9 @@ spec:
           template: |
             content: |
               [Service]
-              Environment="HTTP_PROXY={{.TKG_HTTP_PROXY}}"
-              Environment="HTTPS_PROXY={{.TKG_HTTPS_PROXY}}"
-              Environment="NO_PROXY={{- range .TKG_NO_PROXY}}{{.}},{{- end}}{{.AZURE_VNET_CIDR}},169.254.0.0/16,168.63.129.16,{{.SERVICE_CIDR}},{{.CLUSTER_CIDR}},localhost,127.0.0.1,.scv,.svc.cluster.local"
+              Environment="HTTP_PROXY={{.proxy.httpProxy}}"
+              Environment="HTTPS_PROXY={{.proxy.httpsProxy}}"
+              Environment="NO_PROXY={{- range .proxy.noProxy}}{{.}},{{- end}}{{.AZURE_VNET_CIDR}},169.254.0.0/16,168.63.129.16,{{.SERVICE_CIDR}},{{.CLUSTER_CIDR}},localhost,127.0.0.1,.scv,.svc.cluster.local"
             owner: root:root
             path: /etc/systemd/system/containerd.service.d/http-proxy.conf
             permissions: "0640"
@@ -641,9 +644,9 @@ spec:
           template: |
             content: |
               [Service]
-              Environment="HTTP_PROXY={{.TKG_HTTP_PROXY}}"
-              Environment="HTTPS_PROXY={{.TKG_HTTPS_PROXY}}"
-              Environment="NO_PROXY={{- range .TKG_NO_PROXY}}{{.}},{{- end}}{{.AZURE_VNET_CIDR}},169.254.0.0/16,168.63.129.16,{{.SERVICE_CIDR}},{{.CLUSTER_CIDR}},localhost,127.0.0.1,.scv,.svc.cluster.local"
+              Environment="HTTP_PROXY={{.proxy.httpProxy}}"
+              Environment="HTTPS_PROXY={{.proxy.httpsProxy}}"
+              Environment="NO_PROXY={{- range .proxy.noProxy}}{{.}},{{- end}}{{.AZURE_VNET_CIDR}},169.254.0.0/16,168.63.129.16,{{.SERVICE_CIDR}},{{.CLUSTER_CIDR}},localhost,127.0.0.1,.scv,.svc.cluster.local"
             owner: root:root
             path: /usr/lib/systemd/system/kubelet.service.d/http-proxy.conf
             permissions: "0640"
@@ -657,19 +660,19 @@ spec:
         path: /spec/template/spec/preKubeadmCommands/-
         valueFrom:
           template: |
-            export HTTP_PROXY={{.TKG_HTTP_PROXY}}
+            export HTTP_PROXY={{.proxy.httpProxy}}
       - op: add
         path: /spec/template/spec/preKubeadmCommands/-
         valueFrom:
           template: |
-            export HTTPS_PROXY={{.TKG_HTTPS_PROXY}}
+            export HTTPS_PROXY={{.proxy.httpsProxy}}
       - op: add
         path: /spec/template/spec/preKubeadmCommands/-
         valueFrom:
           template: |
-            export NO_PROXY={{- range .TKG_NO_PROXY}}{{.}},{{- end}}{{.AZURE_VNET_CIDR}},169.254.0.0/16,168.63.129.16,{{.SERVICE_CIDR}},{{.CLUSTER_CIDR}},localhost,127.0.0.1,.scv,.svc.cluster.local
+            export NO_PROXY={{- range .proxy.noProxy}}{{.}},{{- end}}{{.AZURE_VNET_CIDR}},169.254.0.0/16,168.63.129.16,{{.SERVICE_CIDR}},{{.CLUSTER_CIDR}},localhost,127.0.0.1,.scv,.svc.cluster.local
   - name: registryCACert
-    enabledif: '{{and (ne "" (or .TKG_PROXY_CA_CERT .TKG_CUSTOM_IMAGE_REPOSITORY_CA_CERTIFICATE)) (and .TKG_CUSTOM_IMAGE_REPOSITORY_SKIP_TLS_VERIFY (ne "" .TKG_CUSTOM_IMAGE_REPOSITORY)) }}'
+    enabledif: '{{and (ne "" (or .TKG_PROXY_CA_CERT .TKG_CUSTOM_IMAGE_REPOSITORY_CA_CERTIFICATE)) (not (and .TKG_CUSTOM_IMAGE_REPOSITORY_SKIP_TLS_VERIFY (ne "" .TKG_CUSTOM_IMAGE_REPOSITORY))) }}'
     definitions:
     - selector:
         apiVersion: controlplane.cluster.x-k8s.io/v1beta1
@@ -773,7 +776,7 @@ spec:
         path: /spec/template/spec/kubeadmConfigSpec/preKubeadmCommands/-
         valueFrom:
           template: |
-            sed -i 's|\".*/pause|\{{.TKG_IMAGE_REPO}}/pause|' /etc/containerd/config.toml            
+            sed -i 's|\".*/pause|\{{.TKG_CUSTOM_IMAGE_REPOSITORY}}/pause|' /etc/containerd/config.toml            
       - op: add
         path: /spec/template/spec/kubeadmConfigSpec/preKubeadmCommands/-
         value: systemctl restart containerd
@@ -789,7 +792,7 @@ spec:
         path: /spec/template/spec/preKubeadmCommands/-
         valueFrom:
           template: |
-            sed -i 's|\".*/pause|\{{.TKG_IMAGE_REPO}}/pause|' /etc/containerd/config.toml
+            sed -i 's|\".*/pause|\{{.TKG_CUSTOM_IMAGE_REPOSITORY}}/pause|' /etc/containerd/config.toml
       - op: add
         path: /spec/template/spec/preKubeadmCommands/-
         value: systemctl restart containerd

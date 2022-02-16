@@ -1,7 +1,7 @@
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: VSphereClusterTemplate
 metadata:
-  name: '${ CLUSTER_NAME }-infrastructure'
+  name: 'tkg-vsphere-infrastructure'
   namespace: '${ NAMESPACE }'
 spec:
   template:
@@ -44,7 +44,7 @@ spec:
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: VSphereMachineTemplate
 metadata:
-  name: '${ CLUSTER_NAME }-control-plane'
+  name: 'tkg-vsphere-control-plane'
   namespace: '${ NAMESPACE }'
 spec:
   template:
@@ -68,7 +68,7 @@ spec:
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: VSphereMachineTemplate
 metadata:
-  name: '${ CLUSTER_NAME }-worker'
+  name: 'tkg-vsphere-worker'
   namespace: '${ NAMESPACE }'
 spec:
   template:
@@ -92,7 +92,7 @@ spec:
 apiVersion: controlplane.cluster.x-k8s.io/v1beta1
 kind: KubeadmControlPlaneTemplate
 metadata:
-  name: '${ CLUSTER_NAME }-control-plane'
+  name: 'tkg-vsphere-kcp'
   namespace: '${ NAMESPACE }'
 spec:
   template:
@@ -101,7 +101,7 @@ spec:
         infrastructureRef:
           apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
           kind: VSphereMachineTemplate
-          name: '${ CLUSTER_NAME }-control-plane'
+          name: 'tkg-vsphere-control-plane'
       kubeadmConfigSpec:
         useExperimentalRetryJoin: true
         clusterConfiguration:
@@ -118,6 +118,7 @@ spec:
             imageTag: '${ _TKG_COREDNS_IMAGE_TAG }'
           apiServer:
             timeoutForControlPlane: "8m0s"
+            extraVolumes: []
             extraArgs:
               cloud-provider: external
               tls-cipher-suites: TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
@@ -128,7 +129,7 @@ spec:
           scheduler:
             extraArgs:
               tls-cipher-suites: TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
-        files:
+        files: []
         initConfiguration:
           nodeRegistration:
             criSocket: /var/run/containerd/containerd.sock
@@ -160,7 +161,7 @@ spec:
 apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
 kind: KubeadmConfigTemplate
 metadata:
-  name: '${ CLUSTER_NAME }-md-0'
+  name: 'tkg-vsphere-md-0'
   namespace: '${ NAMESPACE }'
 spec:
   template:
@@ -236,18 +237,18 @@ spec:
     ref:
       apiVersion: controlplane.cluster.x-k8s.io/v1beta1
       kind: KubeadmControlPlaneTemplate
-      name: '${ CLUSTER_NAME }-control-plane'
+      name: 'tkg-vsphere-kcp'
     machineInfrastructure:
       ref:
         kind: VSphereMachineTemplate
         apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
-        name: '${ CLUSTER_NAME }-control-plane'
+        name: 'tkg-vsphere-control-plane'
     machineHealthCheck:
   infrastructure:
     ref:
       apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
       kind: VSphereClusterTemplate
-      name: '${ CLUSTER_NAME }-infrastructure'
+      name: 'tkg-vsphere-infrastructure'
       namespace: '${ NAMESPACE }'
   workers:
     machineDeployments:
@@ -258,13 +259,13 @@ spec:
             ref:
               kind: KubeadmConfigTemplate
               apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
-              name: '${ CLUSTER_NAME }-md-0'
+              name: 'tkg-vsphere-md-0'
               namespace: '${ NAMESPACE }'
           infrastructure:
             ref:
               kind: VSphereMachineTemplate
               apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
-              name: '${ CLUSTER_NAME }-md-0'
+              name: 'tkg-vsphere-worker'
               namespace: '${ NAMESPACE }'
   variables:
   - name: CONTROL_PLANE_MACHINE
@@ -393,22 +394,25 @@ spec:
       openAPIV3Schema:
         type: string
         default: eth0
-  - name: TKG_HTTP_PROXY
+  - name: proxy
     schema:
       openAPIV3Schema:
-        type: string
-        default: ""
-  - name: TKG_HTTPS_PROXY
-    schema:
-      openAPIV3Schema:
-        type: string
-        default: ""
-  - name: TKG_NO_PROXY
-    schema:
-      openAPIV3Schema:
-        type: array
-        items:
-          type: string
+        type: object
+        properties:
+          httpProxy:
+            type: string
+            default: ""
+          httpsProxy:
+            type: string
+            default: ""
+          noProxy:
+            type: array
+            items:
+              type: string
+        required:
+          - httpProxy
+          - httpsProxy
+          - noProxy
   - name: TKG_PROXY_CA_CERT
     schema:
       openAPIV3Schema:
@@ -725,7 +729,7 @@ spec:
           template: |
             devices:
             - networkName: {{.VSPHERE_NETWORK}}
-              nameservers: {{.CONTROL_PLANE_NODE_NAMESERVERS}}
+              {{if .CONTROL_PLANE_NODE_NAMESERVERS}}nameservers: {{.CONTROL_PLANE_NODE_NAMESERVERS}}{{end}}
               dhcp4: {{or (eq "ipv4" .TKG_IP_FAMILY) (or (eq "ipv4,ipv6" .TKG_IP_FAMILY) (eq "ipv6,ipv4" .TKG_IP_FAMILY))}}
               dhcp6: {{or (eq "ipv6" .TKG_IP_FAMILY) (or (eq "ipv4,ipv6" .TKG_IP_FAMILY) (eq "ipv6,ipv4" .TKG_IP_FAMILY))}}
     - selector:
@@ -742,7 +746,7 @@ spec:
           template: |
             devices:
             - networkName: {{.VSPHERE_NETWORK}}
-              nameservers: {{.WORKER_NODE_NAMESERVERS}}
+              {{if .WORKER_NODE_NAMESERVERS}}nameservers: {{.WORKER_NODE_NAMESERVERS}}{{end}}
               dhcp4: {{or (eq "ipv4" .TKG_IP_FAMILY) (or (eq "ipv4,ipv6" .TKG_IP_FAMILY) (eq "ipv6,ipv4" .TKG_IP_FAMILY))}}
               dhcp6: {{or (eq "ipv6" .TKG_IP_FAMILY) (or (eq "ipv4,ipv6" .TKG_IP_FAMILY) (eq "ipv6,ipv4" .TKG_IP_FAMILY))}}
   - name: controlPlaneEndpointConfiguration
@@ -828,7 +832,7 @@ spec:
         path: /spec/template/spec/kubeadmConfigSpec/postKubeadmCommands/-
         value: sed -i '/listen-client-urls/ s/$/,https:\/\/127.0.0.1:2379/' /etc/kubernetes/manifests/etcd.yaml
   - name: httpProxy
-    enabledIf: '{{ne "" .TKG_HTTP_PROXY}}'
+    enabledIf: '{{not (not .proxy)}}'
     definitions:
     - selector:
         apiVersion: controlplane.cluster.x-k8s.io/v1beta1
@@ -842,9 +846,9 @@ spec:
           template: |
             content: |
               [Service]
-              Environment="HTTP_PROXY={{.TKG_HTTP_PROXY}}"
-              Environment="HTTPS_PROXY={{.TKG_HTTPS_PROXY}}"
-              Environment="NO_PROXY={{- range .TKG_NO_PROXY}}{{.}},{{- end}}{{.SERVICE_CIDR}},{{.CLUSTER_CIDR}},localhost,127.0.0.1
+              Environment="HTTP_PROXY={{.proxy.httpProxy}}"
+              Environment="HTTPS_PROXY={{.proxy.httpsProxy}}"
+              Environment="NO_PROXY={{- range .proxy.noProxy}}{{.}},{{- end}}{{.SERVICE_CIDR}},{{.CLUSTER_CIDR}},localhost,127.0.0.1
             {{- if or (eq "ipv6" .TKG_IP_FAMILY) (or (eq "ipv4,ipv6" .TKG_IP_FAMILY) (eq "ipv6,ipv4" .TKG__IP_FAMILY))}},::1{{end}},.scv,.svc.cluster.local"
             owner: root:root
             path: /etc/systemd/system/containerd.service.d/http-proxy.conf
@@ -855,9 +859,9 @@ spec:
           template: |
             content: |
               [Service]
-              Environment="HTTP_PROXY={{.TKG_HTTP_PROXY}}"
-              Environment="HTTPS_PROXY={{.TKG_HTTPS_PROXY}}"
-              Environment="NO_PROXY={{- range .TKG_NO_PROXY}}{{.}},{{- end}}{{.SERVICE_CIDR}},{{.CLUSTER_CIDR}},localhost,127.0.0.1
+              Environment="HTTP_PROXY={{.proxy.httpProxy}}"
+              Environment="HTTPS_PROXY={{.proxy.httpsProxy}}"
+              Environment="NO_PROXY={{- range .proxy.noProxy}}{{.}},{{- end}}{{.SERVICE_CIDR}},{{.CLUSTER_CIDR}},localhost,127.0.0.1
             {{- if or (eq "ipv6" .TKG_IP_FAMILY) (or (eq "ipv4,ipv6" .TKG_IP_FAMILY) (eq "ipv6,ipv4" .TKG__IP_FAMILY))}},::1{{end}},.scv,.svc.cluster.local"
             owner: root:root
             path: /usr/lib/systemd/system/kubelet.service.d/http-proxy.conf
@@ -875,17 +879,17 @@ spec:
         path: /spec/template/spec/kubeadmConfigSpec/preKubeadmCommands/-
         valueFrom:
           template: |
-            export HTTP_PROXY={{.TKG_HTTP_PROXY}}
+            export HTTP_PROXY={{.proxy.httpProxy}}
       - op: add
         path: /spec/template/spec/kubeadmConfigSpec/preKubeadmCommands/-
         valueFrom:
           template: |
-            export HTTPS_PROXY={{.TKG_HTTPS_PROXY}}
+            export HTTPS_PROXY={{.proxy.httpsProxy}}
       - op: add
         path: /spec/template/spec/kubeadmConfigSpec/preKubeadmCommands/-
         valueFrom:
           template: |
-            export NO_PROXY={{- range .TKG_NO_PROXY}}{{.}},{{- end}}{{.SERVICE_CIDR}},{{.CLUSTER_CIDR}},localhost,127.0.0.1
+            export NO_PROXY={{- range .proxy.noProxy}}{{.}},{{- end}}{{.SERVICE_CIDR}},{{.CLUSTER_CIDR}},localhost,127.0.0.1
             {{- if or (eq "ipv6" .TKG_IP_FAMILY) (or (eq "ipv4,ipv6" .TKG_IP_FAMILY) (eq "ipv6,ipv4" .TKG__IP_FAMILY))}},::1{{end}},.scv,.svc.cluster.local
     - selector:
         apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
@@ -901,9 +905,9 @@ spec:
           template: |
             content: |
               [Service]
-              Environment="HTTP_PROXY={{.TKG_HTTP_PROXY}}"
-              Environment="HTTPS_PROXY={{.TKG_HTTPS_PROXY}}"
-              Environment="NO_PROXY={{- range .TKG_NO_PROXY}}{{.}},{{- end}}{{.SERVICE_CIDR}},{{.CLUSTER_CIDR}},localhost,127.0.0.1
+              Environment="HTTP_PROXY={{.proxy.httpProxy}}"
+              Environment="HTTPS_PROXY={{.proxy.httpsProxy}}"
+              Environment="NO_PROXY={{- range .proxy.noProxy}}{{.}},{{- end}}{{.SERVICE_CIDR}},{{.CLUSTER_CIDR}},localhost,127.0.0.1
             {{- if or (eq "ipv6" .TKG_IP_FAMILY) (or (eq "ipv4,ipv6" .TKG_IP_FAMILY) (eq "ipv6,ipv4" .TKG__IP_FAMILY))}},::1{{end}},.scv,.svc.cluster.local"
             owner: root:root
             path: /etc/systemd/system/containerd.service.d/http-proxy.conf
@@ -914,9 +918,9 @@ spec:
           template: |
             content: |
               [Service]
-              Environment="HTTP_PROXY={{.TKG_HTTP_PROXY}}"
-              Environment="HTTPS_PROXY={{.TKG_HTTPS_PROXY}}"
-              Environment="NO_PROXY={{- range .TKG_NO_PROXY}}{{.}},{{- end}}{{.SERVICE_CIDR}},{{.CLUSTER_CIDR}},localhost,127.0.0.1
+              Environment="HTTP_PROXY={{.proxy.httpProxy}}"
+              Environment="HTTPS_PROXY={{.proxy.httpsProxy}}"
+              Environment="NO_PROXY={{- range .proxy.noProxy}}{{.}},{{- end}}{{.SERVICE_CIDR}},{{.CLUSTER_CIDR}},localhost,127.0.0.1
             {{- if or (eq "ipv6" .TKG_IP_FAMILY) (or (eq "ipv4,ipv6" .TKG_IP_FAMILY) (eq "ipv6,ipv4" .TKG__IP_FAMILY))}},::1{{end}},.scv,.svc.cluster.local"
             owner: root:root
             path: /usr/lib/systemd/system/kubelet.service.d/http-proxy.conf
@@ -931,17 +935,17 @@ spec:
         path: /spec/template/spec/preKubeadmCommands/-
         valueFrom:
           template: |
-            export HTTP_PROXY={{.TKG_HTTP_PROXY}}
+            export HTTP_PROXY={{.proxy.httpProxy}}
       - op: add
         path: /spec/template/spec/preKubeadmCommands/-
         valueFrom:
           template: |
-            export HTTPS_PROXY={{.TKG_HTTPS_PROXY}}
+            export HTTPS_PROXY={{.proxy.httpsProxy}}
       - op: add
         path: /spec/template/spec/preKubeadmCommands/-
         valueFrom:
           template: |
-            export NO_PROXY={{- range .TKG_NO_PROXY}}{{.}},{{- end}}{{.SERVICE_CIDR}},{{.CLUSTER_CIDR}},localhost,127.0.0.1
+            export NO_PROXY={{- range .proxy.noProxy}}{{.}},{{- end}}{{.SERVICE_CIDR}},{{.CLUSTER_CIDR}},localhost,127.0.0.1
             {{- if or (eq "ipv6" .TKG_IP_FAMILY) (or (eq "ipv4,ipv6" .TKG_IP_FAMILY) (eq "ipv6,ipv4" .TKG__IP_FAMILY))}},::1{{end}},.scv,.svc.cluster.local
   - name: auditLogging
     enabledIf: '{{.ENABLE_AUDIT_LOGGING}}'
@@ -1126,7 +1130,7 @@ spec:
                 omitStages:
                   - "RequestReceived"
   - name: registryCACert
-    enabledif: '{{and (ne "" (or .TKG_PROXY_CA_CERT .TKG_CUSTOM_IMAGE_REPOSITORY_CA_CERTIFICATE)) (and .TKG_CUSTOM_IMAGE_REPOSITORY_SKIP_TLS_VERIFY (ne "" .TKG_CUSTOM_IMAGE_REPOSITORY)) }}'
+    enabledIf: '{{and (ne "" (or .TKG_PROXY_CA_CERT .TKG_CUSTOM_IMAGE_REPOSITORY_CA_CERTIFICATE)) (not (and .TKG_CUSTOM_IMAGE_REPOSITORY_SKIP_TLS_VERIFY (ne "" .TKG_CUSTOM_IMAGE_REPOSITORY))) }}'
     definitions:
     - selector:
         apiVersion: controlplane.cluster.x-k8s.io/v1beta1
@@ -1230,7 +1234,7 @@ spec:
         path: /spec/template/spec/kubeadmConfigSpec/preKubeadmCommands/-
         valueFrom:
           template: |
-            sed -i 's|\".*/pause|\{{.TKG_IMAGE_REPO}}/pause|' /etc/containerd/config.toml           
+            sed -i 's|\".*/pause|\{{.TKG_CUSTOM_IMAGE_REPOSITORY}}/pause|' /etc/containerd/config.toml           
       - op: add
         path: /spec/template/spec/kubeadmConfigSpec/preKubeadmCommands/-
         value: systemctl restart containerd
@@ -1246,7 +1250,7 @@ spec:
         path: /spec/template/spec/preKubeadmCommands/-
         valueFrom:
           template: |
-            sed -i 's|\".*/pause|\{{.TKG_IMAGE_REPO}}/pause|' /etc/containerd/config.toml
+            sed -i 's|\".*/pause|\{{.TKG_CUSTOM_IMAGE_REPOSITORY}}/pause|' /etc/containerd/config.toml
       - op: add
         path: /spec/template/spec/preKubeadmCommands/-
         value: systemctl restart containerd
