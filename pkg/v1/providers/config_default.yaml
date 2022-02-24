@@ -95,8 +95,6 @@ VSPHERE_NETWORK: VM Network
 VSPHERE_TEMPLATE:
 VSPHERE_TEMPLATE_MOID:
 
-VSPHERE_TEMPLATE_MOID:
-
 #! WINDOWS PARAMETERS
 #! The name of the VM Windows template to be used to create a specific version of
 #! a Tanzu Kubernetes Cluster including WINDOWS node.
