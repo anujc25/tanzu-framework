@@ -1,10 +1,6 @@
 #@ load("@ytt:overlay", "overlay")
 #@ load("@ytt:data", "data")
 
-#@ load("lib/validate.star", "validate_configuration")
-
-#@ validate_configuration("azure")
-
 #@overlay/match by=overlay.subset({"kind":"ClusterClass"})
 ---
 apiVersion: cluster.x-k8s.io/v1beta1

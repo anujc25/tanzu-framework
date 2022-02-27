@@ -173,7 +173,7 @@ stringData:
 apiVersion: cluster.x-k8s.io/v1beta1
 kind: ClusterClass
 metadata:
-  name: tkg-cluster-class-dev
+  name: tkg-vsphere-default
   namespace: '${ NAMESPACE }'
 spec:
   controlPlane:

@@ -1,7 +1,11 @@
+#@ load("@ytt:overlay", "overlay")
+#@ load("@ytt:yaml", "yaml")
+#@ load("@ytt:data", "data")
+
 apiVersion: cluster.x-k8s.io/v1beta1
 kind: ClusterClass
 metadata:
-  name: tkg-cluster-class-dev
+  name: tkg-aws-default
   namespace: default
 spec:
   controlPlane:
@@ -39,17 +43,27 @@ spec:
     schema:
       openAPIV3Schema:
         type: string
+        #@ if data.values.AWS_REGION:
+        default: #@ data.values.AWS_REGION
+        #@ end
   - name: AWS_SSH_KEY_NAME
     required: true
     schema:
       openAPIV3Schema:
         type: string
+        #@ if data.values.AWS_SSH_KEY_NAME:
+        default: #@ data.values.AWS_SSH_KEY_NAME
+        #@ end
   - name: BASTION_HOST_ENABLED
     required: true
     schema:
       openAPIV3Schema:
         type: boolean
+        #@ if data.values.AWS_SSH_KEY_NAME:
+        default: #@ data.values.AWS_SSH_KEY_NAME
+        #@ else:
         default: true
+        #@ end
   - name: AWS_VPC_CIDR
     required: true
     schema:
@@ -169,13 +183,21 @@ spec:
     schema:
       openAPIV3Schema:
         type: integer
+        #@ if data.values.AWS_CONTROL_PLANE_OS_DISK_SIZE_GIB:
+        default: #@ data.values.AWS_CONTROL_PLANE_OS_DISK_SIZE_GIB
+        #@ else:
         default: 80
+        #@ end
   - name: AWS_NODE_OS_DISK_SIZE_GIB
     required: true
     schema:
       openAPIV3Schema:
         type: integer
+        #@ if data.values.AWS_NODE_OS_DISK_SIZE_GIB:
+        default: #@ data.values.AWS_NODE_OS_DISK_SIZE_GIB
+        #@ else:
         default: 80
+        #@ end
   - name: AWS_SECURITY_GROUP_BASTION
     required: true
     schema:
@@ -254,32 +276,38 @@ spec:
           - httpsProxy
           - noProxy
   - name: TKG_PROXY_CA_CERT
+    required: true
     schema:
       openAPIV3Schema:
         type: string
         default: ""
   - name: TKG_CUSTOM_IMAGE_REPOSITORY
+    required: true
     schema:
       openAPIV3Schema:
         type: string
         default: ""
   #! TODO this is subset of above, try to remove this
   - name: TKG_CUSTOM_IMAGE_REPOSITORY_HOSTNAME
+    required: true
     schema:
       openAPIV3Schema:
         type: string
         default: ""
   - name: TKG_CUSTOM_IMAGE_REPOSITORY_CA_CERTIFICATE
+    required: true
     schema:
       openAPIV3Schema:
         type: string
         default: ""
   - name: TKG_CUSTOM_IMAGE_REPOSITORY_SKIP_TLS_VERIFY
+    required: true
     schema:
       openAPIV3Schema:
         type: boolean
         default: false
   - name: ENABLE_AUDIT_LOGGING
+    required: true
     schema:
       openAPIV3Schema:
         type: boolean

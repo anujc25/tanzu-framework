@@ -1,11 +1,6 @@
 #@ load("@ytt:overlay", "overlay")
 #@ load("@ytt:data", "data")
 
-#@ load("lib/validate.star", "validate_configuration")
-#@ load("@ytt:yaml", "yaml")
-#@ load("/lib/config_variable_association.star", "config_variable_association", "get_cluster_variables")
-#@ validate_configuration("vsphere")
-
 #@ if not data.values.IS_WINDOWS_WORKLOAD_CLUSTER:
 
 #@overlay/match by=overlay.subset({"kind":"ClusterClass"})
@@ -61,14 +56,5 @@ spec:
               name: tkg-vsphere-worker
               namespace: #@ data.values.NAMESPACE
 
-#@overlay/match by=overlay.subset({"kind": "Secret", "metadata":{"name": "${ CLUSTER_NAME }"}})
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: #@ data.values.CLUSTER_NAME
-stringData:
-  username: #@ data.values.VSPHERE_USERNAME
-  password: #@ data.values.VSPHERE_PASSWORD
-
 #@ end
+
