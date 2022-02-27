@@ -5,16 +5,16 @@
 #@ def get_clusterclass_name():
 
 #@ if data.values.metadata.infraProvider == "aws":
-#@   return "tkg-clusterclass-aws"
+#@   return "tkg-aws-default"
 #@ end
 #@ if data.values.metadata.infraProvider == "docker":
-#@   return "tkg-clusterclass-docker"
+#@   return "tkg-docker-default"
 #@ end
 #@ if data.values.metadata.infraProvider == "azure":
-#@   return "tkg-clusterclass-azure"
+#@   return "tkg-azure-default"
 #@ end
 #@ if data.values.metadata.infraProvider == "vsphere":
-#@   return "tkg-clusterclass-vsphere"
+#@   return "tkg-vsphere-default"
 #@ end
 
 #@ end
