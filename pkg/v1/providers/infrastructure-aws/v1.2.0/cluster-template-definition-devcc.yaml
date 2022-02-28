@@ -3,7 +3,6 @@ kind: TemplateDefinition
 spec:
   paths:
     - path: providers/infrastructure-aws/v1.2.0/yttcc
-    - path: providers/infrastructure-aws/v1.2.0/cconly
     - path: providers/infrastructure-aws/yttcc
     - path: providers/ytt
     - path: bom
