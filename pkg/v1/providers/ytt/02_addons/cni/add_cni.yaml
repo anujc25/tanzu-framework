@@ -2,7 +2,7 @@
 #@ load("@ytt:data", "data")
 #@ load("@ytt:yaml", "yaml")
 #@ load("@ytt:struct", "struct")
-#@ load("/lib/helpers.star", "ValuesFormatStr")
+#@ load("/lib/helpers.star", "ValuesFormatStr", "tkg_use_clusterclass")
 
 #@ def removeKappConfigCR():
 #@overlay/match by=overlay.subset({"apiVersion":"kapp.k14s.io/v1alpha1","kind":"Config"})
@@ -138,6 +138,7 @@ stringData:
   value: #@ yaml.encode(overlay.apply(cni_antrea_lib.with_data_values(antreadatavalues()).eval(), removeKappConfigCR(), updateantreaimage()))
 #@ end
 
+#@ if not tkg_use_clusterclass():
 ---
 apiVersion: v1
 kind: Secret
@@ -177,6 +178,7 @@ spec:
           fromPort: 10100
           protocol: tcp
           toPort: 10100
+#@ end
 
 
 #@ end

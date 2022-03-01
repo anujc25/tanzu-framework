@@ -2,7 +2,7 @@
 #@ load("@ytt:data", "data")
 #@ load("@ytt:yaml", "yaml")
 #@ load("@ytt:template", "template")
-#@ load("/lib/helpers.star", "get_default_tkg_bom_data", "get_provider", "get_kubernetes_provider")
+#@ load("/lib/helpers.star", "get_default_tkg_bom_data", "get_provider", "get_kubernetes_provider", "tkg_use_clusterclass")
 
 #@ if data.values.PROVIDER_TYPE != "tkg-service-vsphere":
 
@@ -123,6 +123,7 @@ subjects:
 
 #@ else:
 
+#@ if not tkg_use_clusterclass():
 ---
 apiVersion: v1
 kind: Secret
@@ -177,6 +178,7 @@ spec:
    kind: Secret
  - name: #@ get_metadata_crs_secret_bom_configmap_name()
    kind: Secret
+#@ end
 
 #@ end
 
