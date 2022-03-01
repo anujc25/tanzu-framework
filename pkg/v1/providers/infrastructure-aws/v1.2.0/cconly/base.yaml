@@ -333,12 +333,10 @@ spec:
         path: "/spec/template/spec/bastion/enabled"
         valueFrom:
           variable: BASTION_HOST_ENABLED
-      - op: replace
-        path: "/spec/template/spec/network/vpc"
+      - op: add
+        path: "/spec/template/spec/network/vpc/cidrBlock"
         valueFrom:
-          template: |
-            id: '{{.AWS_VPC_ID}}'
-            cidrBlock: {{.AWS_VPC_CIDR}}
+          variable: AWS_VPC_CIDR
       - op: replace
         path: "/spec/template/spec/network/subnets"
         valueFrom:
@@ -346,6 +344,20 @@ spec:
             - availabilityZone: {{if .AWS_NODE_AZ}} {{.AWS_NODE_AZ}} {{else if .AWS_REGION}} {{.AWS_REGION}}a{{end}}
               cidrBlock: {{.AWS_PRIVATE_NODE_CIDR}}
               id: '{{.AWS_PRIVATE_SUBNET_ID}}'
+
+  - name: AWSCT_VPC_Id
+    enabledIf: '{{if .AWS_VPC_ID }}true{{end}}'
+    definitions:
+    - selector:
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        kind: AWSClusterTemplate
+        matchResources:
+          infrastructureCluster: true
+      jsonPatches:
+      - op: add
+        path: "/spec/template/spec/network/vpc/id"
+        valueFrom:
+          template: '{{.AWS_VPC_ID}}'
 
   - name: AWSCT_IdentityRef
     enabledIf: '{{if .AWS_IDENTITY_REF_NAME }}true{{end}}'
@@ -945,9 +957,6 @@ spec:
       bastion:
         enabled: true
       network:
-        vpc:
-          cidrBlock: '${AWS_VPC_CIDR}'
-          id: '${AWS_VPC_ID}'
         subnets:
           - availabilityZone: '${AWS_NODE_AZ}'
             cidrBlock: '${AWS_PRIVATE_NODE_CIDR}'
