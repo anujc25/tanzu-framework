@@ -51,6 +51,10 @@ spec:
     version: #@ data.values.KUBERNETES_VERSION
     controlPlane:
       replicas: #@ data.values.CONTROL_PLANE_MACHINE_COUNT
+      metadata:
+        annotations:
+          #! VVV TODO(vui) os-name handling
+          run.tanzu.vmware.com/resolve-os-image: #@ "ami-region={},os-name=ubuntu".format(data.values.AWS_REGION)
     workers:
       machineDeployments:
       #@overlay/match by=overlay.index(0)
@@ -59,6 +63,10 @@ spec:
         replicas: #@ data.values.WORKER_MACHINE_COUNT
         #@overlay/match missing_ok=True
         failureDomain: #@ default_az_0
+        metadata:
+          annotations:
+            #! VVV TODO(vui) os-name handling
+            run.tanzu.vmware.com/resolve-os-image: #@ "ami-region={},os-name=ubuntu".format(data.values.AWS_REGION)
       #@ if data.values.CLUSTER_PLAN == "prodcc":
       #@overlay/append
       - class: tkg-worker
@@ -95,4 +103,3 @@ spec:
         value: #@ vars[configVariable]
       #@ end
     #@ end
-
