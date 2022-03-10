@@ -23,7 +23,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/vmware-tanzu/tanzu-framework/addons/pkg/constants"
-	runtanzuv1alpha1 "github.com/vmware-tanzu/tanzu-framework/apis/run/v1alpha1"
+	runtanzuv1alpha3 "github.com/vmware-tanzu/tanzu-framework/apis/run/v1alpha3"
 	bomtypes "github.com/vmware-tanzu/tanzu-framework/pkg/v1/tkr/pkg/types"
 )
 
@@ -64,7 +64,7 @@ func GetClusterByName(ctx context.Context, c client.Client, namespace, name stri
 }
 
 // GetClustersByTKR gets the clusters using this TKR
-func GetClustersByTKR(ctx context.Context, c client.Client, tkr *runtanzuv1alpha1.TanzuKubernetesRelease) ([]*clusterv1beta1.Cluster, error) {
+func GetClustersByTKR(ctx context.Context, c client.Client, tkr *runtanzuv1alpha3.TanzuKubernetesRelease) ([]*clusterv1beta1.Cluster, error) {
 	var clusters []*clusterv1beta1.Cluster
 
 	if c == nil || tkr == nil {

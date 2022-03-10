@@ -18,17 +18,17 @@ import (
 
 	"github.com/vmware-tanzu/tanzu-framework/addons/pkg/constants"
 	"github.com/vmware-tanzu/tanzu-framework/addons/pkg/util"
-	runtanzuv1alpha1 "github.com/vmware-tanzu/tanzu-framework/apis/run/v1alpha1"
+	runtanzuv1alpha3 "github.com/vmware-tanzu/tanzu-framework/apis/run/v1alpha3"
 )
 
 // TKRToClusters returns the clusters using TKR
 func (r *AddonReconciler) TKRToClusters(o client.Object) []ctrl.Request {
-	var tkr *runtanzuv1alpha1.TanzuKubernetesRelease
+	var tkr *runtanzuv1alpha3.TanzuKubernetesRelease
 
 	r.Log.V(4).Info("TKr to clusters handler")
 
 	switch obj := o.(type) {
-	case *runtanzuv1alpha1.TanzuKubernetesRelease:
+	case *runtanzuv1alpha3.TanzuKubernetesRelease:
 		tkr = obj
 	default:
 		r.Log.Error(errors.New("invalid type"),

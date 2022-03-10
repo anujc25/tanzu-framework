@@ -556,9 +556,9 @@ func GetExternalCRDs() map[schema.GroupVersion]*sets.String {
 	controlplanev1alpha3Resources := sets.NewString("kubeadmcontrolplanes")
 	crds[controlplanev1beta1.GroupVersion] = &controlplanev1alpha3Resources
 
-	// tkr
-	runtanzuv1alpha1Resources := sets.NewString("tanzukubernetesreleases")
-	crds[runtanzuv1alpha1.GroupVersion] = &runtanzuv1alpha1Resources
+	// // tkr
+	// runtanzuv1alpha1Resources := sets.NewString("tanzukubernetesreleases")
+	// crds[runtanzuv1alpha1.GroupVersion] = &runtanzuv1alpha1Resources
 
 	// kapp-controller APIs
 	kappctrlv1alpha1Resources := sets.NewString("apps")

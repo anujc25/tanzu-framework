@@ -9,16 +9,16 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	runtanzuv1alpha1 "github.com/vmware-tanzu/tanzu-framework/apis/run/v1alpha1"
+	runtanzuv1alpha3 "github.com/vmware-tanzu/tanzu-framework/apis/run/v1alpha3"
 )
 
 // GetTKRByName gets TKR object given a TKR name
-func GetTKRByName(ctx context.Context, c client.Client, tkrName string) (*runtanzuv1alpha1.TanzuKubernetesRelease, error) {
+func GetTKRByName(ctx context.Context, c client.Client, tkrName string) (*runtanzuv1alpha3.TanzuKubernetesRelease, error) {
 	if tkrName == "" {
 		return nil, nil
 	}
 
-	tkr := &runtanzuv1alpha1.TanzuKubernetesRelease{}
+	tkr := &runtanzuv1alpha3.TanzuKubernetesRelease{}
 
 	tkrNamespaceName := client.ObjectKey{
 		Name: tkrName,
