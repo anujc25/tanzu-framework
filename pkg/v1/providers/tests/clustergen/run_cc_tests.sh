@@ -25,6 +25,9 @@ mkdir -p $TKG_CONFIG_DIR
 # shellcheck source=tests/clustergen/diffcluster/helpers.sh
 . "${TESTROOT}"/diffcluster/helpers.sh
 
+# initialize the CLI, set up providers, boms, etc
+$TKG get mc --configdir ${TKG_CONFIG_DIR}
+
 generate_cluster_configurations() {
   local outputdir=$1
   local infra=$2
@@ -37,7 +40,6 @@ generate_cluster_configurations() {
     CASES=$(for i in `grep ${infra} *.case | cut -d: -f1 | uniq | cut -d/ -f1 | head -${MAX_CASES_PER_INFRA}`; do echo -n "$i "; done; echo)
   fi
 
-  $TKG get mc --configdir ${TKG_CONFIG_DIR}
   docker run -t --rm -v ${TKG_CONFIG_DIR}:${TKG_CONFIG_DIR} -v ${TESTROOT}:/clustergen -w /clustergen -e TKG_CONFIG_DIR=${TKG_CONFIG_DIR} ${BUILDER_IMAGE} /bin/bash -c "./gen_duplicate_bom_azure.py $TKG_CONFIG_DIR"
   RESULT=$?
   if [[ ! $RESULT -eq 0 ]]; then
@@ -74,7 +76,7 @@ generate_cluster_configurations() {
     if [[ $RESULT -eq 0 ]]; then
       # XXX fixup plan, hard code cluster class
       cat "$t" | perl -pe 's/--plan (\S+)/--plan $1cc/; s/_PLAN: (\S+)/_PLAN: $1cc/' > /tmp/test_tkg_config_cc
-      echo "CLUSTER_CLASS: tkg-cluster-class-dev" >> /tmp/test_tkg_config_cc
+      echo "CLUSTER_CLASS: tkg-${infra,,}-default" >> /tmp/test_tkg_config_cc
       read -r -a cmdargs < <(grep EXE: /tmp/test_tkg_config_cc | cut -d: -f2-)
       echo $TKG --file /tmp/test_tkg_config_cc --configdir ${TKG_CONFIG_DIR} --log_file /tmp/"$t"_cc.log config cluster "${cmdargs[@]}"
       $TKG --file /tmp/test_tkg_config_cc --configdir ${TKG_CONFIG_DIR} --log_file /tmp/"$t"_cc.log config cluster "${cmdargs[@]}" 2>/tmp/err_cc.txt 1>/tmp/expected_cc.yaml
@@ -119,10 +121,20 @@ compile_diff_stats() {
    cat ${outfile}
 }
 
+export SUPPRESS_PROVIDERS_UPDATE=1
+export CLUSTERCTL_SKIP_UNIQUE_NAMESPACE=true
+export CLUSTERCTL_SKIP_FETCH_CC=true
+
 outputdir=$1
 mkdir -p ${TESTDATA}/${outputdir} || true
 rm -rf ${TESTDATA}/${outputdir}/*
 for infra in ${TESTED_INFRAS}; do
+   pushd "${TKG_CONFIG_DIR}/providers/infrastructure-${infra}"
+   for i in `find . -name "cluster-template-definition*cc.yaml"`; do
+      perl -pi -e 's@^(.*- path: providers/infrastructure-.*/v.*/)(yttcc)@$1cconly\n$1$2@g' $i
+   done
+   popd
+
    generate_cluster_configurations $outputdir $infra
 done
 
