@@ -959,6 +959,8 @@ spec:
       bastion:
         enabled: true
       network:
+        vpc:
+          cidrBlock:
         subnets:
           - availabilityZone: '${AWS_NODE_AZ}'
             cidrBlock: '${AWS_PRIVATE_NODE_CIDR}'
