@@ -266,7 +266,27 @@ spec:
       openAPIV3Schema:
         type: boolean
         default: false
+  - name: AZURE_CUSTOM_TAGS
+    schema:
+      openAPIV3Schema:
+        type: string
+        default: ""
   patches:
+  - name: AzureClusterCustomTags
+    enabledIf: '{{if .AZURE_CUSTOM_TAGS}}true{{end}}'
+    definitions:
+    - selector:
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        kind: AzureClusterTemplate
+        matchResources:
+          infrastructureCluster: true
+      jsonPatches:
+      - op: add
+        path: "/spec/template/spec/additionalTags"
+        valueFrom:
+          template: |
+            {{$azureTags := split "," .AZURE_CUSTOM_TAGS}}{{range $azureTag := $azureTags}}{{$azureTagSplit := split "=" $azureTag}}{{$azureTagSplit._0}}: {{$azureTagSplit._1}}
+            {{end}}
   - name: AzureClusterIdentityRef
     enabledIf: '{{if or .AZURE_IDENTITY_NAME (eq .TKG_CLUSTER_ROLE "management")}}true{{end}}'
     definitions:
