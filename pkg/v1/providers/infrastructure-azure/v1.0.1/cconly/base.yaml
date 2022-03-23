@@ -271,6 +271,10 @@ spec:
       openAPIV3Schema:
         type: string
         default: ""
+  - name: TKR_KUBERNETES_SPEC
+    schema:
+      openAPIV3Schema:
+        type: object
   patches:
   - name: AzureClusterCustomTags
     enabledIf: '{{if .AZURE_CUSTOM_TAGS}}true{{end}}'
