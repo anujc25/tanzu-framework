@@ -76,7 +76,8 @@ generate_cluster_configurations() {
     if [[ $RESULT -eq 0 ]]; then
       # XXX fixup plan, hard code cluster class
       cat "$t" | perl -pe 's/--plan (\S+)/--plan $1cc/; s/_PLAN: (\S+)/_PLAN: $1cc/' > /tmp/test_tkg_config_cc
-      echo "CLUSTER_CLASS: tkg-${infra,,}-default" >> /tmp/test_tkg_config_cc
+      infra=`echo "$infra" | awk '{ print tolower($1) }'`
+      echo "CLUSTER_CLASS: tkg-${infra}-default" >> /tmp/test_tkg_config_cc
       read -r -a cmdargs < <(grep EXE: /tmp/test_tkg_config_cc | cut -d: -f2-)
       echo $TKG --file /tmp/test_tkg_config_cc --configdir ${TKG_CONFIG_DIR} --log_file /tmp/"$t"_cc.log config cluster "${cmdargs[@]}"
       $TKG --file /tmp/test_tkg_config_cc --configdir ${TKG_CONFIG_DIR} --log_file /tmp/"$t"_cc.log config cluster "${cmdargs[@]}" 2>/tmp/err_cc.txt 1>/tmp/expected_cc.yaml
