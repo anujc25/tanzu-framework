@@ -2,7 +2,7 @@
 #@ load("@ytt:template", "template")
 #@ load("@ytt:data", "data")
 #@ load("@ytt:yaml", "yaml")
-#@ load("/lib/helpers.star", "ValuesFormatStr", "tkg_use_clusterclass")
+#@ load("/lib/helpers.star", "ValuesFormatStr")
 #@ load("kapp-controller_overlay.lib.yaml", "kappcontrolleroverlay")
 #@ load("kapp-controller_addon_data.lib.yaml", "kappcontrollerdatavalues")
 #@ load("/vendir/kapp-controller/kapp-controller.lib.yaml", "kapp_controller_lib")
@@ -44,8 +44,6 @@ stringData:
 #@ end
 #@ end
 
-
-#@ if not tkg_use_clusterclass():
 #@ if data.values.PROVIDER_TYPE != "tkg-service-vsphere" and data.values.TKG_CLUSTER_ROLE == "workload":
 
 ---
@@ -65,5 +63,4 @@ type: tkg.tanzu.vmware.com/addon
 stringData:
   values.yaml: #@ ValuesFormatStr.format(yaml.encode(kappcontrollerdatavalues()))
 
-#@ end
 #@ end

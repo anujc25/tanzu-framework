@@ -1,8 +1,7 @@
 #@ load("@ytt:overlay", "overlay")
 #@ load("@ytt:data", "data")
-#@ load("/lib/helpers.star", "validate", "tkg_use_clusterclass")
+#@ load("/lib/helpers.star", "validate")
 
-#@ if not tkg_use_clusterclass():
 #@ if data.values.ENABLE_OIDC and validate():
 #@overlay/match by=overlay.subset({"kind":"KubeadmControlPlane"})
 ---
@@ -36,5 +35,4 @@ spec:
         encoding: "gzip+base64"
         #! kubectl get secret dex-cert-tls -n tanzu-system-auth -o 'go-template={{ index .data "ca.crt" }}' | base64 -D | gzip | base64
         content: #@ data.values.OIDC_DEX_CA
-#@ end
 #@ end

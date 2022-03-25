@@ -3,7 +3,6 @@
 #@ load("@ytt:overlay", "overlay")
 #@ load("@ytt:base64", "base64")
 #@ load("@ytt:yaml", "yaml")
-#@ load("/lib/helpers.star", "tkg_use_clusterclass")
 
 #@ def audit_policy():
 apiVersion: audit.k8s.io/v1beta1
@@ -142,7 +141,6 @@ rules:
 
 #@ end
 
-#@ if not tkg_use_clusterclass():
 #@ if data.values.ENABLE_AUDIT_LOGGING:
 #@ if data.values.PROVIDER_TYPE in ["vsphere", "aws", "azure", "docker"]:
 #@overlay/match by=overlay.subset({"kind":"KubeadmControlPlane"})
@@ -177,6 +175,5 @@ spec:
         #! See "audit-config.yaml" for reference, this is just that file base64'd
         content: #@ base64.encode(yaml.encode(audit_policy()))
 
-#@ end
 #@ end
 #@ end
