@@ -4,7 +4,7 @@ spec:
   paths:
     - path: providers/infrastructure-azure/v1.0.1/yttcc
     - path: providers/infrastructure-azure/yttcc
-    - path: providers/ytt
+    - path: providers/yttcc
     - path: bom
       filemark: text-plain
     - path: providers/config_default.yaml
