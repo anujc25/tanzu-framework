@@ -289,7 +289,7 @@ spec:
         path: "/spec/template/spec/additionalTags"
         valueFrom:
           template: |
-            {{$azureTags := split "," .AZURE_CUSTOM_TAGS}}{{range $azureTag := $azureTags}}{{$azureTagSplit := split "=" $azureTag}}{{$azureTagSplit._0}}: {{$azureTagSplit._1}}
+            {{$azureTags := split "," .AZURE_CUSTOM_TAGS}}{{range $azureTag := $azureTags}}{{$azureTag = trim $azureTag}}{{$azureTagSplit := split "=" $azureTag}}{{$azureTagSplit._0}}: {{$azureTagSplit._1}}
             {{end}}
   - name: AzureClusterIdentityRef
     enabledIf: '{{if or .AZURE_IDENTITY_NAME (eq .TKG_CLUSTER_ROLE "management")}}true{{end}}'
