@@ -54,6 +54,9 @@ const (
 	// or legacy way of managing management components. This is also used for clusterclass based management and workload
 	// cluster provisioning
 	FeatureFlagPackageBasedLCM = "features.global.package-based-lcm-beta"
+	// FeatureFlagAutoApplyClusterClassBasedConfiguration feature flag determines whether to auto-apply the clusterclass
+	// based configuration after converting legacy configration to clusterclass based config or not
+	FeatureFlagAutoApplyClusterClassBasedConfiguration = "features.cluster.auto-apply-clusterclass-based-configuration-alpha"
 )
 
 // DefaultCliFeatureFlags is used to populate an initially empty config file with default values for feature flags.

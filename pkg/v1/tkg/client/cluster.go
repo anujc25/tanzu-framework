@@ -19,6 +19,7 @@ import (
 	"sigs.k8s.io/cluster-api/cmd/clusterctl/client/repository"
 	addonsv1 "sigs.k8s.io/cluster-api/exp/addons/api/v1beta1"
 
+	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/config"
 	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/tkg/clusterclient"
 	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/tkg/constants"
 	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/tkg/log"
@@ -65,7 +66,7 @@ type waitForAddonsOptions struct {
 var TKGSupportedClusterOptions string
 
 // CreateCluster creates a workload cluster based on a cluster template
-// generated from the provided options. Returns cluster creation attempted
+// generated from the provided options. Returns whether cluster creation was attempted
 // information along with error information
 func (c *TkgClient) CreateCluster(options *CreateClusterOptions, waitForCluster bool) (bool, error) { //nolint:gocyclo,funlen
 	if err := CheckClusterNameFormat(options.ClusterName, options.ProviderRepositorySource.InfrastructureProvider); err != nil {
@@ -117,6 +118,7 @@ func (c *TkgClient) CreateCluster(options *CreateClusterOptions, waitForCluster 
 	}
 
 	var bytes []byte
+	var configFilePath string
 	isManagementCluster := false
 	if options.KubernetesVersion, options.TKRVersion, err = c.ConfigureAndValidateTkrVersion(options.TKRVersion); err != nil {
 		return false, err
@@ -143,16 +145,21 @@ func (c *TkgClient) CreateCluster(options *CreateClusterOptions, waitForCluster 
 			return false, errors.Wrap(err, "unable to get cluster configuration")
 		}
 	} else {
-		_, configFilePath, err := c.getClusterConfigurationBytes(&options.ClusterConfigOptions, infraProviderName, isManagementCluster, options.IsWindowsWorkloadCluster, true)
+		bytes, configFilePath, err = c.getClusterConfigurationBytes(&options.ClusterConfigOptions, infraProviderName, isManagementCluster, options.IsWindowsWorkloadCluster, true)
 		if err != nil {
 			return false, errors.Wrap(err, "unable to get cluster configuration")
 		}
 
-		log.Warningf("\nLegacy configuration file detected. The inputs from said file have been converted into the new Cluster configuration as '%v'\n", configFilePath)
-		log.Warningf("To create a cluster with it, use")
-		log.Warningf("    tanzu cluster create --file %v", configFilePath)
+		log.Warningf("\nLegacy configuration file detected. The inputs from said file have been converted into the new Cluster configuration as '%v'", configFilePath)
 
-		return false, nil
+		// If `features.cluster.auto-apply-generated-clusterclass-based-configuration` feature-flag is not activated
+		// log command to use to create cluster using ClusterClass based config file and return
+		if !config.IsFeatureActivated(config.FeatureFlagAutoApplyClusterClassBasedConfiguration) {
+			log.Warningf("\nTo create a cluster with it, use")
+			log.Warningf("    tanzu cluster create --file %v", configFilePath)
+			return false, nil
+		}
+		log.Warningf("\nUsing this new Cluster configuration '%v' to create the cluster.\n", configFilePath)
 	}
 
 	clusters, err := regionalClusterClient.ListClusters("")

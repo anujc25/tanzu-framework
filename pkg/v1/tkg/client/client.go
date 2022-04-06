@@ -115,7 +115,7 @@ type Client interface {
 	// and validates k8s version format is valid semantic version
 	ConfigureAndValidateTkrVersion(tkrVersion string) (string, string, error)
 	// CreateCluster creates a workload cluster based on a cluster template
-	// generated from the provided options. Returns cluster creation attempted
+	// generated from the provided options. Returns whether cluster creation was attempted
 	// information along with error information
 	CreateCluster(options *CreateClusterOptions, waitForCluster bool) (attempedClusterCreation bool, err error)
 	// CreateAWSCloudFormationStack create aws cloud formation stack
