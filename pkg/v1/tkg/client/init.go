@@ -599,7 +599,7 @@ func (c *TkgClient) BuildRegionalClusterConfiguration(options *InitRegionOptions
 		YamlProcessor:            yamlprocessor.NewYttProcessorWithConfigDir(c.tkgConfigDir),
 	}
 
-	if options.IsInputFileHasCClass {
+	if options.IsInputFileClusterClassBased {
 		bytes, err = getContentFromInputFile(options.ClusterConfigFile)
 	} else {
 		bytes, err = c.getClusterConfigurationBytes(&clusterConfigOptions, clusterConfigOptions.ProviderRepositorySource.InfrastructureProvider, true, false)

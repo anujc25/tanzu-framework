@@ -139,7 +139,7 @@ func (c *TkgClient) CreateCluster(options *CreateClusterOptions, waitForCluster 
 		return false, err
 	}
 
-	if options.IsInputFileHasCClass {
+	if options.IsInputFileClusterClassBased {
 		bytes, err = getContentFromInputFile(options.ClusterConfigFile)
 		if err != nil {
 			return false, errors.Wrap(err, "unable to get cluster configuration")

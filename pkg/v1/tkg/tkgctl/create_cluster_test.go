@@ -242,8 +242,8 @@ var _ = Describe("Unit tests for - ccluster.yaml as input file for 'tanzu cluste
 			ctl.TKGConfigReaderWriter().Set("AWS_VPC_ID", vpcID)
 
 			//Process input ccluster.yaml file.
-			IsInputFileHasCClass, err := ctl.processWorkloadClusterInputFile(&options)
-			Expect(IsInputFileHasCClass).Should(BeTrue())
+			IsInputFileClusterClassBased, err := ctl.processWorkloadClusterInputFile(&options)
+			Expect(IsInputFileClusterClassBased).Should(BeTrue())
 			Expect(err).To(BeNil())
 
 			cname, _ := ctl.TKGConfigReaderWriter().Get("CLUSTER_NAME")
@@ -268,8 +268,8 @@ var _ = Describe("Unit tests for - ccluster.yaml as input file for 'tanzu cluste
 
 			//Process input ccluster.yaml file.
 			options.ClusterConfigFile = "../fakes/config/ccluster2_multipleObjects.yaml"
-			IsInputFileHasCClass, err := ctl.processWorkloadClusterInputFile(&options)
-			Expect(IsInputFileHasCClass).Should(BeTrue())
+			IsInputFileClusterClassBased, err := ctl.processWorkloadClusterInputFile(&options)
+			Expect(IsInputFileClusterClassBased).Should(BeTrue())
 			Expect(err).To(BeNil())
 
 			cname, _ := ctl.TKGConfigReaderWriter().Get("CLUSTER_NAME")
@@ -307,15 +307,15 @@ var _ = Describe("Unit tests for - ccluster.yaml as input file for 'tanzu cluste
 
 		It("Input file is config.yaml file not ccluster.yaml file", func() {
 			options.ClusterConfigFile = "../fakes/config/ccluster1_config.yaml"
-			IsInputFileHasCClass, err := ctl.processWorkloadClusterInputFile(&options)
-			Expect(IsInputFileHasCClass).Should(BeFalse())
+			IsInputFileClusterClassBased, err := ctl.processWorkloadClusterInputFile(&options)
+			Expect(IsInputFileClusterClassBased).Should(BeFalse())
 			Expect(err).To(BeNil())
 		})
 
 		It("Input file is not specified", func() {
 			options.ClusterConfigFile = ""
-			IsInputFileHasCClass, _ := ctl.processWorkloadClusterInputFile(&options)
-			Expect(IsInputFileHasCClass).Should(BeFalse())
+			IsInputFileClusterClassBased, _ := ctl.processWorkloadClusterInputFile(&options)
+			Expect(IsInputFileClusterClassBased).Should(BeFalse())
 		})
 
 		It("Input file not exists", func() {
