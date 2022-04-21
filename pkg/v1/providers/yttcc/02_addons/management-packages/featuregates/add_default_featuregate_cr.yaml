@@ -12,7 +12,7 @@ spec:
   namespaceSelector: {}
 #@ end
 
-#@ if data.values.TKG_CLUSTER_ROLE != "workload" and data.values.PROVIDER_TYPE != "tkg-service-vsphere":
+#@ if data.values.TKG_CLUSTER_ROLE != "workload" and data.values.PROVIDER_TYPE != "tkg-service-vsphere" and not data.values.FEATURE_FLAG_PACKAGE_BASED_LCM:
 ---
 apiVersion: addons.cluster.x-k8s.io/v1beta1
 kind: ClusterResourceSet
