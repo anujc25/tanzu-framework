@@ -5,6 +5,7 @@ package managementcomponents
 
 import (
 	"context"
+	"os"
 	"time"
 
 	"github.com/pkg/errors"
@@ -57,6 +58,15 @@ func InstallManagementComponents(mcip *ManagementComponentsInstallOptions) error
 	}
 	if err := InstallKappController(clusterClient, mcip.KappControllerOptions); err != nil {
 		return errors.Wrap(err, "unable to install kapp-controller")
+	}
+
+	resouceFile := os.Getenv("_ADDITIONAL_MANAGEMENT_COMPONENT_CONFIGURATION_FILE")
+	if resouceFile != "" {
+		log.Infof("Appling additional management component configuration from %q", resouceFile)
+		err := clusterClient.ApplyFile(resouceFile)
+		if err != nil {
+			return err
+		}
 	}
 
 	// create package client
