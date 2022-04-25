@@ -60,10 +60,10 @@ func InstallManagementComponents(mcip *ManagementComponentsInstallOptions) error
 		return errors.Wrap(err, "unable to install kapp-controller")
 	}
 
-	resouceFile := os.Getenv("_ADDITIONAL_MANAGEMENT_COMPONENT_CONFIGURATION_FILE")
-	if resouceFile != "" {
-		log.Infof("Appling additional management component configuration from %q", resouceFile)
-		err := clusterClient.ApplyFile(resouceFile)
+	resouceFilePreDeploy := os.Getenv("_ADDITIONAL_MANAGEMENT_COMPONENT_CONFIGURATION_FILE_PRE_DEPLOY")
+	if resouceFilePreDeploy != "" {
+		log.Infof("Appling additional management component configuration from %q", resouceFilePreDeploy)
+		err := clusterClient.ApplyFile(resouceFilePreDeploy)
 		if err != nil {
 			return err
 		}
@@ -83,6 +83,15 @@ func InstallManagementComponents(mcip *ManagementComponentsInstallOptions) error
 	err = WaitForManagementPackages(clusterClient, mcip.ManagementPackageRepositoryOptions.PackageInstallTimeout)
 	if err != nil {
 		return errors.Wrap(err, "timed out waiting for management packages to get reconciled successfully")
+	}
+
+	resouceFilePostDeploy := os.Getenv("_ADDITIONAL_MANAGEMENT_COMPONENT_CONFIGURATION_FILE_POST_DEPLOY")
+	if resouceFilePostDeploy != "" {
+		log.Infof("Appling additional management component configuration from %q", resouceFilePostDeploy)
+		err := clusterClient.ApplyFile(resouceFilePostDeploy)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
