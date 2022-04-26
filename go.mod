@@ -5,7 +5,6 @@ go 1.17
 replace (
 	github.com/vmware-tanzu/tanzu-framework/apis/cni => ./apis/cni
 	github.com/vmware-tanzu/tanzu-framework/apis/cpi => ./apis/cpi
-	sigs.k8s.io/cluster-api => sigs.k8s.io/cluster-api v1.1.3
 )
 
 // Legacy tags before v0.1.0 was created
