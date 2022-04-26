@@ -419,6 +419,11 @@ spec:
       openAPIV3Schema:
         type: boolean
         default: false
+  - name: TKR_DATA
+    required: true
+    schema:
+      openAPIV3Schema:
+        type: object
   patches:
   - name: vsphereClusterTemplate
     definitions:
