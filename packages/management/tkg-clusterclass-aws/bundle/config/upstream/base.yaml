@@ -1029,7 +1029,7 @@ spec:
       iamInstanceProfile: "control-plane.tkg.cloud.vmware.com"
       sshKeyName: ${AWS_SSH_KEY_NAME}
       ami:
-        id: "${AWS_AMI_ID}"
+        id: ami-0f5b7867fe2674806
       rootVolume:
         size: 80
 ---
@@ -1045,7 +1045,7 @@ spec:
       iamInstanceProfile: "nodes.tkg.cloud.vmware.com"
       sshKeyName: "${AWS_SSH_KEY_NAME}"
       ami:
-        id: "${AWS_AMI_ID}"
+        id: ami-0f5b7867fe2674806
       rootVolume:
         size: 80
 ---
