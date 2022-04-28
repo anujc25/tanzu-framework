@@ -6,7 +6,7 @@ apiVersion: cluster.x-k8s.io/v1beta1
 kind: ClusterClass
 metadata:
   name: tkg-aws-default
-  namespace: default
+  namespace: #@ data.values.NAMESPACE
   annotations:
     run.tanzu.vmware.com/resolve-tkr: ""
 spec:
@@ -258,6 +258,16 @@ spec:
     schema:
       openAPIV3Schema:
         type: string
+  - name: CNI
+    required: true
+    schema:
+      openAPIV3Schema:
+        type: string
+        #@ if data.values.CNI:
+        default: #@ data.values.CNI
+        #@ else:
+        default: ""
+        #@ end
   - name: proxy
     schema:
       openAPIV3Schema:
@@ -311,6 +321,10 @@ spec:
     schema:
       openAPIV3Schema:
         type: object
+  - name: TKR_DATA
+    schema:
+      openAPIV3Schema:
+        type: object
   patches:
   - name: AWSCT_main
     definitions:
@@ -343,7 +357,56 @@ spec:
             - availabilityZone: {{if .AWS_NODE_AZ}} {{.AWS_NODE_AZ}} {{else if .AWS_REGION}} {{.AWS_REGION}}a{{end}}
               cidrBlock: '{{.AWS_PRIVATE_NODE_CIDR}}'
               id: '{{.AWS_PRIVATE_SUBNET_ID}}'
-
+  - name: AWSCT_CNIIngressRules_Calico
+    enabledIf: '{{if (eq .CNI "calico") }}true{{end}}'
+    definitions:
+    - selector:
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        kind: AWSClusterTemplate
+        matchResources:
+          infrastructureCluster: true
+      jsonPatches:
+      - op: add
+        path: "/spec/template/spec/network/cni/cniIngressRules/-"
+        valueFrom:
+          template: |
+            description: bgp (calico)
+            fromPort: 179
+            protocol: tcp
+            toPort: 179
+      - op: add
+        path: "/spec/template/spec/network/cni/cniIngressRules/-"
+        valueFrom:
+          template: |
+            description: IP-in-IP (calico)
+            fromPort: -1
+            protocol: "4"
+            toPort: 65535
+  - name: AWSCT_CNIIngressRules_Antrea
+    enabledIf: '{{if (eq .CNI "antrea") }}true{{end}}'
+    definitions:
+    - selector:
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        kind: AWSClusterTemplate
+        matchResources:
+          infrastructureCluster: true
+      jsonPatches:
+      - op: add
+        path: "/spec/template/spec/network/cni/cniIngressRules/-"
+        valueFrom:
+          template: |
+            description: antrea1
+            fromPort: 10349
+            protocol: tcp
+            toPort: 10349
+      - op: add
+        path: "/spec/template/spec/network/cni/cniIngressRules/-"
+        valueFrom:
+          template: |
+            description: genev
+            fromPort: 6081
+            protocol: udp
+            toPort: 6081
   - name: AWSCT_VPC_Id
     enabledIf: '{{if .AWS_VPC_ID }}true{{end}}'
     definitions:
@@ -947,7 +1010,7 @@ apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: AWSClusterTemplate
 metadata:
   name: aws-cluster-template
-  namespace: default
+  namespace: #@ data.values.NAMESPACE
 spec:
   template:
     spec:
@@ -962,12 +1025,22 @@ spec:
         - availabilityZone: '${AWS_NODE_AZ}'
           cidrBlock: '${AWS_PRIVATE_NODE_CIDR}'
           id: '${AWS_PRIVATE_SUBNET_ID}'
+        cni:
+          cniIngressRules:
+          - description: kapp-controller
+            fromPort: 10100
+            protocol: tcp
+            toPort: 10100
+          - description: addons-manager
+            fromPort: 9865
+            protocol: tcp
+            toPort: 9865
 ---
 apiVersion: controlplane.cluster.x-k8s.io/v1beta1
 kind: KubeadmControlPlaneTemplate
 metadata:
   name: tkg-aws-kcp
-  namespace: default
+  namespace: #@ data.values.NAMESPACE
 spec:
   template:
     spec:
@@ -1017,7 +1090,7 @@ kind: AWSMachineTemplate
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 metadata:
   name: tkg-aws-controlplane-template
-  namespace: default
+  namespace: #@ data.values.NAMESPACE
 spec:
   template:
     spec:
@@ -1025,7 +1098,7 @@ spec:
       iamInstanceProfile: "control-plane.tkg.cloud.vmware.com"
       sshKeyName: ${AWS_SSH_KEY_NAME}
       ami:
-        id: "${AWS_AMI_ID}"
+        id: ami-0f5b7867fe2674806
       rootVolume:
         size: 80
 ---
@@ -1033,7 +1106,7 @@ apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: AWSMachineTemplate
 metadata:
   name: tkg-aws-worker-template
-  namespace: default
+  namespace: #@ data.values.NAMESPACE
 spec:
   template:
     spec:
@@ -1041,7 +1114,7 @@ spec:
       iamInstanceProfile: "nodes.tkg.cloud.vmware.com"
       sshKeyName: "${AWS_SSH_KEY_NAME}"
       ami:
-        id: "${AWS_AMI_ID}"
+        id: ami-0f5b7867fe2674806
       rootVolume:
         size: 80
 ---
@@ -1049,7 +1122,7 @@ apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
 kind: KubeadmConfigTemplate
 metadata:
   name: tkg-aws-bootstrap-template
-  namespace: default
+  namespace: #@ data.values.NAMESPACE
 spec:
   template:
     spec:
