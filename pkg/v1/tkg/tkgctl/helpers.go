@@ -188,6 +188,7 @@ func (t *tkgctl) checkIfInputFileIsClusterClassBased(clusterConfigFile string) (
 func (t *tkgctl) processCClusterObjectForConfigurationVariables(cclusterObj unstructured.Unstructured) {
 	variablesMap := make(map[string]string)
 	variablesMap[constants.ConfigVariableClusterName] = cclusterObj.GetName()
+	variablesMap[constants.ConfigVariableNamespace] = cclusterObj.GetNamespace()
 	spec := cclusterObj.Object["spec"].(map[string]interface{})
 	if spec != nil {
 		topology := spec["topology"].(map[string]interface{})
@@ -217,6 +218,7 @@ func (t *tkgctl) processCClusterObjectForConfigurationVariables(cclusterObj unst
 // overrideClusterOptionsWithCClusterConfigurationValues overrides CreateClusterOptions attributes with latest values from the environment.
 func (t *tkgctl) overrideClusterOptionsWithCClusterConfigurationValues(cc *CreateClusterOptions) {
 	cc.ClusterName, _ = t.TKGConfigReaderWriter().Get(constants.ConfigVariableClusterName)
+	cc.Namespace, _ = t.TKGConfigReaderWriter().Get(constants.ConfigVariableNamespace)
 	cc.Plan, _ = t.TKGConfigReaderWriter().Get(constants.ConfigVariableClusterPlan)
 	cc.InfrastructureProvider, _ = t.TKGConfigReaderWriter().Get(constants.ConfigVariableInfraProvider)
 	cc.ControlPlaneMachineCount, _ = tkgconfighelper.GetIntegerVariableFromConfig(constants.ConfigVariableControlPlaneMachineCount, t.TKGConfigReaderWriter())
@@ -232,6 +234,7 @@ func (t *tkgctl) overrideClusterOptionsWithCClusterConfigurationValues(cc *Creat
 // overrideManagementClusterOptionsWithCClusterConfigurationValues overrides InitRegion attributes with latest values from the environment.
 func (t *tkgctl) overrideManagementClusterOptionsWithCClusterConfigurationValues(ir *InitRegionOptions) {
 	ir.ClusterName, _ = t.TKGConfigReaderWriter().Get(constants.ConfigVariableClusterName)
+	ir.Namespace, _ = t.TKGConfigReaderWriter().Get(constants.ConfigVariableNamespace)
 	ir.Plan, _ = t.TKGConfigReaderWriter().Get(constants.ConfigVariableClusterPlan)
 	ir.InfrastructureProvider, _ = t.TKGConfigReaderWriter().Get(constants.ConfigVariableInfraProvider)
 	ir.Size, _ = t.TKGConfigReaderWriter().Get(constants.ConfigVariableSize)
