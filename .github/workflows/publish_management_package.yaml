@@ -1,0 +1,67 @@
+name: Publish Management Packages
+
+on:
+  pull_request:
+    branches: [ main, release-*, package-based-lcm ]
+    paths:
+      - 'pkg/v1/tkg/**'
+      - 'pkg/v1/tkr/**'
+      - 'pkg/v2/tkr/**'
+      - 'packages/management/**'
+      - '!pkg/v1/tkg/tkgpackage*/*'
+      - '!pkg/v1/tkg/kappclient/*'
+      - '!pkg/v1/tkg/test/tkgpackageclient/**'
+      - 'pkg/v1/providers/**'
+      - '.github/workflows/publish_management_package.yaml'
+
+
+  push:
+    branches: [ package-based-lcm* ]
+
+jobs:
+
+  build:
+    name: Publish management package
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v3
+        with:
+          go-version: '1.17'
+        id: go
+
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v1
+
+      - name: Login to GCR
+        uses: docker/login-action@v2
+        with:
+          registry: gcr.io
+          username: _json_key
+          password: ${{ secrets.GCP_BUCKET_SA }}
+
+      - name: Build management packages
+        env:
+          NUM: ${{ github.run_id }}
+          OCI_REGISTRY: gcr.io/eminent-nation-87317/tanzu_framework/github-actions/${{ github.event.number }}
+          COMPONENTS: "pkg/v2/tkr/controller/tkr-source pkg/v2/tkr/controller/tkr-status pkg/v1/sdk/features addons pkg/v2/tkr/webhook/infra-machine pkg/v1/sdk/capabilities pkg/v2/tkr/webhook/tkr-conversion pkg/v2/tkr/webhook/cluster/tkr-resolver addons/pinniped/tanzu-auth-controller-manager"
+          BUILD_VERSION: "v0.21.0"
+          IMG_VERSION_OVERRIDE: latest
+        run: |
+          make docker-build
+
+      - name: Publish management packages
+        env:
+          NUM: ${{ github.run_number }}
+          OCI_REGISTRY: gcr.io/eminent-nation-87317/tanzu_framework/github-actions/${{ github.event.number }}
+          COMPONENTS: "pkg/v2/tkr/controller/tkr-source pkg/v2/tkr/controller/tkr-status pkg/v1/sdk/features addons pkg/v2/tkr/webhook/infra-machine pkg/v1/sdk/capabilities pkg/v2/tkr/webhook/tkr-conversion pkg/v2/tkr/webhook/cluster/tkr-resolver addons/pinniped/tanzu-auth-controller-manager"
+          BUILD_VERSION: "v0.21.0"
+          IMG_VERSION_OVERRIDE: latest
+        run: |
+          make docker-publish
+          make local-registry
+          cp pkg/v1/tkg/test/config/packages/kbld_config_test.yaml packages/kbld-config.yaml
+          make kbld-image-replace
+          make package-push-bundles-repo PACKAGE_REPOSITORY=management
+          make clean-registry
