@@ -177,7 +177,22 @@ func (c *TkgClient) UpgradeCluster(options *UpgradeClusterOptions) error { // no
 		}
 	}
 
-	err = c.addKubernetesReleaseLabel(regionalClusterClient, options)
+	// Check if Cluster is ClusterClass based cluster or not
+	isClassyCluster, err := regionalClusterClient.IsClassyCluster(options.ClusterName, options.Namespace)
+	if err != nil {
+		return errors.Wrap(err, "unable to determine cluster type")
+	}
+
+	// If cluster is ClusterClass based cluster upgrade the cluster with different path
+	if isClassyCluster {
+		return c.DoClassyClusterUpgrade(regionalClusterClient, currentClusterClient, options)
+	}
+	return c.DoLegacyClusterUpgrade(regionalClusterClient, currentClusterClient, options)
+}
+
+func (c *TkgClient) DoLegacyClusterUpgrade(regionalClusterClient, currentClusterClient clusterclient.Client, options *UpgradeClusterOptions) error {
+
+	err := c.addKubernetesReleaseLabel(regionalClusterClient, options)
 	if err != nil {
 		return errors.Wrapf(err, "unable to patch the cluster object with TanzuKubernetesRelease label")
 	}
