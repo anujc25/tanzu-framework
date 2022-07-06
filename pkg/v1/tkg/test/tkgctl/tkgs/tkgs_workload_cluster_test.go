@@ -14,8 +14,6 @@ import (
 	. "github.com/onsi/gomega"
 	"sigs.k8s.io/cluster-api/util"
 
-	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/config"
-	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/tkg/constants"
 	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/tkg/test/framework"
 	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/tkg/test/framework/exec"
 	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/tkg/tkgctl"
@@ -177,10 +175,10 @@ var _ = Describe("TKGS - Create workload cluster use cases", func() {
 				tkgctlClient, err = tkgctl.New(tkgctlOptions)
 				Expect(err).To(BeNil())
 			})
-			It("should return error", func() {
+			It("should not return error and should create the cluster if feature-gate is enabled", func() {
 				By(fmt.Sprintf("creating Cluster class based workload cluster, cli feature flag is disabled"))
 				err = tkgctlClient.CreateCluster(clusterOptions)
-				Expect(err.Error()).To(ContainSubstring(fmt.Sprintf(constants.ErrorMsgCClassInputFeatureFlagDisabled, config.FeatureFlagPackageBasedLCM)))
+				Expect(err).To(BeNil())
 			})
 		})
 	})
