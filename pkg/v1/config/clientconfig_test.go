@@ -4,6 +4,7 @@
 package config
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"testing"
@@ -12,6 +13,7 @@ import (
 	uuid "github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"github.com/tj/assert"
+	"golang.org/x/sync/errgroup"
 
 	configv1alpha1 "github.com/vmware-tanzu/tanzu-framework/apis/config/v1alpha1"
 	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/tkg/constants"
@@ -561,4 +563,56 @@ func configureTestDefaultStandaloneDiscoveryOCI() {
 func configureTestDefaultStandaloneDiscoveryLocal() {
 	DefaultStandaloneDiscoveryType = "local"
 	DefaultStandaloneDiscoveryLocalPath = "local/path"
+}
+
+func TestClientConfigUpdateInParallel(t *testing.T) {
+	assert := assert.New(t)
+	addMC := func(mcName string) error {
+		_, err := GetClientConfig()
+		if err != nil {
+			return err
+		}
+
+		s := &configv1alpha1.Server{
+			Name: mcName,
+			Type: configv1alpha1.ManagementClusterServerType,
+			ManagementClusterOpts: &configv1alpha1.ManagementClusterServer{
+				Context: "fake-context",
+				Path:    "fake-path",
+			},
+		}
+		err = AddServer(s, true)
+		if err != nil {
+			return err
+		}
+
+		_, err = GetClientConfig()
+		return err
+	}
+
+	parallelTest := func() {
+		f, err := os.CreateTemp("", "tanzu_config*")
+		assert.Nil(err)
+		os.Setenv("TANZU_CONFIG", f.Name())
+
+		parallelReadWriteCounter := 100
+		group, _ := errgroup.WithContext(context.Background())
+		for i := 1; i <= parallelReadWriteCounter; i++ {
+			id := i
+			group.Go(func() error {
+				return addMC(fmt.Sprintf("mc-%v", id))
+			})
+		}
+		err = group.Wait()
+		assert.Nil(err)
+
+		clientconfig, err := GetClientConfig()
+		assert.Nil(err)
+
+		assert.Equal(parallelReadWriteCounter, len(clientconfig.KnownServers))
+	}
+
+	for testCounter := 1; testCounter <= 5; testCounter++ {
+		parallelTest()
+	}
 }

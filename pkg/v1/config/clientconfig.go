@@ -22,6 +22,27 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
+func init() {
+	// Acquire tanzu config lock
+	AcquireTanzuConfigLock()
+	defer ReleaseTanzuConfigLock()
+
+	c, err := GetClientConfig()
+	if err != nil {
+		log.Warningf("unable to get client config: %v", err)
+	}
+
+	addedDefaultDiscovery := populateDefaultStandaloneDiscovery(c)
+	addedFeatureFlags := addDefaultFeatureFlagsIfMissing(c, DefaultCliFeatureFlags)
+	addedEdition := addDefaultEditionIfMissing(c)
+	addedBomRepo := addBomRepoIfMissing(c)
+	addedCompatabilityFile := addCompatibilityFileIfMissing(c)
+
+	if addedFeatureFlags || addedDefaultDiscovery || addedEdition || addedCompatabilityFile || addedBomRepo {
+		_ = StoreClientConfig(c)
+	}
+}
+
 // This block is for global feature constants, to allow them to be used more broadly
 const (
 	// FeatureContextAwareCLIForPlugins determines whether to use legacy way of discovering plugins or
@@ -299,6 +320,7 @@ func GetClientConfig() (cfg *configv1alpha1.ClientConfig, err error) {
 	if err != nil {
 		return nil, err
 	}
+
 	b, err := os.ReadFile(cfgPath)
 	if err != nil {
 		cfg, err = NewClientConfig()
@@ -307,6 +329,7 @@ func GetClientConfig() (cfg *configv1alpha1.ClientConfig, err error) {
 		}
 		return cfg, nil
 	}
+
 	scheme, err := configv1alpha1.SchemeBuilder.Build()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create scheme")
@@ -317,16 +340,6 @@ func GetClientConfig() (cfg *configv1alpha1.ClientConfig, err error) {
 	_, _, err = s.Decode(b, nil, &c)
 	if err != nil {
 		return nil, errors.Wrap(err, "could not decode config file")
-	}
-
-	addedDefaultDiscovery := populateDefaultStandaloneDiscovery(&c)
-	addedFeatureFlags := addDefaultFeatureFlagsIfMissing(&c, DefaultCliFeatureFlags)
-	addedEdition := addDefaultEditionIfMissing(&c)
-	addedBomRepo := addBomRepoIfMissing(&c)
-	addedCompatabilityFile := addCompatibilityFileIfMissing(&c)
-
-	if addedFeatureFlags || addedDefaultDiscovery || addedEdition || addedCompatabilityFile || addedBomRepo {
-		_ = StoreClientConfig(&c)
 	}
 
 	return &c, nil
@@ -414,11 +427,14 @@ func storeConfigToLegacyDir(data []byte) {
 }
 
 // StoreClientConfig stores the config in the local directory.
+// Make sure to Acquire and Release tanzu lock when reading/writing to the
+// tanzu client configuration
 func StoreClientConfig(cfg *configv1alpha1.ClientConfig) error {
 	cfgPath, err := ClientConfigPath()
 	if err != nil {
 		return errors.Wrap(err, "could not find config path")
 	}
+
 	cfgPathExists, err := fileExists(cfgPath)
 	if err != nil {
 		return errors.Wrap(err, "failed to check config path existence")
@@ -446,10 +462,12 @@ func StoreClientConfig(cfg *configv1alpha1.ClientConfig) error {
 	if err := s.Encode(cfg, buf); err != nil {
 		return errors.Wrap(err, "failed to encode config file")
 	}
+
 	// TODO (pbarker): need to consider races.
 	if err = os.WriteFile(cfgPath, buf.Bytes(), 0644); err != nil {
 		return errors.Wrap(err, "failed to write config file")
 	}
+
 	storeConfigToLegacyDir(buf.Bytes())
 	return nil
 }
@@ -497,6 +515,10 @@ func ServerExists(name string) (bool, error) {
 
 // AddServer adds a server to the config.
 func AddServer(s *configv1alpha1.Server, setCurrent bool) error {
+	// Acquire tanzu config lock
+	AcquireTanzuConfigLock()
+	defer ReleaseTanzuConfigLock()
+
 	cfg, err := GetClientConfig()
 	if err != nil {
 		return err
@@ -515,6 +537,10 @@ func AddServer(s *configv1alpha1.Server, setCurrent bool) error {
 
 // PutServer adds or updates the server.
 func PutServer(s *configv1alpha1.Server, setCurrent bool) error {
+	// Acquire tanzu config lock
+	AcquireTanzuConfigLock()
+	defer ReleaseTanzuConfigLock()
+
 	cfg, err := GetClientConfig()
 	if err != nil {
 		return err
@@ -535,6 +561,10 @@ func PutServer(s *configv1alpha1.Server, setCurrent bool) error {
 
 // RemoveServer adds a server to the config.
 func RemoveServer(name string) error {
+	// Acquire tanzu config lock
+	AcquireTanzuConfigLock()
+	defer ReleaseTanzuConfigLock()
+
 	cfg, err := GetClientConfig()
 	if err != nil {
 		return err
@@ -561,6 +591,10 @@ func RemoveServer(name string) error {
 
 // SetCurrentServer sets the current server.
 func SetCurrentServer(name string) error {
+	// Acquire tanzu config lock
+	AcquireTanzuConfigLock()
+	defer ReleaseTanzuConfigLock()
+
 	cfg, err := GetClientConfig()
 	if err != nil {
 		return err
