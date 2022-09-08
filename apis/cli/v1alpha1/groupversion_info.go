@@ -26,4 +26,7 @@ var (
 
 	// GroupVersionKindCLIPlugin has information about group, version and kind of CLIPlugin object.
 	GroupVersionKindCLIPlugin = GroupVersion.WithKind("CLIPlugin")
+
+	// GroupVersionKindClientConfig has information about group, version and kind of ClientConfig object.
+	GroupVersionKindClientConfig = GroupVersion.WithKind("ClientConfig")
 )
