@@ -12,7 +12,7 @@ import (
 	"github.com/vmware-tanzu/tanzu-framework/tkg/constants"
 	"github.com/vmware-tanzu/tanzu-framework/tkg/log"
 
-	"github.com/vmware-tanzu/tanzu-framework/apis/config/v1alpha1"
+	"github.com/vmware-tanzu/tanzu-framework/apis/cli/v1alpha1"
 )
 
 type deleteRegionOptions struct {

@@ -8,7 +8,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	configv1alpha1 "github.com/vmware-tanzu/tanzu-framework/apis/config/v1alpha1"
+	configv1alpha1 "github.com/vmware-tanzu/tanzu-framework/apis/cli/v1alpha1"
 )
 
 func TestConfigFeatures(t *testing.T) {
