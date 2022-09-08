@@ -13,6 +13,7 @@ import (
 
 	"github.com/aunum/log"
 	"github.com/pkg/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer/json"
 
 	configv1alpha1 "github.com/vmware-tanzu/tanzu-framework/apis/cli/v1alpha1"
@@ -167,10 +168,10 @@ func GetClientConfigNoLock() (cfg *configv1alpha1.ClientConfig, err error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create scheme")
 	}
-	s := json.NewSerializerWithOptions(json.DefaultMetaFactory, scheme, scheme,
+	s := json.NewSerializerWithOptions(FakeMetaFactory{}, scheme, scheme,
 		json.SerializerOptions{Yaml: true, Pretty: false, Strict: false})
 	var c configv1alpha1.ClientConfig
-	_, _, err = s.Decode(b, nil, &c)
+	_, _, err = s.Decode(b, &configv1alpha1.GroupVersionKindClientConfig, &c)
 	if err != nil {
 		return nil, errors.Wrap(err, "could not decode config file")
 	}
@@ -246,7 +247,7 @@ func StoreClientConfig(cfg *configv1alpha1.ClientConfig) error {
 	s := json.NewSerializerWithOptions(json.DefaultMetaFactory, scheme, scheme,
 		json.SerializerOptions{Yaml: true, Pretty: false, Strict: false})
 	// Set GVK explicitly as encoder does not do it.
-	cfg.GetObjectKind().SetGroupVersionKind(configv1alpha1.GroupVersionKindClientConfig)
+	// cfg.GetObjectKind().SetGroupVersionKind(configv1alpha1.GroupVersionKindClientConfig)
 	buf := new(bytes.Buffer)
 	if err := s.Encode(cfg, buf); err != nil {
 		return errors.Wrap(err, "failed to encode config file")
@@ -580,4 +581,17 @@ func GetEdition() (string, error) {
 		return string(cfg.ClientOptions.CLI.Edition), nil
 	}
 	return "", nil
+}
+
+// SimpleMetaFactory provides default methods for retrieving the type and version of objects
+// that are identified with an "apiVersion" and "kind" fields in their JSON
+// serialization. It may be parameterized with the names of the fields in memory, or an
+// optional list of base structs to search for those fields in memory.
+type FakeMetaFactory struct {
+}
+
+// Interpret will return the APIVersion and Kind of the JSON wire-format
+// encoding of an object, or an error.
+func (FakeMetaFactory) Interpret(data []byte) (*schema.GroupVersionKind, error) {
+	return &schema.GroupVersionKind{Group: "", Version: "", Kind: ""}, nil
 }
