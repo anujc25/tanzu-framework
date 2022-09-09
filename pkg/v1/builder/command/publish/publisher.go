@@ -9,7 +9,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/vmware-tanzu/tanzu-framework/apis/cli/v1alpha1"
+	cliv1alpha1 "github.com/vmware-tanzu/tanzu-framework/apis/cli/v1alpha1"
 )
 
 // Publisher is an interface to publish plugin and CLIPlugin resource files to discovery
@@ -45,11 +45,11 @@ func PublishPlugins(pm *Metadata) error {
 	}
 
 	for plugin, pluginInfo := range availablePluginInfo {
-		mapVersionArtifactList := make(map[string]v1alpha1.ArtifactList)
+		mapVersionArtifactList := make(map[string]cliv1alpha1.ArtifactList)
 
 		// Create version based artifact list
 		for version, arrOSArch := range pluginInfo.versions {
-			artifacts := make([]v1alpha1.Artifact, 0)
+			artifacts := make([]cliv1alpha1.Artifact, 0)
 			for _, oa := range arrOSArch {
 				sourcePath, digest, err := getPluginPathAndDigestFromMetadata(pm.InputArtifactDir, plugin, version, oa.os, oa.arch)
 				if err != nil {

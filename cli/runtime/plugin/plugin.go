@@ -13,7 +13,7 @@ import (
 	"go.uber.org/multierr"
 	"golang.org/x/mod/semver"
 
-	cliv1alpha1 "github.com/vmware-tanzu/tanzu-framework/apis/cli/v1alpha1"
+	cliv1alpha1 "github.com/vmware-tanzu/tanzu-framework/cli/runtime/apis/cli/v1alpha1"
 )
 
 // Plugin is a Tanzu CLI plugin.

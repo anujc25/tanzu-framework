@@ -14,7 +14,7 @@ import (
 	"github.com/vmware-tanzu/tanzu-framework/tkg/log"
 	tkgutils "github.com/vmware-tanzu/tanzu-framework/tkg/utils"
 
-	"github.com/vmware-tanzu/tanzu-framework/apis/config/v1alpha1"
+	"github.com/vmware-tanzu/tanzu-framework/cli/runtime/apis/config/v1alpha1"
 	"github.com/vmware-tanzu/tanzu-framework/cli/runtime/config"
 	tkgauth "github.com/vmware-tanzu/tanzu-framework/pkg/v1/auth/tkg"
 )

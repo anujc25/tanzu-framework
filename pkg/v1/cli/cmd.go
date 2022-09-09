@@ -12,7 +12,7 @@ import (
 	"github.com/aunum/log"
 	"github.com/spf13/cobra"
 
-	cliv1alpha1 "github.com/vmware-tanzu/tanzu-framework/apis/cli/v1alpha1"
+	cliv1alpha1 "github.com/vmware-tanzu/tanzu-framework/cli/runtime/apis/cli/v1alpha1"
 )
 
 // GetCmd returns a cobra command for the plugin.

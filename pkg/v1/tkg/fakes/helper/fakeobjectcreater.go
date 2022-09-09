@@ -27,7 +27,7 @@ import (
 	cabpkv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 
-	"github.com/vmware-tanzu/tanzu-framework/apis/cli/v1alpha1"
+	cliv1alpha1 "github.com/vmware-tanzu/tanzu-framework/apis/cli/v1alpha1"
 	tkgsv1alpha2 "github.com/vmware-tanzu/tanzu-framework/apis/run/v1alpha2"
 	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/tkg/clusterclient"
 	"github.com/vmware-tanzu/tanzu-framework/tkg/constants"
@@ -585,8 +585,8 @@ func GetFakePinnipedInfo(pinnipedInfo PinnipedInfo) string {
 }
 
 // NewCLIPlugin returns new NewCLIPlugin object
-func NewCLIPlugin(options TestCLIPluginOption) v1alpha1.CLIPlugin {
-	artifacts := []v1alpha1.Artifact{
+func NewCLIPlugin(options TestCLIPluginOption) cliv1alpha1.CLIPlugin {
+	artifacts := []cliv1alpha1.Artifact{
 		{
 			Image: "fake.image.repo.com/tkg/plugin/test-darwin-plugin:v1.4.0",
 			OS:    "darwin",
@@ -603,14 +603,14 @@ func NewCLIPlugin(options TestCLIPluginOption) v1alpha1.CLIPlugin {
 			Arch:  "amd64",
 		},
 	}
-	cliplugin := v1alpha1.CLIPlugin{
+	cliplugin := cliv1alpha1.CLIPlugin{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: options.Name,
 		},
-		Spec: v1alpha1.CLIPluginSpec{
+		Spec: cliv1alpha1.CLIPluginSpec{
 			Description:        options.Description,
 			RecommendedVersion: options.RecommendedVersion,
-			Artifacts: map[string]v1alpha1.ArtifactList{
+			Artifacts: map[string]cliv1alpha1.ArtifactList{
 				"v1.0.0": artifacts,
 			},
 		},

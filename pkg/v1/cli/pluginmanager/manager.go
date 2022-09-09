@@ -21,8 +21,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
 
-	cliv1alpha1 "github.com/vmware-tanzu/tanzu-framework/apis/cli/v1alpha1"
-	"github.com/vmware-tanzu/tanzu-framework/apis/config/v1alpha1"
+	newcliv1alpha1 "github.com/vmware-tanzu/tanzu-framework/apis/cli/v1alpha1"
+	cliv1alpha1 "github.com/vmware-tanzu/tanzu-framework/cli/runtime/apis/cli/v1alpha1"
+	"github.com/vmware-tanzu/tanzu-framework/cli/runtime/apis/config/v1alpha1"
 	"github.com/vmware-tanzu/tanzu-framework/cli/runtime/component"
 	configlib "github.com/vmware-tanzu/tanzu-framework/cli/runtime/config"
 	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/cli"
@@ -626,16 +627,16 @@ func Clean() error {
 // Note: This function generates cliv1alpha1.CLIPlugin which contains only single local distribution type artifact for
 // OS-ARCH where user is running the cli
 // This function is only used to create CLIPlugin resource for local plugin installation with legacy directory structure
-func getCLIPluginResourceWithLocalDistroFromPluginDescriptor(pd *cliv1alpha1.PluginDescriptor, pluginBinaryPath string) cliv1alpha1.CLIPlugin {
-	return cliv1alpha1.CLIPlugin{
+func getCLIPluginResourceWithLocalDistroFromPluginDescriptor(pd *cliv1alpha1.PluginDescriptor, pluginBinaryPath string) newcliv1alpha1.CLIPlugin {
+	return newcliv1alpha1.CLIPlugin{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: pd.Name,
 		},
-		Spec: cliv1alpha1.CLIPluginSpec{
+		Spec: newcliv1alpha1.CLIPluginSpec{
 			Description:        pd.Description,
 			RecommendedVersion: pd.Version,
-			Artifacts: map[string]cliv1alpha1.ArtifactList{
-				pd.Version: []cliv1alpha1.Artifact{
+			Artifacts: map[string]newcliv1alpha1.ArtifactList{
+				pd.Version: []newcliv1alpha1.Artifact{
 					{
 						URI:  pluginBinaryPath,
 						Type: common.DistributionTypeLocal,

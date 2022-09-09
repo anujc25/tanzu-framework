@@ -11,7 +11,8 @@ import (
 	"github.com/spf13/afero"
 	"gopkg.in/yaml.v2"
 
-	"github.com/vmware-tanzu/tanzu-framework/apis/cli/v1alpha1"
+	cliv1alpha1 "github.com/vmware-tanzu/tanzu-framework/apis/cli/v1alpha1"
+	"github.com/vmware-tanzu/tanzu-framework/cli/runtime/apis/cli/v1alpha1"
 	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/cli/common"
 	"github.com/vmware-tanzu/tanzu-framework/tkg/utils"
 
@@ -108,9 +109,9 @@ func getDescriptionFromPluginYaml(pluginYaml string) string {
 	return ""
 }
 
-func newCLIPluginResource(plugin, description, version string, artifacts map[string]v1alpha1.ArtifactList) v1alpha1.CLIPlugin {
-	cliPlugin := v1alpha1.CLIPlugin{}
-	cliPlugin.SetGroupVersionKind(v1alpha1.GroupVersionKindCLIPlugin)
+func newCLIPluginResource(plugin, description, version string, artifacts map[string]cliv1alpha1.ArtifactList) cliv1alpha1.CLIPlugin {
+	cliPlugin := cliv1alpha1.CLIPlugin{}
+	cliPlugin.SetGroupVersionKind(cliv1alpha1.GroupVersionKindCLIPlugin)
 	cliPlugin.SetName(plugin)
 	cliPlugin.Spec.Description = description
 	cliPlugin.Spec.RecommendedVersion = version
@@ -118,8 +119,8 @@ func newCLIPluginResource(plugin, description, version string, artifacts map[str
 	return cliPlugin
 }
 
-func newArtifactObject(osType, arch, artifactType, digest, uri string) v1alpha1.Artifact {
-	artifact := v1alpha1.Artifact{
+func newArtifactObject(osType, arch, artifactType, digest, uri string) cliv1alpha1.Artifact {
+	artifact := cliv1alpha1.Artifact{
 		Type:   artifactType,
 		OS:     osType,
 		Arch:   arch,
@@ -146,7 +147,7 @@ func getPluginPathAndDigestFromMetadata(artifactDir, plugin, version, osType, ar
 	return sourcePath, digest, nil
 }
 
-func saveCLIPluginResource(cliPlugin *v1alpha1.CLIPlugin, discoveryResourceFile string) error {
+func saveCLIPluginResource(cliPlugin *cliv1alpha1.CLIPlugin, discoveryResourceFile string) error {
 	discoveryResourceDir := filepath.Dir(discoveryResourceFile)
 
 	err := fs.MkdirAll(discoveryResourceDir, 0755)

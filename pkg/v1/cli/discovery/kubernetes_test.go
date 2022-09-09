@@ -10,7 +10,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/vmware-tanzu/tanzu-framework/apis/cli/v1alpha1"
+	"github.com/vmware-tanzu/tanzu-framework/cli/runtime/apis/cli/v1alpha1"
 	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/cli/discovery"
 	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/cli/plugin"
 	"github.com/vmware-tanzu/tanzu-framework/pkg/v1/tkg/fakes"

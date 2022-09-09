@@ -80,7 +80,7 @@ Here, the FeatureGate Kind needs be registered in Scheme for type v1alpha1.Featu
 The init function should look like below after adding the appropriate Kinds to the scheme:
 
 ```go
-import configv1alpha1 "github.com/vmware-tanzu/tanzu-framework/apis/config/v1alpha1"
+import configv1alpha1 "github.com/vmware-tanzu/tanzu-framework/cli/runtime/apis/config/v1alpha1"
 ...
 
 func init() {
@@ -103,7 +103,7 @@ and we want to provide a simple means of checking the feature in our reconciler 
 First add the import for the Framework Config API package and the SDK FeatureGate package.
 
 ```go
-configv1alpha1 "github.com/vmware-tanzu/tanzu-framework/apis/config/v1alpha1"
+configv1alpha1 "github.com/vmware-tanzu/tanzu-framework/cli/runtime/apis/config/v1alpha1"
 gate "github.com/vmware-tanzu/tanzu-framework/pkg/v1/sdk/features/featuregate"
 ```
 
