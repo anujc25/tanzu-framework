@@ -7,7 +7,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// CreateNode creates yaml node based on node key Type
+// CreateNode creates yaml node based on node key Target
 func CreateNode(nodeKey Key) []*yaml.Node {
 	switch nodeKey.Type {
 	case yaml.MappingNode:
