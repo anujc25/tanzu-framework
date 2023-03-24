@@ -1,0 +1,7 @@
+plugins:
+- name: isolated-cluster
+  target: global
+  isContextScoped: false
+- name: feature
+  target: kubernetes
+  isContextScoped: true

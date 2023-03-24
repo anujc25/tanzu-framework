@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 include ./common.mk
+include ./plugin-tooling.mk
 
 SHELL := /usr/bin/env bash
 
